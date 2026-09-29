@@ -1,0 +1,25 @@
+# codexRC example configuration
+
+target:
+  url: "https://example.com"
+
+auth:
+  # Choose one method: cookies | credentials | bearer
+  method: "cookies"
+
+  # Method 1: cookies
+  cookies_file: "cookies.txt"
+
+  # Method 2: credentials
+  # login_url: "https://example.com/login"
+  # username: "testuser"
+  # password: "testpass"
+  # username_field: "username"
+  # password_field: "password"
+
+  # Method 3: bearer
+  # token: "eyJhbGciOi..."
+
+output:
+  reports_dir: "reports"
+  format: ["txt", "json"]
