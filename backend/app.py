@@ -12,12 +12,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 import logging
+from logging.handlers import RotatingFileHandler
 import sys
+import time
 import uuid
 from typing import Any, Dict
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from flask import Flask, jsonify, request, send_file, send_from_directory
+from flask import Flask, g, jsonify, request, send_file, send_from_directory
 
 # Permite ejecutar tanto `python backend/app.py` como `python -m backend.app`.
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,24 +35,86 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
-logging.basicConfig(
-    filename=str(REPORTS_DIR / "backend.log"),
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-)
 LOGGER = logging.getLogger("codexRC")
+LOGGER.setLevel(logging.INFO)
+LOGGER.propagate = False
+if not LOGGER.handlers:
+    handler = RotatingFileHandler(
+        REPORTS_DIR / "backend.log",
+        maxBytes=2_000_000,
+        backupCount=5,
+        encoding="utf-8",
+    )
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    LOGGER.addHandler(handler)
+
+
+def log_event(event: str, **fields: Any) -> None:
+    """Escribe eventos JSONL sin incluir secretos."""
+    safe_fields = {key: value for key, value in fields.items() if key not in {"password", "token", "cookies"}}
+    LOGGER.info(json.dumps({"ts": utc_now(), "event": event, **safe_fields}, ensure_ascii=False, default=str))
+
+
+def safe_url(url: str) -> str:
+    """Oculta parámetros potencialmente sensibles de las URLs registradas."""
+    parsed = urlparse(url)
+    query = [(key, "[redacted]") for key, _ in parse_qsl(parsed.query, keep_blank_values=True)]
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, urlencode(query), ""))
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+STARTED_AT = utc_now()
+
+
 def valid_target(url: str) -> bool:
     parsed = urlparse(url)
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+@app.before_request
+def begin_request():
+    g.request_id = uuid.uuid4().hex[:12]
+    g.request_started = time.perf_counter()
+
+
+@app.after_request
+def finish_request(response):
+    response.headers["X-Request-ID"] = g.get("request_id", "unknown")
+    duration = round(time.perf_counter() - g.get("request_started", time.perf_counter()), 3)
+    log_event(
+        "http_request",
+        request_id=g.get("request_id"),
+        method=request.method,
+        path=request.path,
+        status=response.status_code,
+        duration=duration,
+    )
+    return response
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(exc):
+    request_id = g.get("request_id", "unknown")
+    log_event(
+        "unhandled_error",
+        request_id=request_id,
+        method=request.method,
+        path=request.path,
+        error_type=type(exc).__name__,
+        error=str(exc),
+    )
+    return jsonify({
+        "error": "internal_error",
+        "message": "El backend encontró un error inesperado.",
+        "request_id": request_id,
+        "version": VERSION,
+    }), 500
 
 
 def safe_auth_info(auth: AuthManager) -> Dict[str, Any]:
@@ -63,6 +127,7 @@ def safe_auth_info(auth: AuthManager) -> Dict[str, Any]:
     return {
         "authenticated": info.get("authenticated", False),
         "method": info.get("method"),
+        "cookie_names": sorted(info.get("cookies", {}).keys()),
         "headers": headers,
         "login_debug": info.get("login_debug", {}),
     }
@@ -101,7 +166,10 @@ def build_auth(data: Dict[str, Any]) -> AuthManager:
 
 def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """Ejecuta el pipeline completo dentro del backend."""
-    LOGGER.info("scan_started url=%s", url)
+    scan_started = time.perf_counter()
+    log_event("scan_started", request_id=g.get("request_id"), url=safe_url(url), auth_requested=bool(
+        data.get("cookies") or data.get("bearer_token") or data.get("username")
+    ))
     auth = build_auth(data)
     session = auth.get_session()
     pipeline = Pipeline()
@@ -155,11 +223,34 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
         "auth_method": auth.auth_method,
         "authenticated": auth.is_authenticated(),
     }
+    auth_data = scan["results"].get("auth_status", {}).get("data", {})
+    session_check = auth_data.get("session_check", {})
+    recon_data = scan["results"].get("recon", {}).get("data", {}).get("recon", {})
+    scan["connection"] = {
+        "backend": "connected",
+        "target_reachable": recon_data.get("status_code") is not None,
+        "target_status_code": recon_data.get("status_code"),
+        "target_final_url": recon_data.get("final_url"),
+        "auth_configured": bool(auth.auth_method),
+        "auth_method": auth.auth_method,
+        "session_verified": bool(session_check.get("verified")),
+        "authenticated": bool(session_check.get("authenticated", False)),
+        "username": session_check.get("username"),
+        "verification_reason": session_check.get("reason"),
+        "verification_url": session_check.get("url"),
+    }
+    scan["diagnostics"] = {
+        "request_id": g.get("request_id"),
+        "duration": round(time.perf_counter() - scan_started, 3),
+        "completed_nodes": len(scan["results"]),
+        "failed_nodes": [name for name, result in scan["results"].items() if result["status"] == "failed"],
+    }
     for name, result in scan["results"].items():
-        LOGGER.info(
-            "scan_node url=%s node=%s status=%s duration=%s error=%s",
-            url, name, result["status"], result["duration"], result["error"],
+        log_event(
+            "scan_node", request_id=g.get("request_id"), url=safe_url(url), node=name,
+            status=result["status"], duration=result["duration"], error=result["error"],
         )
+    log_event("scan_connection", request_id=g.get("request_id"), **scan["connection"])
     return scan
 
 
@@ -175,7 +266,26 @@ def health():
 
 @app.get("/api/info")
 def info():
-    return jsonify({"name": "codexRC", "version": VERSION, "log_format": "json"})
+    return jsonify({
+        "name": "codexRC",
+        "version": VERSION,
+        "backend": "connected",
+        "started_at": STARTED_AT,
+        "log_format": "jsonl",
+        "features": ["session_verification", "username_detection", "structured_logs"],
+    })
+
+
+@app.get("/api/status")
+def status():
+    return jsonify({
+        "status": "ok",
+        "backend": "connected",
+        "version": VERSION,
+        "started_at": STARTED_AT,
+        "jobs_in_memory": len(JOBS),
+        "reports_directory": str(REPORTS_DIR),
+    })
 
 
 @app.post("/api/scan")
@@ -188,8 +298,22 @@ def start_scan():
     try:
         scan = execute_scan(url, data)
     except Exception as exc:
-        LOGGER.exception("scan_failed url=%s", url)
-        return jsonify({"error": str(exc)}), 500
+        log_event("scan_failed", request_id=g.get("request_id"), url=safe_url(url), error_type=type(exc).__name__, error=str(exc))
+        return jsonify({
+            "error": "scan_failed",
+            "message": str(exc),
+            "request_id": g.get("request_id"),
+            "version": VERSION,
+        }), 500
+
+    scan.setdefault("connection", {
+        "backend": "connected",
+        "target_reachable": False,
+        "auth_configured": False,
+        "authenticated": False,
+        "verification_reason": "diagnostic_unavailable",
+    })
+    scan.setdefault("diagnostics", {"request_id": g.get("request_id"), "completed_nodes": 0, "failed_nodes": []})
 
     job_id = uuid.uuid4().hex[:8]
     job = {
@@ -205,7 +329,8 @@ def start_scan():
     job["log_url"] = f"/api/jobs/{job_id}/log"
     # Reescribe incluyendo la ruta de descarga en el propio informe.
     save_scan_log(job)
-    LOGGER.info("scan_finished id=%s url=%s log=%s", job_id, url, report_path)
+    job.setdefault("diagnostics", {})["report_file"] = job["log_file"]
+    log_event("scan_finished", request_id=g.get("request_id"), job_id=job_id, url=safe_url(url), report=job["log_file"])
     JOBS[job_id] = job
     return jsonify(job)
 

@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 import json
 import re
+import time
 
 
 class AuthManager:
@@ -148,12 +149,21 @@ class AuthManager:
             "final_url": None,
             "username": None,
             "login_detected": False,
+            "redirect_chain": [],
+            "response_time": None,
+            "content_type": None,
+            "signals": [],
+            "cookie_names": sorted(self.session.cookies.get_dict().keys()),
             "error": None,
         }
+        started = time.perf_counter()
         try:
             response = self.session.get(verification_url, timeout=20, allow_redirects=True)
+            result["response_time"] = round(time.perf_counter() - started, 3)
             result["status_code"] = response.status_code
             result["final_url"] = str(response.url)
+            result["content_type"] = response.headers.get("Content-Type")
+            result["redirect_chain"] = [str(item.url) for item in response.history] + [str(response.url)]
             soup = BeautifulSoup(response.text, "html.parser")
             path = urlparse(str(response.url)).path.lower()
             login_detected = any(marker in path for marker in ("login", "signin", "sign-in", "auth"))
@@ -162,6 +172,14 @@ class AuthManager:
             result["username"] = self._extract_username(soup)
             result["verified"] = response.status_code < 400
             result["authenticated"] = result["verified"] and not login_detected
+            if response.status_code < 400:
+                result["signals"].append("http_ok")
+            if response.history:
+                result["signals"].append("redirected")
+            if result["username"]:
+                result["signals"].append("username_detected")
+            if login_detected:
+                result["signals"].append("login_page_detected")
             if result["authenticated"]:
                 result["reason"] = "protected_page_reached"
             elif login_detected:

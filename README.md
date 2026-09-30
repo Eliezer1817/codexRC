@@ -11,9 +11,10 @@
 - **Frontend:** `frontend/index.html` solo presenta la interfaz y llama a la API `/api/*`.
 - **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría.
 - `backend/main.py` existe solo como compatibilidad y reexporta la aplicación Flask; no es un segundo backend.
-- **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` y puede descargarse desde el dashboard; los eventos generales quedan en `reports/backend.log`.
+- **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` y puede descargarse desde el dashboard; los eventos generales quedan en `reports/backend.log` en formato JSONL, con rotación automática y `request_id`.
 - **Versión:** se muestra en la esquina del dashboard y en `GET /api/info`.
 - **Verificación de sesión:** después de autenticar, el backend consulta una URL protegida, detecta redirecciones al login y busca el nombre visible del usuario.
+- **Diagnóstico:** cada respuesta incluye `connection` y `diagnostics` para saber si el backend respondió, el objetivo fue alcanzable, la sesión fue verificada, qué usuario se detectó y qué solicitud revisar en los logs.
 
 ## Inicio en Termux
 
@@ -43,6 +44,7 @@ python backend/app.py
 
 - `GET /health` — estado del backend.
 - `GET /api/info` — nombre y versión actual.
+- `GET /api/status` — estado operativo, hora de inicio y jobs en memoria.
 - `POST /api/scan` — ejecuta el pipeline completo en el backend.
 - `GET /api/jobs` — lista los escaneos realizados en la sesión.
 - `GET /api/jobs/<id>` — consulta un escaneo.
@@ -59,4 +61,4 @@ Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no
 - Correlación de CVEs mediante CIRCL.
 - Dashboard visual del pipeline.
 
-Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación, por ejemplo `/account` o `/dashboard`. El resultado queda en `results.auth_status.data.session_check` con `authenticated`, `username`, `final_url`, `status_code` y `reason`. Si se deja vacío, se usa la URL objetivo, pero una página pública no permite confirmar por completo que la sesión sea válida.
+Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación, por ejemplo `/account` o `/dashboard`. El resultado queda en `connection` y en `results.auth_status.data.session_check` con `authenticated`, `username`, `final_url`, `status_code`, `response_time`, `signals` y `reason`. Si se deja vacío, se usa la URL objetivo, pero una página pública no permite confirmar por completo que la sesión sea válida.

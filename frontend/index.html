@@ -127,7 +127,7 @@
 <body>
   <header>
     <h1><span>codex</span>RC <span class="badge">local</span></h1>
-    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.4.0</span></div>
+    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.5.0</span> · <span id="backendStatus">comprobando backend...</span></div>
   </header>
 
   <main>
@@ -181,6 +181,7 @@
 
       <div class="results">
         <h3>Resultados del pipeline</h3>
+        <div id="connectionSummary" style="margin-bottom:0.75rem;color:var(--muted);font-size:0.82rem">Sin diagnóstico todavía.</div>
         <p id="logLink" style="font-size:0.8rem;margin-bottom:0.75rem"></p>
         <pre id="output">Esperando escaneo...</pre>
       </div>
@@ -219,8 +220,9 @@
 
     renderPipeline();
 
-    fetch("/api/info").then(r => r.json()).then(info => {
+    fetch("/api/status").then(r => r.json()).then(info => {
       if (info.version) document.getElementById("appVersion").textContent = "v" + info.version;
+      document.getElementById("backendStatus").textContent = info.backend === "connected" ? "backend conectado" : "backend con problemas";
     }).catch(() => {});
 
     document.getElementById("authMethod").addEventListener("change", (e) => {
@@ -286,11 +288,15 @@
         }
         renderPipeline(statusMap);
         document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+        const c = data.connection || {};
+        const auth = c.authenticated ? `Sesión confirmada${c.username ? ` · usuario: ${c.username}` : ""}` : (c.auth_configured ? `Sesión no confirmada · ${c.verification_reason || "sin verificación"}` : "Sin autenticación configurada");
+        document.getElementById("connectionSummary").textContent = `Backend: ${c.backend || "desconocido"} · Objetivo: ${c.target_reachable ? "respondió" : "sin respuesta"} · ${auth} · request: ${data.diagnostics?.request_id || "-"}`;
         if (data.log_url) {
           document.getElementById("logLink").innerHTML = `<a href="${data.log_url}" download>Descargar log completo (${data.log_file})</a>`;
         }
       } catch (err) {
         document.getElementById("output").textContent = "Error: " + err.message;
+        document.getElementById("connectionSummary").textContent = "El backend no devolvió un resultado. Revisa /api/status y reports/backend.log.";
         renderPipeline();
       } finally {
         btn.disabled = false;
