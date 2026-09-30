@@ -1,12 +1,12 @@
 """
-codexRC - Authentication Module (improved)
+codexRC - Authentication Module (Termux friendly)
 Supports 3 methods:
 1. Session Cookies (recommended)
 2. Automatic form login (username + password) with better CSRF & form detection
 3. Bearer / JWT / Custom Authorization header
 """
 
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, Tuple
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -30,30 +30,19 @@ class AuthManager:
         self.last_login_response: Optional[requests.Response] = None
         self.login_debug: Dict[str, Any] = {}
 
-    # ------------------------------------------------------------------
-    # Method 1: Cookies
-    # ------------------------------------------------------------------
     def load_cookies_from_file(self, filepath: str) -> bool:
-        """
-        Load cookies from:
-        - Simple format: name=value; name2=value2
-        - Netscape cookie file
-        - JSON {"name": "value", ...}
-        """
         path = Path(filepath)
         if not path.exists():
             raise FileNotFoundError(f"Cookie file not found: {filepath}")
 
         content = path.read_text(encoding="utf-8").strip()
 
-        # JSON format
         if content.startswith("{"):
             data = json.loads(content)
             if isinstance(data, dict):
                 self.set_cookies(data)
                 return True
 
-        # Simple name=value; ...
         if "=" in content and not content.startswith("# Netscape") and "\t" not in content:
             for part in content.split(";"):
                 part = part.strip()
@@ -64,7 +53,6 @@ class AuthManager:
             self.auth_method = "cookies"
             return True
 
-        # Netscape format
         for line in content.splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
@@ -72,11 +60,7 @@ class AuthManager:
             parts = line.split("\t")
             if len(parts) >= 7:
                 domain, flag, path_c, secure, expires, name, value = parts[:7]
-                self.session.cookies.set(
-                    name, value,
-                    domain=domain if domain.startswith(".") else None,
-                    path=path_c
-                )
+                self.session.cookies.set(name, value, path=path_c)
 
         self.authenticated = True
         self.auth_method = "cookies"
@@ -88,11 +72,7 @@ class AuthManager:
         self.authenticated = True
         self.auth_method = "cookies"
 
-    # ------------------------------------------------------------------
-    # Method 2: Automatic form login (improved)
-    # ------------------------------------------------------------------
     def _extract_csrf(self, soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str]]:
-        """Return (field_name, token_value) for common CSRF patterns."""
         csrf_names = [
             "csrf_token", "csrfmiddlewaretoken", "_token",
             "authenticity_token", "__RequestVerificationToken",
@@ -100,19 +80,16 @@ class AuthManager:
             "__csrf_magic", "csrfkey", "token"
         ]
 
-        # input[name=...]
         for name in csrf_names:
             tag = soup.find("input", {"name": re.compile(f"^{name}$", re.I)})
             if tag and tag.get("value"):
                 return tag.get("name"), tag["value"]
 
-        # meta tags
         for name in ["csrf-token", "_csrf", "csrf_token"]:
             meta = soup.find("meta", {"name": name}) or soup.find("meta", {"name": re.compile(name, re.I)})
             if meta and meta.get("content"):
                 return name, meta["content"]
 
-        # hidden inputs that look like tokens
         for inp in soup.find_all("input", {"type": "hidden"}):
             name = (inp.get("name") or "").lower()
             value = inp.get("value") or ""
@@ -122,15 +99,12 @@ class AuthManager:
         return None, None
 
     def _detect_login_fields(self, soup: BeautifulSoup) -> Dict[str, str]:
-        """Try to auto-detect username/email and password field names."""
         result = {"username_field": "username", "password_field": "password"}
 
-        # Password field
         pwd = soup.find("input", {"type": "password"})
         if pwd and pwd.get("name"):
             result["password_field"] = pwd["name"]
 
-        # Username / email
         candidates = []
         for inp in soup.find_all("input"):
             itype = (inp.get("type") or "text").lower()
@@ -156,21 +130,13 @@ class AuthManager:
         failure_indicator: Optional[str] = None,
         auto_detect_fields: bool = True,
     ) -> bool:
-        """
-        Improved automatic login:
-        - Better CSRF detection (inputs + meta)
-        - Auto-detect username/password field names
-        - Multiple success/failure heuristics
-        - Keeps debug info in self.login_debug
-        """
         extra_fields = extra_fields or {}
         self.login_debug = {}
 
         resp = self.session.get(login_url, timeout=20)
         resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "lxml")
+        soup = BeautifulSoup(resp.text, "html.parser")
 
-        # Auto-detect fields if requested
         if auto_detect_fields and (username_field is None or password_field is None):
             detected = self._detect_login_fields(soup)
             username_field = username_field or detected["username_field"]
@@ -190,7 +156,6 @@ class AuthManager:
 
         payload.update(extra_fields)
 
-        # Form action
         form = soup.find("form")
         action = login_url
         method = "post"
@@ -216,7 +181,6 @@ class AuthManager:
 
         self.last_login_response = login_resp
 
-        # Success heuristics
         success = False
         text_lower = login_resp.text.lower()
         final_url = login_resp.url.lower()
@@ -226,12 +190,10 @@ class AuthManager:
         elif failure_indicator:
             success = failure_indicator.lower() not in text_lower
         else:
-            # Heuristics
             still_on_login = any(x in final_url for x in ["login", "signin", "auth", "session"])
-            has_login_form = bool(BeautifulSoup(login_resp.text, "lxml").find("input", {"type": "password"}))
+            has_login_form = bool(BeautifulSoup(login_resp.text, "html.parser").find("input", {"type": "password"}))
             redirected_away = urlparse(login_resp.url).path != urlparse(login_url).path
             good_status = login_resp.status_code < 400
-
             success = good_status and (redirected_away or not has_login_form) and not still_on_login
 
         self.authenticated = success
@@ -242,9 +204,6 @@ class AuthManager:
 
         return success
 
-    # ------------------------------------------------------------------
-    # Method 3: Bearer / Token / Custom header
-    # ------------------------------------------------------------------
     def set_bearer_token(self, token: str) -> None:
         self.session.headers["Authorization"] = f"Bearer {token}"
         self.authenticated = True
@@ -255,9 +214,6 @@ class AuthManager:
         self.authenticated = True
         self.auth_method = "custom_header"
 
-    # ------------------------------------------------------------------
-    # Utilities
-    # ------------------------------------------------------------------
     def get_session(self) -> requests.Session:
         return self.session
 

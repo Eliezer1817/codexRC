@@ -1,6 +1,5 @@
 """
-codexRC - Basic Technology Detection
-Lightweight fingerprinting from headers, HTML, cookies and common paths.
+codexRC - Basic Technology Detection (html.parser)
 """
 
 from typing import List, Dict, Any, Optional
@@ -25,25 +24,21 @@ class TechDetector:
                 return [{"name": "error", "detail": str(e)}]
 
         headers_l = {k.lower(): v for k, v in (headers or {}).items()}
-        soup = BeautifulSoup(html or "", "lxml")
+        soup = BeautifulSoup(html or "", "html.parser")
 
-        # Server header
         server = headers_l.get("server")
         if server:
             techs.append({"name": "Server", "version": server, "source": "header"})
 
-        # X-Powered-By
         powered = headers_l.get("x-powered-by")
         if powered:
             techs.append({"name": powered.split("/")[0].strip(), "version": powered, "source": "header"})
 
-        # Generator meta
         gen = soup.find("meta", {"name": "generator"})
         if gen and gen.get("content"):
             content = gen["content"]
             techs.append({"name": content.split(" ")[0], "version": content, "source": "meta-generator"})
 
-        # Common signatures
         signatures = [
             (r"wp-content|wordpress", "WordPress", None),
             (r"drupal", "Drupal", None),
@@ -63,11 +58,9 @@ class TechDetector:
             m = re.search(pattern, text, re.I)
             if m:
                 version = m.group(group) if group and m.lastindex else None
-                # Avoid duplicates
                 if not any(t["name"].lower() == name.lower() for t in techs):
                     techs.append({"name": name, "version": version, "source": "content"})
 
-        # Cookies hints
         cookies = self.session.cookies.get_dict() if self.session else {}
         for cname in cookies:
             cl = cname.lower()
