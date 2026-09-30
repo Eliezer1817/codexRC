@@ -118,6 +118,62 @@ class AuthManager:
 
         return result
 
+    def _extract_username(self, soup: BeautifulSoup) -> Optional[str]:
+        """Busca un nombre visible en una página autenticada, sin leer secretos."""
+        selectors = [
+            "[data-user-name]", "[data-username]", "[data-user]",
+            ".username", ".user-name", ".user_name", ".profile-name",
+            "[class*='username']", "[class*='user-name']",
+            "meta[name='user']", "meta[name='username']",
+        ]
+        for selector in selectors:
+            tag = soup.select_one(selector)
+            if not tag:
+                continue
+            value = tag.get("content") or tag.get("data-user-name") or tag.get_text(" ", strip=True)
+            if value and 1 < len(value) <= 160:
+                return value.strip()
+
+        text = soup.get_text(" ", strip=True)
+        match = re.search(r"(?:welcome|hello|hola|bienvenido(?:a)?)\s*[,:-]?\s*([\w.@+-]{2,100})", text, re.I)
+        return match.group(1) if match else None
+
+    def verify_session(self, verification_url: str) -> Dict[str, Any]:
+        """Comprueba una URL y determina si la sesión fue redirigida al login."""
+        result: Dict[str, Any] = {
+            "url": verification_url,
+            "verified": False,
+            "authenticated": False,
+            "status_code": None,
+            "final_url": None,
+            "username": None,
+            "login_detected": False,
+            "error": None,
+        }
+        try:
+            response = self.session.get(verification_url, timeout=20, allow_redirects=True)
+            result["status_code"] = response.status_code
+            result["final_url"] = str(response.url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            path = urlparse(str(response.url)).path.lower()
+            login_detected = any(marker in path for marker in ("login", "signin", "sign-in", "auth"))
+            login_detected = login_detected or bool(soup.find("input", {"type": "password"}))
+            result["login_detected"] = login_detected
+            result["username"] = self._extract_username(soup)
+            result["verified"] = response.status_code < 400
+            result["authenticated"] = result["verified"] and not login_detected
+            if result["authenticated"]:
+                result["reason"] = "protected_page_reached"
+            elif login_detected:
+                result["reason"] = "redirected_to_login_or_login_form_detected"
+            else:
+                result["reason"] = "verification_request_failed"
+        except Exception as exc:
+            result["error"] = str(exc)
+            result["reason"] = "verification_exception"
+        self.authenticated = bool(result["authenticated"])
+        return result
+
     def login_with_credentials(
         self,
         login_url: str,

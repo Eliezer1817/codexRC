@@ -13,6 +13,7 @@
 - `backend/main.py` existe solo como compatibilidad y reexporta la aplicación Flask; no es un segundo backend.
 - **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` y puede descargarse desde el dashboard; los eventos generales quedan en `reports/backend.log`.
 - **Versión:** se muestra en la esquina del dashboard y en `GET /api/info`.
+- **Verificación de sesión:** después de autenticar, el backend consulta una URL protegida, detecta redirecciones al login y busca el nombre visible del usuario.
 
 ## Inicio en Termux
 
@@ -57,3 +58,5 @@ Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no
 - Detección tecnológica.
 - Correlación de CVEs mediante CIRCL.
 - Dashboard visual del pipeline.
+
+Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación, por ejemplo `/account` o `/dashboard`. El resultado queda en `results.auth_status.data.session_check` con `authenticated`, `username`, `final_url`, `status_code` y `reason`. Si se deja vacío, se usa la URL objetivo, pero una página pública no permite confirmar por completo que la sesión sea válida.

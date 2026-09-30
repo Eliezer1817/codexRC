@@ -33,7 +33,7 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 logging.basicConfig(
@@ -120,7 +120,20 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
             matcher.close()
 
     def node_auth_info(ctx: Dict[str, Any]) -> Dict[str, Any]:
-        return {"auth_info": safe_auth_info(auth)}
+        if auth.auth_method:
+            verification_url = str(data.get("verification_url") or url)
+            session_check = auth.verify_session(verification_url)
+        else:
+            session_check = {
+                "verified": False,
+                "authenticated": False,
+                "username": None,
+                "reason": "no_auth_method",
+            }
+        return {
+            "auth_info": safe_auth_info(auth),
+            "session_check": session_check,
+        }
 
     pipeline.add_node("recon", node_recon)
     pipeline.add_node("tech_detect", node_tech)

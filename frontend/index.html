@@ -127,7 +127,7 @@
 <body>
   <header>
     <h1><span>codex</span>RC <span class="badge">local</span></h1>
-    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.3.0</span></div>
+    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.4.0</span></div>
   </header>
 
   <main>
@@ -150,6 +150,10 @@
           <label>Cookies (name=value; ...)</label>
           <textarea id="cookiesRaw" rows="3" placeholder="sessionid=abc; token=xyz"></textarea>
         </div>
+
+        <label>URL protegida para verificar sesión (opcional)</label>
+        <input type="url" id="verificationUrl" placeholder="https://example.com/account" />
+        <p class="hint">Debe ser una página que solo se vea con sesión. Si vuelve al login, la sesión se marcará como inválida.</p>
 
         <div id="authCreds" style="display:none">
           <label>Login URL</label>
@@ -232,6 +236,8 @@
 
       const method = document.getElementById("authMethod").value;
       const body = { url };
+      const verificationUrl = document.getElementById("verificationUrl").value.trim();
+      if (verificationUrl) body.verification_url = verificationUrl;
 
       if (method === "cookies") {
         const raw = document.getElementById("cookiesRaw").value.trim();
