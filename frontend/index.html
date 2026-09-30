@@ -127,7 +127,7 @@
 <body>
   <header>
     <h1><span>codex</span>RC <span class="badge">local</span></h1>
-    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style</div>
+    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.3.0</span></div>
   </header>
 
   <main>
@@ -177,6 +177,7 @@
 
       <div class="results">
         <h3>Resultados del pipeline</h3>
+        <p id="logLink" style="font-size:0.8rem;margin-bottom:0.75rem"></p>
         <pre id="output">Esperando escaneo...</pre>
       </div>
     </section>
@@ -214,6 +215,10 @@
 
     renderPipeline();
 
+    fetch("/api/info").then(r => r.json()).then(info => {
+      if (info.version) document.getElementById("appVersion").textContent = "v" + info.version;
+    }).catch(() => {});
+
     document.getElementById("authMethod").addEventListener("change", (e) => {
       const v = e.target.value;
       document.getElementById("authCookies").style.display = v === "cookies" ? "block" : "none";
@@ -250,6 +255,7 @@
       btn.disabled = true;
       btn.textContent = "Ejecutando...";
       document.getElementById("output").textContent = "Pipeline en ejecución...";
+      document.getElementById("logLink").textContent = "";
 
       // Mark all as running visually
       const runningMap = {};
@@ -274,6 +280,9 @@
         }
         renderPipeline(statusMap);
         document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+        if (data.log_url) {
+          document.getElementById("logLink").innerHTML = `<a href="${data.log_url}" download>Descargar log completo (${data.log_file})</a>`;
+        }
       } catch (err) {
         document.getElementById("output").textContent = "Error: " + err.message;
         renderPipeline();

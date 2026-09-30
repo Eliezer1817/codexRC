@@ -12,6 +12,7 @@ build/
 .reports/
 reports/*.txt
 reports/*.json
+reports/*.log
 cookies.txt
 *.session.json
 .env

@@ -11,6 +11,8 @@
 - **Frontend:** `frontend/index.html` solo presenta la interfaz y llama a la API `/api/*`.
 - **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría.
 - `backend/main.py` existe solo como compatibilidad y reexporta la aplicación Flask; no es un segundo backend.
+- **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` y puede descargarse desde el dashboard; los eventos generales quedan en `reports/backend.log`.
+- **Versión:** se muestra en la esquina del dashboard y en `GET /api/info`.
 
 ## Inicio en Termux
 
@@ -39,9 +41,11 @@ python backend/app.py
 ## API principal
 
 - `GET /health` — estado del backend.
+- `GET /api/info` — nombre y versión actual.
 - `POST /api/scan` — ejecuta el pipeline completo en el backend.
 - `GET /api/jobs` — lista los escaneos realizados en la sesión.
 - `GET /api/jobs/<id>` — consulta un escaneo.
+- `GET /api/jobs/<id>/log` — descarga el archivo JSON completo del escaneo.
 - `GET /api/pipeline/schema` — devuelve la estructura visual del pipeline.
 
 Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no se devuelven en la respuesta de autenticación.

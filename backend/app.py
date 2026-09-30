@@ -10,12 +10,14 @@ Ejecutar:
 
 from datetime import datetime, timezone
 from pathlib import Path
+import json
+import logging
 import sys
 import uuid
 from typing import Any, Dict
 from urllib.parse import urlparse
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_file, send_from_directory
 
 # Permite ejecutar tanto `python backend/app.py` como `python -m backend.app`.
 ROOT = Path(__file__).resolve().parent.parent
@@ -31,6 +33,15 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
+VERSION = "0.3.0"
+REPORTS_DIR = ROOT / "reports"
+REPORTS_DIR.mkdir(exist_ok=True)
+logging.basicConfig(
+    filename=str(REPORTS_DIR / "backend.log"),
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
+LOGGER = logging.getLogger("codexRC")
 
 
 def utc_now() -> str:
@@ -57,6 +68,16 @@ def safe_auth_info(auth: AuthManager) -> Dict[str, Any]:
     }
 
 
+def save_scan_log(job: Dict[str, Any]) -> str:
+    """Guarda el resultado completo del escaneo como JSON descargable."""
+    path = REPORTS_DIR / f"codexrc_{job['id']}.json"
+    path.write_text(
+        json.dumps(job, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+    return str(path)
+
+
 def build_auth(data: Dict[str, Any]) -> AuthManager:
     auth = AuthManager()
     if data.get("cookies"):
@@ -80,6 +101,7 @@ def build_auth(data: Dict[str, Any]) -> AuthManager:
 
 def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """Ejecuta el pipeline completo dentro del backend."""
+    LOGGER.info("scan_started url=%s", url)
     auth = build_auth(data)
     session = auth.get_session()
     pipeline = Pipeline()
@@ -106,7 +128,7 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
     pipeline.add_node("auth_status", node_auth_info)
     results = pipeline.run({"url": url})
 
-    return {
+    scan = {
         "pipeline": pipeline.get_status(),
         "results": {
             name: {
@@ -120,6 +142,12 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
         "auth_method": auth.auth_method,
         "authenticated": auth.is_authenticated(),
     }
+    for name, result in scan["results"].items():
+        LOGGER.info(
+            "scan_node url=%s node=%s status=%s duration=%s error=%s",
+            url, name, result["status"], result["duration"], result["error"],
+        )
+    return scan
 
 
 @app.get("/")
@@ -129,7 +157,12 @@ def dashboard():
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "ok", "service": "codexRC-backend", "time": utc_now()})
+    return jsonify({"status": "ok", "service": "codexRC-backend", "version": VERSION, "time": utc_now()})
+
+
+@app.get("/api/info")
+def info():
+    return jsonify({"name": "codexRC", "version": VERSION, "log_format": "json"})
 
 
 @app.post("/api/scan")
@@ -142,6 +175,7 @@ def start_scan():
     try:
         scan = execute_scan(url, data)
     except Exception as exc:
+        LOGGER.exception("scan_failed url=%s", url)
         return jsonify({"error": str(exc)}), 500
 
     job_id = uuid.uuid4().hex[:8]
@@ -150,8 +184,15 @@ def start_scan():
         "url": url,
         "created_at": utc_now(),
         "status": "finished",
+        "version": VERSION,
         **scan,
     }
+    report_path = save_scan_log(job)
+    job["log_file"] = str(Path(report_path).relative_to(ROOT))
+    job["log_url"] = f"/api/jobs/{job_id}/log"
+    # Reescribe incluyendo la ruta de descarga en el propio informe.
+    save_scan_log(job)
+    LOGGER.info("scan_finished id=%s url=%s log=%s", job_id, url, report_path)
     JOBS[job_id] = job
     return jsonify(job)
 
@@ -167,6 +208,17 @@ def get_job(job_id: str):
     if not job:
         return jsonify({"error": "Job not found"}), 404
     return jsonify(job)
+
+
+@app.get("/api/jobs/<job_id>/log")
+def download_job_log(job_id: str):
+    job = JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    path = REPORTS_DIR / f"codexrc_{job_id}.json"
+    if not path.exists():
+        return jsonify({"error": "Log not found"}), 404
+    return send_file(path, as_attachment=True, download_name=path.name, mimetype="application/json")
 
 
 @app.get("/api/pipeline/schema")
