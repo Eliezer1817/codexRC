@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.34.0"
+VERSION = "0.35.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -515,6 +515,25 @@ def dashboard():
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "codexRC-backend", "version": VERSION, "time": utc_now()})
+
+
+@app.post("/api/bin")
+def api_bin():
+    """BIN-AUDIT: analisis binario/nativo (secrets, endpoints, imports)."""
+    data = request.get_json(silent=True) or {}
+    path = (data.get("path") or "").strip()
+    top = int(data.get("top") or 25)
+    if not path:
+        return jsonify({"error": "falta 'path' (binario, zip, apk, jar...)"}), 400
+    import os
+    if not os.path.exists(path):
+        return jsonify({"error": "path inexistente", "path": path}), 404
+    from core.bin_audit import audit_path
+    try:
+        res = audit_path(path, top=top)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"target": path, "count": len(res), "findings": res})
 
 
 @app.post("/api/patterns")
