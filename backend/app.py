@@ -41,7 +41,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.14.1"
+VERSION = "0.14.2"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -705,10 +705,6 @@ def pipeline_schema():
     })
 
 
-if __name__ == "__main__":
-    print("\ncodexRC backend running at http://127.0.0.1:8000\n")
-    app.run(host="0.0.0.0", port=8000, debug=False)
-
 def _bateria_get(hunter, spider_out):
     return hunter.test_params(spider_out.get("param_targets", []))
 
@@ -728,3 +724,8 @@ def _bateria_dom(hunter, spider_out):
 @app.route("/hunter.html")
 def hunter_page():
     return send_from_directory(app.static_folder, "hunter.html")
+
+
+if __name__ == "__main__":
+    print("\ncodexRC backend running at http://127.0.0.1:8000\n")
+    app.run(host="0.0.0.0", port=8000, debug=False)
