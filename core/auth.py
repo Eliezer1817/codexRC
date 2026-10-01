@@ -241,12 +241,12 @@ class AuthManager:
         step("diagnostico_cf", diagnostico["tipo"])
 
         if diagnostico["challenge"] or diagnostico["tipo"] in ("WAF_BLOCK", "BLOQUEO_IP"):
-            from core.ghostgate import ghostgate_relay, HAS_CURL_CFFI
-            if not HAS_CURL_CFFI:
-                self.login_debug["resultado"] = "cloudflare_bloquea_sin_curl_cffi"
+            from core.ghostgate import ghostgate_relay, HAS_CURL_CFFI, HAS_CLOUDSCRAPER
+            if not HAS_CURL_CFFI and not HAS_CLOUDSCRAPER:
+                self.login_debug["resultado"] = "cloudflare_bloquea_sin_relevo"
                 self.login_debug["razon"] = (
-                    "Cloudflare bloquea (" + diagnostico["tipo"] + ") y curl_cffi no "
-                    "esta instalado. Ejecuta: pip install curl_cffi"
+                    "Cloudflare bloquea (" + diagnostico["tipo"] + ") y no hay relevo "
+                    "disponible. En Termux ejecuta: pip install cloudscraper"
                 )
                 self.authenticated = False
                 return False

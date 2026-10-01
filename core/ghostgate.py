@@ -26,6 +26,15 @@ except ImportError:  # pragma: no cover
     creq = None
     HAS_CURL_CFFI = False
 
+# Plan B para Termux (Android armv7l donde curl_cffi no compila):
+# cloudscraper es Python puro y resuelve challenges de Cloudflare.
+try:
+    import cloudscraper
+    HAS_CLOUDSCRAPER = True
+except ImportError:  # pragma: no cover
+    cloudscraper = None
+    HAS_CLOUDSCRAPER = False
+
 IMPERSONATE = "chrome136"  # huella mas moderna probada en los experimentos
 
 REAL_HEADERS = {
@@ -91,11 +100,43 @@ def ghostgate_relay(url: str, timeout: int = 25) -> Dict[str, Any]:
         "html": "", "razon": "",
     }
 
+    if not HAS_CURL_CFFI and HAS_CLOUDSCRAPER:
+        # ---------- GHOSTGATE-LITE plan B: cloudscraper ----------
+        try:
+            scraper = cloudscraper.create_scraper(
+                browser={"browser": "chrome", "platform": "android", "desktop": False}
+            )
+            resp = scraper.get(url, timeout=timeout)
+            diagnostico = clasificar(resp.status_code, dict(resp.headers), resp.text)
+            resultado["tipo"] = diagnostico["tipo"] + " (cloudscraper)"
+            resultado["status"] = resp.status_code
+            resultado["html"] = resp.text
+            resultado["cookies"] = {
+                c.name: c.value for c in resp.cookies if hasattr(c, "name")
+            } if hasattr(resp.cookies, "__iter__") else dict(resp.cookies)
+            resultado["user_agent"] = (
+                resp.request.headers.get("User-Agent", resultado["user_agent"])
+            )
+            if diagnostico["tipo"] in ("SIN_CHALLENGE", "SIN_CF") and resp.status_code < 400:
+                resultado["ok"] = True
+                resultado["razon"] = "Paso con cloudscraper (GHOSTGATE-LITE plan B)"
+            else:
+                resultado["razon"] = (
+                    f"cloudscraper sigue bloqueado ({diagnostico['tipo']}). "
+                    "Se necesita GHOSTGATE completo: navegador real con IP limpia."
+                )
+            return resultado
+        except Exception as exc:
+            resultado["tipo"] = "ERROR_RELEVO"
+            resultado["razon"] = f"Excepcion en cloudscraper: {exc}"
+            return resultado
+
     if not HAS_CURL_CFFI:
-        resultado["tipo"] = "CURL_CFFI_NO_INSTALADO"
+        resultado["tipo"] = "RELEVO_NO_DISPONIBLE"
         resultado["razon"] = (
-            "curl_cffi no esta instalado (pip install curl_cffi). "
-            "Sin huella de navegador real no se puede intentar el paso."
+            "Ni curl_cffi ni cloudscraper estan instalados. "
+            "En Termux instala: pip install cloudscraper "
+            "(curl_cffi no compila en Android armv7l)."
         )
         return resultado
 
