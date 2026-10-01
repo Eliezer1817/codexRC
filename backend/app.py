@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.26.0"
+VERSION = "0.27.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -587,7 +587,7 @@ def start_scan():
     return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
 
 
-HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers",
+HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
                 "xss_dom", "sqli", "veritas", "report"]
 
 
@@ -774,6 +774,21 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                 node_state("param_map", "success", round(time.perf_counter() - t0, 2))
                 job["results"]["param_map"] = {"status": "success", "data": {
                     "targets": spider_out["param_targets"], "forms": spider_out["forms"]}}
+
+                # ---- CEREBRO: fingerprint del blanco + cola de caza rankeada
+                node_state("brain", "running")
+                t0 = time.perf_counter()
+                from core.brain import Brain
+                brain_out = Brain(session, emit, timeout=15).run(url, spider_out)
+                node_state("brain", "success", round(time.perf_counter() - t0, 2))
+                job["results"]["brain"] = {"status": "success", "data": {
+                    "fingerprint": brain_out["fingerprint"],
+                    "ranked": [
+                        {"url": t["url"], "param": t["param"], "score": t["score"],
+                         "budget": t["budget"], "why": t["why"]}
+                        for t in brain_out["ranked_targets"][:50]]}}
+                # las baterias consumen la cola YA ordenada por valor
+                spider_out["param_targets"] = brain_out["ranked_targets"]
 
                 hunter = XSSHunter(session, emit, delay=float(data.get("delay", 0.15)),
                                    workers=workers)

@@ -128,7 +128,8 @@ class SqlBait:
 
     # ----------------------------------------------------------- per-param
 
-    def test_param(self, url: str, param: str) -> Optional[Dict[str, Any]]:
+    def test_param(self, url: str, param: str,
+                   budget: int = MAX_PROBES_PER_PARAM) -> Optional[Dict[str, Any]]:
         r0, t_base, base = self._req(url)
         if r0 is None or r0.status_code != 200:
             return None
@@ -137,7 +138,7 @@ class SqlBait:
 
         # ---- TIER 1: error-based con fingerprint
         for p in ERROR_PROBES:
-            if probes >= MAX_PROBES_PER_PARAM:
+            if probes >= budget:
                 break
             probes += 1
             _, _, body = self._req(self._set_q(url, param, p))
@@ -156,7 +157,7 @@ class SqlBait:
         variants = (BOOL_NUMERIC if is_num else BOOL_STRING) + \
                    (BOOL_STRING_CM if not is_num else [])
         for t_probe, f_probe in variants:
-            if probes >= MAX_PROBES_PER_PARAM:
+            if probes >= budget:
                 break
             probes += 2
             _, _, b_true = self._req(self._set_q(url, param, t_probe.format(v=v)))
@@ -176,7 +177,7 @@ class SqlBait:
 
         # ---- TIER 3: time-based con confirmacion repetida
         for dbms, tpl in TIME_PAYLOADS:
-            if probes >= MAX_PROBES_PER_PARAM:
+            if probes >= budget:
                 break
             probes += 1
             _, elapsed, _ = self._req(self._set_q(url, param, tpl.format(v=v)))
@@ -247,7 +248,8 @@ class SqlBait:
         tgts = [t for t in targets[:max_params]
                 if "?" in t.get("url", "") and t.get("param")]
         for t in tgts:
-            f = self.test_param(t["url"], t["param"])
+            f = self.test_param(t["url"], t["param"],
+                                budget=int(t.get("budget", MAX_PROBES_PER_PARAM)))
             if f:
                 findings.append(f)
         if tgts:
