@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.17.0"
+VERSION = "0.17.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -745,7 +745,10 @@ def get_job(job_id: str):
     job = JOBS.get(job_id)
     if not job:
         return jsonify({"error": "Job not found"}), 404
-    return jsonify(job)
+    resp = dict(job)
+    # seccion aparte: filtraciones de datos de usuarios (lo que importa)
+    resp["leaks"] = [f for f in job.get("findings", []) if f.get("leak")]
+    return jsonify(resp)
 
 
 @app.get("/api/jobs/<job_id>/log")

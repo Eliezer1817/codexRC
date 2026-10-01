@@ -458,7 +458,8 @@ class DeepHunter:
                     "target": pv,
                     "evidence": f"datos privados de otro registro (campos: {', '.join(pii_p)})"
                                 + (f" · identidad: {p_email}" if p_email else ""),
-                    "verdict": "candidata IDOR: confirmar identidad ajena"})
+                    "verdict": "candidata IDOR: confirmar identidad ajena",
+                    "leak": True, "leak_fields": pii_p, "leak_identity": p_email})
                 self.log(f"[idor] 💥 posible IDOR en {urlparse(pv).path}"
                          + (f"?{urlparse(pv).query}" if urlparse(pv).query else "")
                          + f" ({', '.join(pii_p)})")
@@ -606,7 +607,9 @@ class DeepHunter:
                     "param": "-", "target": u,
                     "evidence": f"responde datos privados SIN sesion "
                                 f"(campos: {', '.join(pii_n)})",
-                    "verdict": "confirmado por contraste anonimo"})
+                    "verdict": "confirmado por contraste anonimo",
+                    "leak": True, "leak_fields": pii_n,
+                    "leak_identity": self._json_find(json.loads(pii_n and rn.text or "{}"), ("email", "username", "first_name"))})
                 self.log(f"[api] 💥 BAC: {urlparse(u).path} entrega datos privados "
                          f"SIN sesion ({', '.join(pii_n)})")
             elif anon_ok:
@@ -754,12 +757,6 @@ class XSSHunter:
 
     def _finding(self, kind: str, target: str, param: str, method: str,
                  gravedad: str, razon: str, evidence: str, ctx: Optional[str]) -> Dict[str, Any]:
-        paga = {
-            "alta": "POSIBLE: Patchstack solo paga XSS site-wide con JS; validar si se inyecta en todo el sitio",
-            "media": "POCO PROBABLE: requiere encadenar (site-wide o stored)",
-            "baja": "NO PAGA solo por reflejar sanitizado",
-            "info": "NO PAGA (solo informativo)",
-        }[gravedad]
         return {
             "type": kind,
             "target": target,
@@ -771,7 +768,6 @@ class XSSHunter:
             "evidence": evidence[:300],
             "veredicto": {
                 "gravedad": gravedad,
-                "paga": paga,
                 "primeros": "desconocido: revisar si ya esta reportado antes de enviar",
                 "reglas": "OK: sonda pasiva de reflexion, sin ejecucion ni payloads",
             },
@@ -884,7 +880,6 @@ class XSSHunter:
                 "evidence": f"sink: {cand['sink']} | fuente: {cand['source_pattern']}",
                 "veredicto": {
                     "gravedad": "media",
-                    "paga": "POSIBLE si se logra ejecutar JS propio: validar manualmente",
                     "primeros": "desconocido: revisar antes de reportar",
                     "reglas": "OK: analisis estatico del JS publico del sitio",
                 },

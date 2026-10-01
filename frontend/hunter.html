@@ -190,6 +190,7 @@ esperando objetivo...</pre>
         <div class="card-head">Hallazgos <span id="fCount" style="color:var(--muted)"></span></div>
         <div class="card-body">
           <div id="summary"></div>
+          <div id="leaks"></div>
           <div id="findings"><div class="empty">sin hallazgos todavía…</div></div>
         </div>
       </div>
@@ -248,6 +249,30 @@ esperando objetivo...</pre>
       if (nearBottom) out.scrollTop = out.scrollHeight;
     }
 
+    function renderLeaks(leaks) {
+      const box = document.getElementById("leaks");
+      if (!box) return;
+      if (!leaks || !leaks.length) {
+        box.innerHTML = "";
+        return;
+      }
+      const items = leaks.map(f => `
+        <div class="finding ${f.severity}">
+          <span class="sev ${f.severity}">${esc(f.severity)}</span>
+          <span class="sev info" style="margin-left:4px">${esc(f.type || "")}</span>
+          <h4>DATOS FILTRADOS: ${esc((f.leak_fields || []).join(", "))}</h4>
+          <div class="target">${esc(f.target || "")}</div>
+          ${f.leak_identity ? `<div class="reason">identidad vista: <b>${esc(f.leak_identity)}</b></div>` : ""}
+          <div class="reason">${esc(f.evidence || "")}</div>
+        </div>`).join("");
+      box.innerHTML = `
+        <div class="node" style="border-color:var(--red); margin-bottom:0.6rem">
+          <h3 style="color:var(--red)">💥 FILTRACIÓN DE DATOS DE USUARIOS (${leaks.length})</h3>
+          <div class="empty">lo de arriba es lo primero que importa: datos de usuarios visibles donde no deben</div>
+          ${items}
+        </div>`;
+    }
+
     function renderFindings(findings) {
       const box = document.getElementById("findings");
       document.getElementById("fCount").textContent = findings.length ? "· " + findings.length : "";
@@ -264,7 +289,6 @@ esperando objetivo...</pre>
           <pre class="ev">${esc(f.evidence || "")}</pre>
           <div class="veredicto">
             <b>gravedad:</b><span>${esc(v.gravedad || f.severity)}</span>
-            <b>¿paga?:</b><span>${esc(v.paga || "?")}</span>
             <b>¿primeros?:</b><span>${esc(v.primeros || "?")}</span>
             <b>¿reglas OK?:</b><span>${esc(v.reglas || "?")}</span>
           </div>
@@ -341,6 +365,7 @@ esperando objetivo...</pre>
             renderPipeline(job.pipeline?.nodes || {});
             const lines = job.live_log || [];
             for (; last < lines.length; last++) logLine(lines[last].msg);
+            renderLeaks(job.leaks);
             if (job.findings && job.findings.length) renderFindings(job.findings);
             if (job.status !== "running") {
               clearInterval(poll);
