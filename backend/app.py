@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.17.3"
+VERSION = "0.18.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -520,7 +520,9 @@ def _auth_config_of(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 PRIVATE_PATHS = ("app", "dashboard", "account", "panel", "cabinet", "user",
-                 "profile", "wallet", "trade", "member", "personal", "my-account")
+                 "profile", "wallet", "trade", "member", "personal", "my-account",
+                 "referrals", "deposits", "withdrawals", "settings", "history",
+                 "transactions", "billing", "balance", "exchange", "admin")
 
 
 def _descubrir_zona_privada(session, base_url: str, emit) -> list:

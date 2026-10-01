@@ -260,6 +260,35 @@ class DeepHunter:
     )
 
     SECRET_MARKERS = ("API_KEY", "SECRET", "PASSWORD", "PRIVATE_KEY", "DB_PASS", "TOKEN=")
+    SECRET_PATTERNS = (
+        (re.compile(r"AKIA[0-9A-Z]{16}"), "AWS Access Key"),
+        (re.compile(r"ghp_[A-Za-z0-9]{20,}"), "GitHub token"),
+        (re.compile(r"sk_live_[A-Za-z0-9]{16,}"), "Stripe secret key"),
+        (re.compile(r"AIza[0-9A-Za-z_\-]{30,}"), "Google API key"),
+        (re.compile(r"eyJ[A-Za-z0-9_\-]{15,}\.[A-Za-z0-9_\-]{15,}\.[A-Za-z0-9_\-]{10,}"),
+         "JWT hardcodeado"),
+        (re.compile(r"(?i)(api[_-]?key|secret|passwd|password|access[_-]?token)"
+                    r"\s*[:=]\s*[\"\'][^\"\']{12,}[\"\']"), "credencial hardcodeada"),
+    )
+
+    def _scan_secrets(self, text: str, source: str, findings: List[Dict[str, Any]]) -> None:
+        """Busca credenciales/keys filtradas en JS publico (solo patrones de
+        deteccion, nunca valida ni usa la credencial)."""
+        for pat, label in self.SECRET_PATTERNS:
+            m = pat.search(text or "")
+            if not m:
+                continue
+            i = (text or "").find(m.group(0))
+            ev = (text[max(0, i - 40): i + len(m.group(0)) + 40]
+                  if i >= 0 else m.group(0)).replace("\n", " ").strip()
+            findings.append({
+                "severity": "media" if label == "credencial hardcodeada" else "alta",
+                "type": "Secreto en JS publico",
+                "param": "-", "target": source,
+                "evidence": f"{label}: {ev[:180]}",
+                "verdict": "revisar si la credencial es real y de que servicio"})
+            self.log(f"[api-js] 💥 {label} en {urlparse(source).path}")
+            break  # un hallazgo por archivo basta para el inventario
 
     def __init__(self, session: requests.Session, log: Log,
                  delay: float = 0.15, timeout: float = 15.0):
@@ -321,10 +350,12 @@ class DeepHunter:
                 "Referer": base_url.rstrip("/") + "/",
                 "X-Requested-With": "XMLHttpRequest"}
 
-    def _post_read(self, sess, u: str):
-        """POST de lectura (JSON vacio) contra un endpoint tipo getPage/init.
-        Solo se invoca sobre rutas cuyo ultimo segmento NO empieza con 'do'."""
-        return sess.post(u, json={}, timeout=self.timeout, allow_redirects=False)
+    def _post_read(self, sess, u: str, payload=None):
+        """POST de lectura (JSON vacio o con id vecino) contra un endpoint tipo
+        getPage/init. Solo se invoca sobre rutas cuyo ultimo segmento NO empieza
+        con 'do' (nunca escribe datos: los payloads son ids de lectura)."""
+        return sess.post(u, json=(payload if payload is not None else {}),
+                         timeout=self.timeout, allow_redirects=False)
 
     def _scan_js_text(self, base_url, text, specs, queue, seen_files):
         """Extrae chunks lazy y rutas API (con verbo) de un archivo JS."""
@@ -375,6 +406,7 @@ class DeepHunter:
             if r.status_code != 200 or len(r.text) < 50:
                 continue
             self._scan_js_text(base_url, r.text, specs, queue, seen_files)
+            self._scan_secrets(r.text, js, findings)
         self.api_specs.update(specs)
         hits = list(specs.keys())[:40]
         if hits:
@@ -394,7 +426,9 @@ class DeepHunter:
         findings: List[Dict[str, Any]] = []
         probes_done = 0
         base = list(api_hits) + [urljoin(base_url, "/" + a) for a in self.API_DEFAULTS]
-        cands = list(dict.fromkeys(base))[:20]
+        # rutas reales descubiertas en los chunks JS primero; genericas al final
+        cands = sorted(dict.fromkeys(base),
+                       key=lambda u: 0 if u in self.api_specs else 1)[:20]
         if not cands:
             self.log("[idor] sin endpoints API para probar IDOR")
             return findings
@@ -424,22 +458,36 @@ class DeepHunter:
             path_variants = []
             if m and int(m.group(1)) != 1:
                 path_variants.append(re.sub(r"/\d+(/?)$", "/1\\1", u))
-            # variante 2: parametros id/user_id
+            # variante 2: parametros id/user_id en la URL
             param_variants = []
             sep = "&" if "?" in u else "?"
             for p in ("id", "user_id", "uid", "user"):
                 for v in ("1", "2"):
                     param_variants.append(f"{u}{sep}{p}={v}")
-            for pv in path_variants + param_variants:
-                if probes_done >= 60:
+            # variante 3 (POST): id vecino DENTRO del body JSON (patron SPA/Angular)
+            def _plabel(pv):
+                return (urlparse(pv).query
+                        or re.sub(r"/\d+(/?)$", "/<id>", urlparse(pv).path) or "-")
+            probes = []
+            if verb == "POST":
+                for p in ("id", "user_id", "userId", "account", "user"):
+                    probes.append((f"body:{p}=1", ("body", u, {p: 1})))
+                probes += [(_plabel(pv), ("url", pv, None)) for pv in param_variants]
+            else:
+                probes = [(_plabel(pv), ("url", pv, None))
+                          for pv in path_variants + param_variants]
+            for label, spec in probes:
+                if probes_done >= 150:
                     break
                 probes_done += 1
                 self._pause()
                 try:
-                    if verb == "POST":
-                        rp = self._post_read(self.session, pv)
+                    if spec[0] == "body":
+                        rp = self._post_read(self.session, spec[1], spec[2])
+                    elif verb == "POST":
+                        rp = self._post_read(self.session, spec[1])
                     else:
-                        rp = self.session.get(pv, timeout=self.timeout, allow_redirects=False)
+                        rp = self.session.get(spec[1], timeout=self.timeout, allow_redirects=False)
                 except Exception:
                     continue
                 if rp.status_code != 200:
@@ -458,14 +506,14 @@ class DeepHunter:
                     continue  # mismo usuario, el endpoint ignoro el id
                 findings.append({
                     "severity": "alta", "type": "IDOR (lectura A->B)",
-                    "param": urlparse(pv).query or "-",
-                    "target": pv,
+                    "param": label.replace("body:", "body ").replace("=1", ""),
+                    "target": spec[1],
                     "evidence": f"datos privados de otro registro (campos: {', '.join(pii_p)})"
                                 + (f" · identidad: {p_email}" if p_email else ""),
                     "verdict": "candidata IDOR: confirmar identidad ajena",
                     "leak": True, "leak_fields": pii_p, "leak_identity": p_email})
-                self.log(f"[idor] 💥 posible IDOR en {urlparse(pv).path}"
-                         + (f"?{urlparse(pv).query}" if urlparse(pv).query else "")
+                self.log(f"[idor] 💥 posible IDOR en {urlparse(spec[1]).path}"
+                         + (f"?{urlparse(spec[1]).query}" if urlparse(spec[1]).query else "")
                          + f" ({', '.join(pii_p)})")
         if probes_done:
             self.log(f"[idor] {probes_done} sondas de lectura A->B completadas")
