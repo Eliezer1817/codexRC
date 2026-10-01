@@ -162,6 +162,7 @@
             <label><input type="checkbox" id="optApiJs" checked /> API-JS</label>
             <label><input type="checkbox" id="optIdor" checked /> IDOR</label>
             <label><input type="checkbox" id="optParamsPlus" checked /> Params+</label>
+            <label><input type="checkbox" id="optXssPro" /> XSS-PRO</label>
           </div>
           <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
           <p class="hint">
@@ -329,6 +330,7 @@ esperando objetivo...</pre>
         opt_api_js: document.getElementById("optApiJs").checked,
         opt_idor: document.getElementById("optIdor").checked,
         opt_params_plus: document.getElementById("optParamsPlus").checked,
+        opt_xss_pro: document.getElementById("optXssPro").checked,
       };
       const user = document.getElementById("authUser").value.trim();
       if (user) {

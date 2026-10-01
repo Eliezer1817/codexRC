@@ -32,7 +32,7 @@ import threading
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
 from core.deep_scan import DomainMap, cookie_flags, detect_waf, tls_audit
-from core.hunter import Spider, XSSHunter, DeepHunter, BlindXSS
+from core.hunter import Spider, XSSHunter, DeepHunter, BlindXSS, XSSPro
 from core.pipeline import Pipeline
 from core.recon import Recon
 from core.tech_detect import TechDetector
@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.19.0"
+VERSION = "0.20.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -585,6 +585,7 @@ def start_hunter():
         "params_plus": bool(data.get("opt_params_plus", True)),
         "csp": bool(data.get("opt_csp", True)),
         "blind": bool(data.get("opt_blind", False)),  # ESCRIBE en el blanco
+        "xss_pro": bool(data.get("opt_xss_pro", False)),  # avanzados: stored POSTEA marcador
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
 
@@ -706,6 +707,9 @@ def start_hunter():
                 battery("blind", "blind", lambda: BlindXSS(
                     session, emit, delay=float(data.get("delay", 0.15)),
                     timeout=15.0).plant(spider_out, data.get("blind_endpoint", "")))
+                battery("xss_pro", "xss_pro", lambda: XSSPro(
+                    session, emit, delay=float(data.get("delay", 0.15)),
+                    timeout=15.0).run(url, spider_out))
                 battery("params_plus", "params_plus", lambda: _bateria_get(
                     hunter, {"param_targets": deep.discover_hidden_params(url, spider_out["pages"])}))
 
