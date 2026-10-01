@@ -62,9 +62,12 @@ class Spider:
             })
 
     def run(self, url: str, log: Log, max_pages: int = 25,
-            max_js_files: int = 15) -> Dict[str, Any]:
+            max_js_files: int = 15, seed_urls=None) -> Dict[str, Any]:
         origin = self._origin(url)
         queue: List[str] = [url]
+        for s in (seed_urls or []):
+            if _norm(s) not in [q for q in queue]:
+                queue.append(s)
         visited: Set[str] = set()
         js_seen: Set[str] = set()
         js_endpoints: Set[str] = set()

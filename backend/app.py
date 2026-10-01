@@ -17,6 +17,7 @@ import sys
 import time
 import uuid
 from typing import Any, Dict
+import requests
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from flask import Flask, g, jsonify, request, send_file, send_from_directory
@@ -41,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.14.2"
+VERSION = "0.14.3"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -518,6 +519,50 @@ def _auth_config_of(data: Dict[str, Any]) -> Dict[str, Any]:
     return {k: data[k] for k in AUTH_FIELDS if data.get(k)}
 
 
+PRIVATE_PATHS = ("app", "dashboard", "account", "panel", "cabinet", "user",
+                 "profile", "wallet", "trade", "member", "personal", "my-account")
+
+
+def _descubrir_zona_privada(session, base_url: str, emit) -> list:
+    """Sondea rutas tipicas de zona privada comparando GET logueado vs GET anonimo.
+    Solo lectura, sin marcadores. Devuelve URLs semilla para la araña."""
+    from urllib.parse import urljoin as _ujoin
+    anon = requests.Session()
+    seeds: list = []
+    try:
+        shell_ref = session.get(base_url, timeout=12, allow_redirects=True).text
+    except Exception:
+        shell_ref = ""
+    for path in PRIVATE_PATHS:
+        u = _ujoin(base_url, "/" + path)
+        try:
+            r_auth = session.get(u, timeout=10, allow_redirects=False)
+            r_anon = anon.get(u, timeout=10, allow_redirects=False)
+        except Exception:
+            continue
+        if r_auth.status_code != 200:
+            continue
+        ct = (r_auth.headers.get("content-type") or "").lower()
+        if "html" not in ct and "json" not in ct:
+            continue
+        if r_anon.status_code in (401, 403, 301, 302, 303, 307, 308):
+            emit(f"[auth-zone] 💥 zona privada confirmada: /{path} "
+                 f"(200 logueado vs {r_anon.status_code} anonimo)")
+            seeds.append(u)
+        elif "html" in ct:
+            html = r_auth.text
+            spa = ("app-root" in html or 'id="root"' in html or "ng-version" in html)
+            if spa and html != shell_ref:
+                emit(f"[auth-zone] candidata SPA: /{path} (shell distinta a la del login)")
+                seeds.append(u)
+    if not seeds:
+        emit("[auth-zone] sin rutas privadas obvias; pega la URL del panel logueado "
+             "como objetivo del hunter para cazar ahi")
+    else:
+        emit(f"[auth-zone] {len(seeds)} paginas privadas sembradas en la araña")
+    return seeds[:5]
+
+
 @app.post("/api/hunter")
 def start_hunter():
     """HUNTER MODE: arana + corpus XSS automatico, con log de terminal detallado."""
@@ -582,9 +627,15 @@ def start_hunter():
                 auth = build_auth(hunter_data, target_url=url)
                 session = auth.get_session()
 
+                seed_urls: list = []
+                if hunter_data.get("cookies") or hunter_data.get("bearer_token") or \
+                        (hunter_data.get("username") and hunter_data.get("password")):
+                    seed_urls = _descubrir_zona_privada(session, url, emit)
+
                 node_state("spider", "running")
                 t0 = time.perf_counter()
-                spider_out = Spider(session, timeout=15).run(url, emit, max_pages=max_pages)
+                spider_out = Spider(session, timeout=15).run(
+                    url, emit, max_pages=max_pages, seed_urls=seed_urls)
                 node_state("spider", "success", round(time.perf_counter() - t0, 2))
                 job["results"]["spider"] = {"status": "success", "data": {"summary": {
                     "pages": spider_out["pages"],
