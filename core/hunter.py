@@ -84,9 +84,11 @@ class Spider:
                     seen_targets.add(key)
                     param_targets.append({"url": _norm(u), "param": k})
 
+        cur_base: List[str] = [url]
+
         def enqueue(u: str) -> None:
             try:
-                full = urljoin(url, u)
+                full = urljoin(cur_base[0], u)
             except Exception:
                 return
             p = urlparse(full)
@@ -145,16 +147,18 @@ class Spider:
             except Exception:
                 continue
 
-            for a in soup.find_all("a", href=True):
-                enqueue(a["href"])
+            # base href: los links relativos se resuelven contra esto
+            cur_base[0] = str(r.url)
             for base_tag in soup.find_all("base", href=True):
                 try:
-                    urljoin(str(r.url), base_tag["href"])
+                    cur_base[0] = urljoin(str(r.url), base_tag["href"])
                 except Exception:
                     pass
 
+            for a in soup.find_all("a", href=True):
+                enqueue(a["href"])
             for f in soup.find_all("form"):
-                action = urljoin(str(r.url), f.get("action") or "")
+                action = urljoin(cur_base[0], f.get("action") or "")
                 method = (f.get("method") or "get").lower()
                 fields = []
                 for inp in f.find_all(["input", "textarea"]):
@@ -198,6 +202,252 @@ class Spider:
             "js_endpoints": sorted(js_endpoints)[:40],
             "dom_candidates": dom_candidates[:20],
         }
+
+
+class DeepHunter:
+    """Caza activa SEGURA (v0.15): fuerza superficie que el spider pasivo no ve.
+    Tres baterias: rutas ocultas (detecta respuestas reales bajo shells SPA),
+    BAC en APIs JSON (contraste logueado vs anonimo, lectura A->B) y descubrimiento
+    de parametros no enlazados con nombres comunes.
+    Reglas: solo GETs, marcadores canary inofensivos, nunca escribe en el blanco,
+    nunca dispara payloads de exploit, nunca toca endpoints que modifiquen datos."""
+
+    PATH_DICT = (
+        "admin", "administrator", "panel", "dashboard", "cp", "cpanel",
+        "login", "signin", "register", "logout",
+        "api", "api/v1", "api/me", "api/account", "api/account/init",
+        "api/user", "api/users", "api/profile", "api/settings", "api/config",
+        "api/wallet", "api/balance", "api/transactions", "api/orders",
+        "api/admin", "api/auth/me", "api/auth/session",
+        "backup", "backups", "dump.sql", "db", "database",
+        "uploads", "upload", "files", "storage", "media",
+        "tmp", "temp", "test", "debug", "phpinfo", "status", "health",
+        "config", "wp-admin", "wp-login.php",
+        "robots.txt", "humans.txt", ".env", ".env.local", ".git/HEAD",
+        "package.json", "composer.json",
+    )
+
+    SENSITIVE_PATHS = (
+        "admin", "administrator", "panel", "dashboard", "cp", "cpanel",
+        "backup", "backups", "dump.sql", "db", "database", "phpinfo",
+        "debug", "test", "wp-admin", "wp-login.php",
+    )
+
+    API_DEFAULTS = (
+        "api/me", "api/account", "api/account/init", "api/user", "api/users",
+        "api/profile", "api/settings", "api/config", "api/wallet", "api/balance",
+        "api/transactions", "api/orders", "api/admin", "api/auth/me",
+        "api/auth/session", "api/v1/me", "api/v1/user", "api/v1/account",
+    )
+
+    PARAM_NAMES = (
+        "id", "uid", "user_id", "userId", "page", "q", "s", "search", "term",
+        "name", "email", "phone", "sort", "order", "filter", "type", "view",
+        "display", "lang", "locale", "currency", "redirect", "url", "next",
+        "callback", "return", "ref", "from", "to", "date", "amount", "token",
+    )
+
+    PII_KEYS = (
+        "email", "phone", "balance", "first_name", "last_name", "fullname",
+        "passport", "address", "ssn", "card_number", "birthday", "birth_date",
+        "password", "private_key", "wallet_address",
+    )
+
+    SECRET_MARKERS = ("API_KEY", "SECRET", "PASSWORD", "PRIVATE_KEY", "DB_PASS", "TOKEN=")
+
+    def __init__(self, session: requests.Session, log: Log,
+                 delay: float = 0.15, timeout: float = 15.0):
+        self.session = session
+        self.log = log
+        self.delay = delay
+        self.timeout = timeout
+
+    def _pause(self) -> None:
+        time.sleep(self.delay)
+
+    def _pii_keys(self, text: str) -> list:
+        """Nombres de campos personales presentes en un JSON (nunca los valores)."""
+        keys = []
+        low = text[:20000]
+        for k in self.PII_KEYS:
+            if f'"{k}"' in low or f"'{k}'" in low or f"{k}:" in low:
+                keys.append(k)
+        return keys[:6]
+
+    def test_paths(self, base_url: str):
+        """Sondea el diccionario de rutas. Detecta (1) respuestas reales distintas
+        del shell SPA, (2) APIs JSON expuestas, (3) rutas protegidas,
+        (4) secretos accesibles (.env/.git) sin mostrar sus valores.
+        Devuelve (findings, api_hits)."""
+        findings: List[Dict[str, Any]] = []
+        api_hits: List[str] = []
+        self.log(f"[paths] sondeando {len(self.PATH_DICT)} rutas comunes "
+                 f"(GETs de lectura, contraste con shell)")
+        # huella del shell: sitios SPA sirven el mismo HTML para toda ruta
+        shell_len = None
+        try:
+            r = self.session.get(base_url, timeout=self.timeout, allow_redirects=True)
+            if "html" in (r.headers.get("content-type") or "").lower():
+                shell_len = len(r.text)
+        except Exception:
+            pass
+        for p in self.PATH_DICT:
+            u = urljoin(base_url, "/" + p)
+            self._pause()
+            try:
+                r = self.session.get(u, timeout=self.timeout, allow_redirects=False)
+            except Exception:
+                continue
+            ct = (r.headers.get("content-type") or "").lower()
+            if r.status_code in (404, 410, 405):
+                continue
+            # --- APIs JSON expuestas: alimento de la bateria BAC ---
+            if r.status_code == 200 and "json" in ct:
+                api_hits.append(u)
+                self.log(f"[paths] 💥 API JSON accesible: /{p}")
+                continue
+            # --- secretos y backups accesibles (solo presencia, sin valores) ---
+            if p.startswith(".env") and r.status_code == 200 and any(
+                    m in r.text[:4000].upper() for m in self.SECRET_MARKERS):
+                findings.append({"severity": "alta", "type": "Exposicion de secretos",
+                                 "param": "-", "target": u,
+                                 "evidence": ".env accesible con marcadores de credenciales "
+                                             "(valores NO extraidos)",
+                                 "verdict": "confirmada por lectura, no se exfiltra contenido"})
+                self.log(f"[paths] 💥 .env accesible en /{p} (valores no extraidos)")
+                continue
+            if p == ".git/HEAD" and r.status_code == 200 and "ref:" in r.text[:120]:
+                findings.append({"severity": "alta", "type": "Repositorio .git expuesto",
+                                 "param": "-", "target": u,
+                                 "evidence": ".git/HEAD legible",
+                                 "verdict": "confirmada por lectura"})
+                self.log(f"[paths] 💥 .git expuesto")
+                continue
+            if r.status_code in (401, 403) and p in self.SENSITIVE_PATHS:
+                findings.append({"severity": "info", "type": "Ruta protegida",
+                                 "param": "-", "target": u,
+                                 "evidence": f"responde {r.status_code} (existe, acceso negado)",
+                                 "verdict": "mapeada"})
+                self.log(f"[paths] ruta protegida existe: /{p} ({r.status_code})")
+                continue
+            # --- superficie real bajo shell SPA ---
+            if r.status_code == 200 and "html" in ct:
+                if shell_len and abs(len(r.text) - shell_len) < 300:
+                    continue  # mismo shell: ruta client-side, nada nuevo del lado servidor
+                if p in self.SENSITIVE_PATHS or p in ("api", "config", "status", "health"):
+                    findings.append({"severity": "info", "type": "Superficie real",
+                                     "param": "-", "target": u,
+                                     "evidence": "HTML distinto al shell principal "
+                                                 f"({len(r.text)} vs {shell_len or '?'} bytes)",
+                                     "verdict": "mapeada para baterias"})
+                self.log(f"[paths] superficie real: /{p} (HTML distinto al shell)")
+                continue
+        if api_hits:
+            self.log(f"[paths] {len(api_hits)} endpoints API listos para contraste BAC")
+        else:
+            self.log("[paths] sin APIs JSON a la vista en rutas comunes")
+        return findings, api_hits
+
+    def test_api(self, base_url: str, api_hits: List[str]):
+        """Contraste BAC sobre endpoints API: GET logueado vs GET anonimo.
+        Lee A->B: si el anonimo recibe datos privados que exigen sesion = BAC.
+        Nunca llama endpoints que modifiquen datos (do*, post, delete)."""
+        findings: List[Dict[str, Any]] = []
+        cands, seen = [], set()
+        for u in list(api_hits) + [urljoin(base_url, "/" + a) for a in self.API_DEFAULTS]:
+            if u not in seen:
+                seen.add(u)
+                cands.append(u)
+        self.log(f"[api] contraste BAC en {min(len(cands), 30)} endpoints "
+                 f"(con sesion vs anonimo, solo GETs)")
+        for u in cands[:30]:
+            self._pause()
+            try:
+                ra = self.session.get(u, timeout=self.timeout, allow_redirects=False)
+            except Exception:
+                continue
+            if ra.status_code != 200:
+                if ra.status_code in (401, 403):
+                    self.log(f"[api] /{urlparse(u).path} exige sesion (correcto)")
+                continue
+            pii_a = self._pii_keys(ra.text)
+            # contraste anonimo: mismos datos sin sesion?
+            self._pause()
+            try:
+                rn = requests.get(u, timeout=self.timeout, allow_redirects=False)
+                anon_ok = rn.status_code == 200
+                pii_n = self._pii_keys(rn.text) if anon_ok else []
+            except Exception:
+                anon_ok, pii_n = False, []
+            if anon_ok and pii_n:
+                findings.append({
+                    "severity": "alta", "type": "BAC en API",
+                    "param": "-", "target": u,
+                    "evidence": f"responde datos privados SIN sesion "
+                                f"(campos: {', '.join(pii_n)})",
+                    "verdict": "confirmado por contraste anonimo"})
+                self.log(f"[api] 💥 BAC: {urlparse(u).path} entrega datos privados "
+                         f"SIN sesion ({', '.join(pii_n)})")
+            elif anon_ok:
+                findings.append({"severity": "info", "type": "API publica",
+                                 "param": "-", "target": u,
+                                 "evidence": "200 anonimo sin campos privados",
+                                 "verdict": "mapeada"})
+                self.log(f"[api] API publica: {urlparse(u).path}")
+            elif pii_a:
+                self.log(f"[api] API privada correcta: {urlparse(u).path} "
+                         f"(datos solo con sesion: {', '.join(pii_a)})")
+                findings.append({"severity": "info", "type": "API privada mapeada",
+                                 "param": "-", "target": u,
+                                 "evidence": f"campos personales con sesion: "
+                                             f"{', '.join(pii_a)}",
+                                 "verdict": "mapeada"})
+            # reflejo de marcador en la respuesta (posible inyeccion si se renderiza)
+            self._pause()
+            mark = "kapi" + secrets.token_hex(4) + "z"
+            try:
+                rc = self.session.get(u + ("&" if "?" in u else "?") + "__cx=" + mark,
+                                      timeout=self.timeout, allow_redirects=False)
+                if rc.status_code == 200 and mark in rc.text:
+                    findings.append({"severity": "baja", "type": "Reflejo en API",
+                                     "param": "__cx", "target": u,
+                                     "evidence": "marcador reflejado en respuesta",
+                                     "verdict": "candidata si el JSON se renderiza"})
+                    self.log(f"[api] reflejo de marcador en {urlparse(u).path}")
+            except Exception:
+                pass
+        return findings
+
+    def discover_hidden_params(self, base_url: str, pages: List[str]) -> list:
+        """Genera objetivos de parametros ocultos: nombres comunes (id, user_id,
+        redirect, token...) sobre las paginas mas dinamicas del sitio."""
+        dyn = []
+        for pg in pages[:25]:
+            u = urljoin(base_url, pg)
+            self._pause()
+            try:
+                r = self.session.get(u, timeout=self.timeout, allow_redirects=True)
+                if "html" not in (r.headers.get("content-type") or "").lower():
+                    continue
+                score = sum(r.text.count(x) for x in
+                           ("<form", "<input", "api", "fetch(", "XMLHttpRequest",
+                            "ng-", "v-if", "useState"))
+                if score > 0:
+                    dyn.append((score, str(r.url).split("?")[0]))
+            except Exception:
+                continue
+        dyn.sort(reverse=True)
+        chosen = [u for _s, u in dyn[:4]]
+        if not chosen:
+            self.log("[params+] sin paginas dinamicas para forzar parametros")
+            return []
+        targets = []
+        for u in chosen:
+            for name in self.PARAM_NAMES:
+                targets.append({"url": u, "param": name})
+        self.log(f"[params+] forzando {len(self.PARAM_NAMES)} nombres de parametros "
+                 f"en {len(chosen)} paginas dinamicas ({len(targets)} sondas)")
+        return targets
 
 
 class XSSHunter:

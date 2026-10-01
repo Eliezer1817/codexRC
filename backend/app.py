@@ -32,7 +32,7 @@ import threading
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
 from core.deep_scan import DomainMap, cookie_flags, detect_waf, tls_audit
-from core.hunter import Spider, XSSHunter
+from core.hunter import Spider, XSSHunter, DeepHunter
 from core.pipeline import Pipeline
 from core.recon import Recon
 from core.tech_detect import TechDetector
@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.14.3"
+VERSION = "0.15.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -576,6 +576,9 @@ def start_hunter():
         "forms": bool(data.get("opt_forms", True)),
         "headers": bool(data.get("opt_headers", True)),
         "dom": bool(data.get("opt_dom", True)),
+        "paths": bool(data.get("opt_paths", True)),
+        "api": bool(data.get("opt_api", True)),
+        "params_plus": bool(data.get("opt_params_plus", True)),
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
 
@@ -607,7 +610,8 @@ def start_hunter():
                 job["live_log"].append({"ts": utc_now(), "msg": msg})
             try:
                 emit(f"[hunter] objetivo fijado: {url}")
-                emit("[hunter] modo pasivo: sondas de reflexion, sin payloads ni ejecucion")
+                emit("[hunter] modo activo seguro: rutas + BAC API + params ocultos + reflexion. "
+                    "Solo lectura A->B, sin payloads de exploit, sin endpoints que escriban")
 
                 if _auth_config_of(data):
                     emit("[hunter] auth: usando las credenciales provistas en este formulario")
@@ -655,6 +659,14 @@ def start_hunter():
                     "targets": spider_out["param_targets"], "forms": spider_out["forms"]}}
 
                 hunter = XSSHunter(session, emit, delay=float(data.get("delay", 0.15)))
+                deep = DeepHunter(session, emit, delay=float(data.get("delay", 0.15)))
+                api_hits: list = []
+
+                def run_paths():
+                    fnd, hits = deep.test_paths(url)
+                    api_hits.extend(hits)
+                    return fnd
+
 
                 def battery(node, key, runner):
                     if not opts.get(key):
@@ -672,6 +684,12 @@ def start_hunter():
                         "found": len(job["findings"]) - before,
                         "details": [f for f in found]}}
                     return found
+
+                # baterias activas seguras: superficie, BAC API, params ocultos
+                battery("surface", "paths", run_paths)
+                battery("bac_api", "api", lambda: deep.test_api(url, api_hits))
+                battery("params_plus", "params_plus", lambda: _bateria_get(
+                    hunter, {"param_targets": deep.discover_hidden_params(url, spider_out["pages"])}))
 
                 # las 4 baterias del corpus
                 battery("xss_get", "get", lambda: _bateria_get(hunter, spider_out))

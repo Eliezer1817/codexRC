@@ -157,6 +157,9 @@
             <label><input type="checkbox" id="optForms" checked /> Forms</label>
             <label><input type="checkbox" id="optHeaders" checked /> Cabeceras</label>
             <label><input type="checkbox" id="optDom" checked /> DOM</label>
+            <label><input type="checkbox" id="optPaths" checked /> Rutas</label>
+            <label><input type="checkbox" id="optApi" checked /> BAC API</label>
+            <label><input type="checkbox" id="optParamsPlus" checked /> Params+</label>
           </div>
           <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
           <p class="hint">
@@ -196,6 +199,9 @@ esperando objetivo...</pre>
     const NODES = [
       { id: "spider", label: "SPIDER" },
       { id: "param_map", label: "PARAMS" },
+      { id: "surface", label: "SURFACE" },
+      { id: "bac_api", label: "BAC-API" },
+      { id: "params_plus", label: "PARAMS+" },
       { id: "xss_get", label: "XSS-GET" },
       { id: "xss_forms", label: "XSS-FORMS" },
       { id: "xss_headers", label: "XSS-HEAD" },
@@ -290,6 +296,9 @@ esperando objetivo...</pre>
         opt_forms: document.getElementById("optForms").checked,
         opt_headers: document.getElementById("optHeaders").checked,
         opt_dom: document.getElementById("optDom").checked,
+        opt_paths: document.getElementById("optPaths").checked,
+        opt_api: document.getElementById("optApi").checked,
+        opt_params_plus: document.getElementById("optParamsPlus").checked,
       };
       const user = document.getElementById("authUser").value.trim();
       if (user) {
