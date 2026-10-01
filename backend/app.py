@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.25.0"
+VERSION = "0.25.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -794,7 +794,19 @@ def start_hunter():
                     node_state(node, "running")
                     t0 = time.perf_counter()
                     before = len(job["findings"])
-                    found = runner() or []
+                    try:
+                        found = runner() or []
+                    except Exception as exc:      # AISLAMIENTO: una bateria
+                        # que explota NO tumba la caza: se marca el nodo en
+                        # error, se reporta al log vivo y el pipeline sigue
+                        emit(f"💥 [hunter] bateria '{node}' FALLO: "
+                             f"{type(exc).__name__}: {str(exc)[:120]} · "
+                             f"la caza CONTINUA con las demas")
+                        node_state(node, "error", round(time.perf_counter() - t0, 2),
+                                   error=f"{type(exc).__name__}: {str(exc)[:200]}")
+                        job["results"][node] = {"status": "error", "data": {
+                            "error": f"{type(exc).__name__}: {str(exc)[:200]}"}}
+                        return []
                     for f in found:
                         job["findings"].append(f)
                     node_state(node, "success", round(time.perf_counter() - t0, 2))
