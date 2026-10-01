@@ -9,13 +9,47 @@ DOM final contiene el canario en <title>. Si ejecuto -> confirmado. Si
 no -> era un falso positivo y baja de gravedad.
 
 Herramienta general de auditoria con autorizacion previa del operador."""
+import os
 import re
 import secrets
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+
+
+def _find_browser() -> Optional[str]:
+    """Busca un navegador Chromium ejecutable en cualquier plataforma:
+    Linux (chrome/chromium), Windows (chrome.exe/msedge.exe, rutas de
+    instalacion), macOS (Google Chrome.app / Chromium.app)."""
+    for name in ("google-chrome", "google-chrome-stable", "chromium",
+                 "chromium-browser", "chrome", "msedge", "microsoft-edge"):
+        p = shutil.which(name)
+        if p:
+            return p
+    if sys.platform == "darwin":
+        for p in ("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+                  "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                  os.path.expanduser("~/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")):
+            if os.path.exists(p):
+                return p
+    if os.name == "nt":
+        bases = [os.environ.get("PROGRAMFILES", r"C:\Program Files"),
+                 os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)"),
+                 os.environ.get("LOCALAPPDATA", "")]
+        names = [r"\Google\Chrome\Application\chrome.exe",
+                 r"\Google\Chrome\Beta\Application\chrome.exe",
+                 r"\Microsoft\Edge\Application\msedge.exe",
+                 r"\Chromium\Application\chrome.exe"]
+        for b in bases:
+            for n in names:
+                p = b + n
+                if p and os.path.exists(p):
+                    return p
+    return None
 
 
 class Veritas:
@@ -23,10 +57,7 @@ class Veritas:
         self.log = log
         self.timeout = timeout
         self.max_verify = max_verify
-        self.chrome = (shutil.which("google-chrome")
-                       or shutil.which("google-chrome-stable")
-                       or shutil.which("chromium")
-                       or shutil.which("chromium-browser"))
+        self.chrome = _find_browser()
 
     def available(self) -> bool:
         return bool(self.chrome)
