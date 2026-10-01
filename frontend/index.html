@@ -153,7 +153,7 @@
 
         <label>URL protegida para verificar sesión (opcional)</label>
         <input type="url" id="verificationUrl" placeholder="https://example.com/account" />
-        <p class="hint">Debe ser una página que solo se vea con sesión. Si vuelve al login, la sesión se marcará como inválida.</p>
+        <p class="hint">Página o API que solo responde con sesión iniciada. <b>Apps modernas:</b> usá una URL de API que devuelva tus datos, ej: <code>https://vellius.com/api/account/init</code> (el motor la prueba con GET y POST, y con sesión da 200, sin sesión da 401). OJO: no pongas la página de login aquí, en apps JavaScript siempre parece "no logueado".</p>
 
         <div id="authCreds" style="display:none">
           <label>URL de login (la página donde vos te logueás)</label>

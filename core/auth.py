@@ -170,33 +170,82 @@ class AuthManager:
         started = time.perf_counter()
         try:
             response = self.session.get(verification_url, timeout=20, allow_redirects=True)
+            # APIs tipo POST (comun en apps JavaScript): si la ruta no tiene
+            # GET (404/405), reintentar con POST {} como hace la propia app.
+            if response.status_code in (404, 405):
+                try:
+                    _origin = "{0.scheme}://{0.netloc}".format(urlparse(verification_url))
+                    response = self.session.post(
+                        verification_url, json={},
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "Origin": _origin,
+                            "Referer": _origin + "/",
+                        },
+                        timeout=20, allow_redirects=True,
+                    )
+                except Exception:
+                    pass
             result["response_time"] = round(time.perf_counter() - started, 3)
             result["status_code"] = response.status_code
             result["final_url"] = str(response.url)
             result["content_type"] = response.headers.get("Content-Type")
             result["redirect_chain"] = [str(item.url) for item in response.history] + [str(response.url)]
-            soup = BeautifulSoup(response.text, "html.parser")
-            path = urlparse(str(response.url)).path.lower()
-            login_detected = any(marker in path for marker in ("login", "signin", "sign-in", "auth"))
-            login_detected = login_detected or bool(soup.find("input", {"type": "password"}))
-            result["login_detected"] = login_detected
-            result["username"] = self._extract_username(soup)
-            result["verified"] = response.status_code < 400
-            result["authenticated"] = result["verified"] and not login_detected
-            if response.status_code < 400:
-                result["signals"].append("http_ok")
-            if response.history:
-                result["signals"].append("redirected")
-            if result["username"]:
-                result["signals"].append("username_detected")
-            if login_detected:
-                result["signals"].append("login_page_detected")
-            if result["authenticated"]:
-                result["reason"] = "protected_page_reached"
-            elif login_detected:
-                result["reason"] = "redirected_to_login_or_login_form_detected"
+
+            _ct = (response.headers.get("Content-Type") or "").lower()
+            _es_json = "json" in _ct or response.text.lstrip()[:1] == "{"
+            if _es_json:
+                # respuesta de API: HTML no sirve en apps JavaScript
+                body = response.text.lower()
+                compact = response.text.replace(" ", "")[:400].lower()
+                api_ok = (
+                    response.status_code < 400
+                    and "unauthorized" not in body[:200]
+                    and '"state":"error"' not in compact
+                )
+                result["login_detected"] = False
+                result["verified"] = True
+                result["authenticated"] = api_ok
+                result["signals"].append("api_json_response")
+                # nombre de usuario si viene en el JSON
+                try:
+                    _j = response.json()
+                    _u = _j.get("user", _j) if isinstance(_j, dict) else {}
+                    for k in ("username", "login", "email", "name"):
+                        if isinstance(_u, dict) and _u.get(k):
+                            result["username"] = str(_u[k])
+                            result["signals"].append("username_detected")
+                            break
+                except Exception:
+                    pass
+                if api_ok:
+                    result["reason"] = "api_authenticated"
+                else:
+                    result["reason"] = "api_unauthorized_or_error"
             else:
-                result["reason"] = "verification_request_failed"
+                soup = BeautifulSoup(response.text, "html.parser")
+                path = urlparse(str(response.url)).path.lower()
+                login_detected = any(marker in path for marker in ("login", "signin", "sign-in", "auth"))
+                login_detected = login_detected or bool(soup.find("input", {"type": "password"}))
+                result["login_detected"] = login_detected
+                result["username"] = self._extract_username(soup)
+                result["verified"] = response.status_code < 400
+                result["authenticated"] = result["verified"] and not login_detected
+                if response.status_code < 400:
+                    result["signals"].append("http_ok")
+                if response.history:
+                    result["signals"].append("redirected")
+                if result["username"]:
+                    result["signals"].append("username_detected")
+                if login_detected:
+                    result["signals"].append("login_page_detected")
+                if result["authenticated"]:
+                    result["reason"] = "protected_page_reached"
+                elif login_detected:
+                    result["reason"] = "redirected_to_login_or_login_form_detected"
+                else:
+                    result["reason"] = "verification_request_failed"
         except Exception as exc:
             result["error"] = str(exc)
             result["reason"] = "verification_exception"
