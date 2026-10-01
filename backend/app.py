@@ -32,6 +32,7 @@ import threading
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
 from core.deep_scan import DomainMap, cookie_flags, detect_waf, tls_audit
+from core.waf_guard import WafGuard, GuardedSession, CooldownActive
 from core.hunter import Spider, XSSHunter, DeepHunter, BlindXSS, XSSPro
 from core.pipeline import Pipeline
 from core.recon import Recon
@@ -118,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.23.0"
+VERSION = "0.24.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -597,6 +598,10 @@ LAST_AUTH_CONFIG: Dict[str, Any] = {}
 # contra sitios distintos nunca se pisen la sesion de la otra
 LAST_AUTH_CONFIGS: Dict[str, Dict[str, Any]] = {}
 
+# GHOST-SHIELD: evasion WAF con memoria. El estado persiste en waf_state.json
+# (excluido del repo): la memoria de quien nos bloqueo sobrevive jobs y reinicios.
+WAF_GUARD = WafGuard(log=lambda m: None, state_path=str(ROOT / "waf_state.json"))
+
 
 def _auth_config_of(data: Dict[str, Any]) -> Dict[str, Any]:
     return {k: data[k] for k in AUTH_FIELDS if data.get(k)}
@@ -673,6 +678,8 @@ def start_hunter():
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
     workers = max(1, min(int(data.get("workers") or 4), 8))
+    # GHOST-SHIELD: evasion WAF con memoria (jitter + cooldown por origen)
+    opt_waf = bool(data.get("opt_waf", True))
 
     job_id = uuid.uuid4().hex[:8]
     job = {
@@ -728,6 +735,15 @@ def start_hunter():
                                             "success_indicator", "verification_url")}
                 auth = build_auth(hunter_data, target_url=url)
                 session = auth.get_session()
+                if opt_waf:
+                    # los mensajes del guardián (bloqueos, quemado, rehab)
+                    # llegan al log vivo de ESTE job
+                    WAF_GUARD.log = emit
+                    session = GuardedSession.wrap(
+                        session, WAF_GUARD,
+                        jitter=float(data.get("delay", 0.15)))
+                    emit("[hunter] GHOST-SHIELD activo: jitter aleatorio + "
+                         "deteccion de bloqueo WAF + cooldown con memoria por origen")
 
                 seed_urls: list = []
                 if hunter_data.get("cookies") or hunter_data.get("bearer_token") or \

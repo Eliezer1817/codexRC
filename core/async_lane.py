@@ -37,6 +37,11 @@ class AsyncLane:
         self.h = hunter
         conc = concurrency if concurrency is not None else hunter.workers * 8
         self.concurrency = max(4, min(int(conc), 64))
+        # GHOST-SHIELD: si la sesion es vigilada, el carril async usa
+        # el mismo WafGuard (misma memoria de bloqueos y cooldowns).
+        from core.waf_guard import GuardedSession
+        self.guard = hunter.session.guard if isinstance(
+            hunter.session, GuardedSession) else None
 
     # ---------- sonda de un objetivo (logica identica a test_param) ----------
     async def _probe_one(self, client, sem, tgt: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -44,6 +49,15 @@ class AsyncLane:
         url, param = tgt["url"], tgt["param"]
         async with sem:
             try:
+                if self.guard is not None:
+                    # cooldown WAF: esperar (async) o saltar la sonda
+                    left = self.guard.cooldown_left(url)
+                    if left > 0:
+                        if left > 45:
+                            h.log(f"[xss] ⏭ {urlparse(url).path}?{param}= · "
+                                  f"origen en cooldown WAF ({left:.0f}s), sonda saltada")
+                            return None
+                        await asyncio.sleep(left)
                 mark = h._mark()
                 r = await self._probe(client, url, param, mark)
                 if r is None or mark not in (r or ""):
@@ -71,9 +85,12 @@ class AsyncLane:
                 h.log(f"[xss] XX {urlparse(url).path}?{param}= · async: {str(exc)[:60]}")
                 return None
             finally:
-                # cortesia: misma pausa por sonda, pero solapada
+                # cortesia/jitter: pausa por sonda con variacion aleatoria
+                # (misma ley que GuardedSession.request)
                 if h.delay:
-                    await asyncio.sleep(h.delay)
+                    import random as _rnd
+                    mult = _rnd.uniform(0.5, 1.8) if self.guard is not None else 1.0
+                    await asyncio.sleep(h.delay * mult)
 
     # ---------- GET async de un parametro ----------
     async def _probe(self, client, url: str, param: str, value: str) -> Optional[str]:
@@ -82,6 +99,8 @@ class AsyncLane:
         q.append((param, value))
         target = urlunparse(parts._replace(query=urlencode(q)))
         r = await client.get(target)
+        if self.guard is not None:
+            self.guard.observe(url, r)
         return r.text
 
     # ---------- orquestacion ----------

@@ -21,3 +21,4 @@ cookies.txt
 .vscode/
 auto_update.log
 .server.pid
+waf_state.json

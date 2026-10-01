@@ -4,11 +4,13 @@
 
 **Automated Web Security Auditing Tool** con backend único, dashboard web local y modo HUNTER de caza activa.
 
-> Solo usar en objetivos que tengas autorización para auditar. Las sondas son de lectura A→B: contrastan el acceso con y sin sesión, sin alterar datos del objetivo.
+> Solo usar en objetivos que tengas autorización para auditar.
+
+> ⚠️ **Proyecto en desarrollo activo:** se actualiza con mucha frecuencia (a veces varias versiones por día) y la interfaz y las baterías cambian sin aviso. **No recomendado todavía para uso en producción**: tomalo como una herramienta en construcción. Si igual lo probás, revisá siempre esta sección de novedades antes de correr la última versión. Las sondas son de lectura A→B: contrastan el acceso con y sin sesión, sin alterar datos del objetivo.
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.23.0**).
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.24.0**).
 - **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
   - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
   - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
@@ -17,6 +19,7 @@
 - **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría. Compatible con `armv7l` (32 bits): el bypass de Cloudflare usa `cloudscraper`, sin binarios precompilados.
 - **GHOSTHOOK:** `ghosthook/worker.js` — colector de blind XSS gratuito para Cloudflare Workers + KV (ver más abajo).
 - **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` descargable desde el dashboard; los eventos generales quedan en `reports/backend.log` en JSONL con rotación automática y `request_id`.
+- **GHOST-SHIELD (evasión WAF con memoria):** la evasión no va en el payload sino en el comportamiento: jitter aleatorio en cada sonda (nunca intervalo fijo de bot), clasificador de bloqueo (403/429/503 + firmas de WAF y páginas de challenge) y cooldown exponencial por origen. La memoria de quién nos bloqueó persiste en disco (`waf_state.json`, fuera del repo): sobrevive jobs, reinicios y días. Tras 4 bloqueos duros el origen se marca quemado y todas sus sondas se saltan al instante; tras 1 hora de purga vuelve a tener chances, y una respuesta sana lo rehabilita. Ante bloqueo sugiere GHOSTGATE (navegador real, IP limpia). La capa vive dentro de la sesión HTTP, así que cubre araña y todas las baterías sin excepción.
 - **SLIPSTREAM (carril async):** la batería GET ahora vuela con I/O asíncrono: un solo hilo mantiene hasta 64 sondas en vuelo vía event loop (httpx), heredando la sesión autenticada. Benchmark contra el lab a 60 objetivos: 219 sondas/s (35x más rápido que el modo secuencial, con los mismos hallazgos). Si httpx no está disponible, cae automáticamente al camino de hilos anterior.
 - **PIPE-HUNT (modo tubería):** `waybackurls sitio.com | python3 hunt_pipe.py --xsspro --workers 8` — recibe URLs desde cualquier herramienta por stdin, las caza con el Hunter del backend local y resume los hallazgos. Con `--no-wait` solo encola y sigue.
 - **OVERDRIVE (velocidad):** las baterías del corpus (GET y formularios) y los módulos de sonda de XSS-PRO (dangling, base tag, redirect) ejecutan sus sondas en paralelo con hasta 8 workers (por defecto 4). En benchmark contra el lab: 5.4x más rápido con 8 workers, con exactamente los mismos hallazgos. El parámetro `workers` (1-8) se controla desde la interfaz del Hunter o la API; con 1 queda el modo secuencial clásico.
@@ -24,6 +27,7 @@
 
 Lo nuevo de cada entrega, de la más reciente a la más antigua:
 
+- **v0.24.0 — GHOST-SHIELD:** evasión WAF con memoria: jitter por sonda, detección de bloqueo (firmas de challenge y rate-limit), cooldown exponencial por origen persistido en disco, origen quemado tras 4 bloqueos (sondas saltadas al instante, purga de 1h) y rehabilitación automática si el origen vuelve a responder sano. Toggle en la UI; el carril async comparte la misma memoria.
 - **v0.23.0 — SLIPSTREAM:** carril async para la batería GET (I/O asíncrono, hasta 64 sondas en vuelo por event loop, sesión heredada intacta). Benchmark: 219 sondas/s en el lab, 35x frente al secuencial, mismos hallazgos. Fallback automático a hilos si falta httpx.
 - **v0.22.0 — OVERDRIVE + PIPE-HUNT:** sondas en paralelo (hasta 8 workers) en las baterías GET/forms y en los módulos de sonda de XSS-PRO (dangling, base tag, redirect); 5.4x más rápido con 8 workers. Modo tubería `hunt_pipe.py`: URLs desde stdin (`waybackurls sitio | python3 hunt_pipe.py --xsspro --workers 8`), vigilancia de jobs y resumen final.
 - **v0.21.1 — parche de estabilidad:** índice de jobs con lock y poda, watchdog para cuelgues, recuperación de jobs al reiniciar (estado "interrupted"), sesión heredada por origen, errorhandler global JSON, `auto_update.sh` con verificación de salud.
