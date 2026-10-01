@@ -38,10 +38,41 @@ fi
 
 server_pid() { [ -f "$PID_FILE" ] && cat "$PID_FILE" 2>/dev/null; }
 
+HEALTH_URL="http://127.0.0.1:8000/health"
+
+# Espera a que el servidor responda /health tras arrancar; si el puerto
+# quedo ocupado por un proceso zombi, lo caza y reintenta una vez.
+wait_healthy() {
+    local i pid_zombi
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        if curl -s --max-time 2 "$HEALTH_URL" >/dev/null 2>&1; then
+            log "Health OK tras ${i} chequeos: servidor vivo"
+            return 0
+        fi
+        sleep 2
+    done
+    # puerto tomado por un proceso que no es el nuestro: liberarlo
+    if command -v fuser >/dev/null 2>&1; then
+        pid_zombi="$(fuser 8000/tcp 2>/dev/null | tr -d ' ')"
+        if [ -n "$pid_zombi" ]; then
+            log "PUERTO 8000 ocupado por pid $pid_zombi (zombi): liberando"
+            kill -9 $pid_zombi 2>/dev/null
+            sleep 2
+            for i in 1 2 3 4 5; do
+                curl -s --max-time 2 "$HEALTH_URL" >/dev/null 2>&1 && return 0
+                sleep 2
+            done
+        fi
+    fi
+    log "AVISO: el servidor no responde /health tras el arranque; el watcher sigue y reintenta en cada ciclo"
+    return 1
+}
+
 start_server() {
     setsid bash start_termux.sh >> "$LOG" 2>&1 &
     echo $! > "$PID_FILE"
     log "Servidor iniciado (pid $(cat "$PID_FILE"))"
+    wait_healthy
 }
 
 stop_server() {
@@ -90,6 +121,15 @@ while true; do
             log "ERROR: git pull fallo. Reiniciando con el codigo anterior."
         fi
 
+        start_server
+    fi
+
+    # autorresurreccion: si el server murio (OOM, Android, crash), volver a levantarlo
+    pid="$(server_pid)"
+    if [ -z "${pid:-}" ] || ! kill -0 "$pid" 2>/dev/null; then
+        log "Servidor CAIDO (pid ausente/muerto): reiniciando"
+        echo "[$(date '+%T')] Servidor caido, reiniciando..."
+        rm -f "$PID_FILE"
         start_server
     fi
 

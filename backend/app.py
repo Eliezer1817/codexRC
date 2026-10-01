@@ -42,7 +42,83 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.21.0"
+# --- estabilidad (v0.21.1): sin carreras, sin fugas, sin jobs colgados ---
+JOBS_LOCK = threading.RLock()
+MAX_JOBS = 40              # indice en memoria: los terminados mas viejos se podan
+MAX_LIVE_LOG = 400         # log vivo por job: se conserva la cola (los mas nuevos)
+MAX_JOB_SECONDS = 45 * 60  # watchdog: job corriendo mas de 45 min -> marcado colgado
+
+
+def _emit(job: Dict[str, Any], msg: str) -> None:
+    """Append al log vivo con tope: un job largo no puede comerse la memoria."""
+    line = {"ts": utc_now(), "msg": msg}
+    log = job.setdefault("live_log", [])
+    log.append(line)
+    if len(log) > MAX_LIVE_LOG:
+        del log[:len(log) - MAX_LIVE_LOG]
+
+
+def _register_job(job: Dict[str, Any]) -> None:
+    """Alta de job con lock y poda: nunca dos hilos pisando el indice."""
+    with JOBS_LOCK:
+        job["_t_start"] = time.time()
+        JOBS[job["id"]] = job
+        _prune_jobs()
+
+
+def _prune_jobs() -> None:
+    if len(JOBS) <= MAX_JOBS:
+        return
+    fin = [(k, j.get("created_at", "")) for k, j in JOBS.items()
+           if j.get("status") in ("finished", "failed", "interrupted")]
+    fin.sort(key=lambda x: x[1])
+    for k, _ in fin[:len(JOBS) - MAX_JOBS]:
+        JOBS.pop(k, None)
+
+
+def _watchdog_loop() -> None:
+    """Marca jobs colgados: el hunter nunca deja la UI en 'running' eterno."""
+    while True:
+        time.sleep(60)
+        try:
+            with JOBS_LOCK:
+                for job in list(JOBS.values()):
+                    if job.get("status") != "running":
+                        continue
+                    t0 = job.get("_t_start")
+                    if t0 and (time.time() - t0) > MAX_JOB_SECONDS:
+                        job["status"] = "failed"
+                        job["error"] = ("watchdog: el job supero 45 min y se "
+                                        "marca como colgado; reintentar la caza")
+                        _emit(job, "XX WATCHDOG: job excedio el limite de "
+                                   "tiempo y se marca colgado")
+                        log_event("job_stalled", job_id=job.get("id"),
+                                  url=safe_url(job.get("url", "")))
+        except Exception:
+            pass
+
+
+def _load_persisted_jobs() -> None:
+    """Arranque frio: recupera los ultimos jobs del disco; un job 'running'
+    en disco significa que el servidor se reinicio en mitad de caza."""
+    try:
+        reports = sorted(REPORTS_DIR.glob("codexrc_*.json"))[-MAX_JOBS:]
+    except Exception:
+        return
+    for path in reports:
+        try:
+            job = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(job, dict) or not job.get("id"):
+            continue
+        if job.get("status") == "running":
+            job["status"] = "interrupted"
+            job["error"] = ("el servidor se reinicio mientras corria "
+                            "(auto-update o reinicio): reintentar la caza")
+        with JOBS_LOCK:
+            JOBS.setdefault(job["id"], job)
+VERSION = "0.21.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -210,6 +286,10 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
         LAST_AUTH_CONFIG.clear()
         LAST_AUTH_CONFIG.update(cfg)
         LAST_AUTH_CONFIG["_for_url"] = url
+        origin = urlparse(url).netloc
+        per_origin = dict(cfg)
+        per_origin["_for_url"] = url
+        LAST_AUTH_CONFIGS[origin] = per_origin
 
     def emit(msg: str) -> None:
         if job is not None:
@@ -478,7 +558,7 @@ def start_scan():
         "live_log": [],
         "results": {},
     }
-    JOBS[job_id] = job
+    _register_job(job)
 
     request_id = g.get("request_id")
 
@@ -513,6 +593,9 @@ AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_v
                "username", "password", "login_url", "username_field", "password_field",
                "success_indicator", "verification_url")
 LAST_AUTH_CONFIG: Dict[str, Any] = {}
+# estabilidad: la sesion heredada se guarda POR ORIGEN para que dos cazas
+# contra sitios distintos nunca se pisen la sesion de la otra
+LAST_AUTH_CONFIGS: Dict[str, Dict[str, Any]] = {}
 
 
 def _auth_config_of(data: Dict[str, Any]) -> Dict[str, Any]:
@@ -603,7 +686,7 @@ def start_hunter():
         "findings": [],
         "results": {},
     }
-    JOBS[job_id] = job
+    _register_job(job)
 
     def node_state(name, status, duration=None, error=None):
         job["pipeline"]["nodes"][name] = {"status": status, "duration": duration, "error": error}
@@ -623,10 +706,16 @@ def start_hunter():
                 if _auth_config_of(data):
                     emit("[hunter] auth: usando las credenciales provistas en este formulario")
                     hunter_data = data
-                elif data.get("inherit_auth") and LAST_AUTH_CONFIG:
+                elif data.get("inherit_auth") and (
+                        LAST_AUTH_CONFIGS.get(urlparse(url).netloc)
+                        or (LAST_AUTH_CONFIG
+                            and urlparse(LAST_AUTH_CONFIG.get("_for_url", "")).netloc
+                            == urlparse(url).netloc)):
                     emit("[hunter] auth: HEREDANDO la sesion del ultimo escaneo "
                          f"({', '.join(k for k in LAST_AUTH_CONFIG if k != '_for_url')})")
-                    hunter_data = dict(LAST_AUTH_CONFIG)
+                    cfg_heredada = (LAST_AUTH_CONFIGS.get(urlparse(url).netloc)
+                                    or LAST_AUTH_CONFIG)
+                    hunter_data = dict(cfg_heredada)
                     hunter_data["_inherited"] = True
                 else:
                     emit("[hunter] auth: SIN sesion, cazando como visitante anonimo")
@@ -749,7 +838,9 @@ def start_hunter():
 
 @app.get("/api/jobs")
 def list_jobs():
-    return jsonify(list(JOBS.values()))
+    with JOBS_LOCK:
+        snapshot = list(JOBS.values())
+    return jsonify(snapshot)
 
 
 @app.get("/api/jobs/<job_id>")
@@ -815,6 +906,17 @@ def _bateria_dom(hunter, spider_out):
     return hunter.test_dom(spider_out)
 
 
+@app.errorhandler(Exception)
+def _safe_500(exc):
+    """Cualquier excepcion no manejada responde JSON y el server sigue vivo."""
+    from werkzeug.exceptions import HTTPException
+    if isinstance(exc, HTTPException):
+        return exc
+    log_event("unhandled_error", request_id=g.get("request_id"),
+              error_type=type(exc).__name__, error=str(exc)[:200])
+    return jsonify({"error": f"{type(exc).__name__}: {str(exc)[:200]}"}), 500
+
+
 @app.route("/hunter.html")
 def hunter_page():
     return send_from_directory(app.static_folder, "hunter.html")
@@ -822,4 +924,7 @@ def hunter_page():
 
 if __name__ == "__main__":
     print("\ncodexRC backend running at http://127.0.0.1:8000\n")
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    _load_persisted_jobs()
+    threading.Thread(target=_watchdog_loop, daemon=True).start()
+    # threaded=True: un scan pesado nunca congela el dashboard ni las encuestas
+    app.run(host="0.0.0.0", port=8000, threaded=True, debug=False)
