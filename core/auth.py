@@ -612,6 +612,40 @@ class AuthManager:
                 finales.append(full)
         return finales[:4]
 
+    def fetch_user_profile(self, page_url: str) -> Dict[str, Any]:
+        """Trae los datos personales del usuario logueado desde endpoints
+        de SOLO LECTURA (get* de settings/perfil). Nunca llama a do* (acciones)."""
+        data = self._scan_spa_js(page_url)
+        origin = "{0.scheme}://{0.netloc}".format(urlparse(page_url))
+        out: Dict[str, Any] = {}
+        for ep in data.get("posts", []):
+            low = ep.lower()
+            ultimo = low.rstrip("/").split("/")[-1]
+            if not ultimo.startswith("get"):
+                continue  # solo lectura: nunca llamar a do* (cambian datos)
+            if not any(k in low for k in ("settings", "profile", "getpartner", "getuserinfo")):
+                continue
+            url = self._armar_url_api(page_url, ep)
+            h = dict(self.session.headers)
+            h.update({"Content-Type": "application/json", "Accept": "application/json",
+                      "Origin": origin, "Referer": origin + "/"})
+            try:
+                r = self.session.post(url, json={}, headers=h, timeout=15)
+                if r.status_code == 200 and r.text.lstrip()[:1] == "{":
+                    try:
+                        j = r.json()
+                    except Exception:
+                        continue
+                    if len(json.dumps(j, default=str)) <= 6000:
+                        out[ep] = j
+                    if self._find_username(j):
+                        break  # ya aparecio el nombre
+            except Exception:
+                continue
+            if len(out) >= 2:
+                break
+        return out
+
     def probe_account_candidates(self, urls: list) -> list:
         """Sin sesion, descarta endpoints publicos (200 anonimo = no sirven
         para verificar sesion). Devuelve solo los que exigen sesion (401/403)."""
@@ -689,10 +723,18 @@ class AuthManager:
         if depth > 6 or obj is None:
             return None
         if isinstance(obj, dict):
-            for k in ("username", "login", "email", "full_name", "first_name",
-                      "firstname", "name", "nickname"):
+            # identificadores personales primero (nunca son metadatos)
+            for k in ("username", "login", "email"):
                 v = obj.get(k)
                 if isinstance(v, str) and 2 <= len(v) <= 100:
+                    return v
+            for k in ("full_name", "first_name", "firstname", "name", "nickname"):
+                v = obj.get(k)
+                if isinstance(v, str) and 2 <= len(v) <= 100:
+                    # "name" dentro de un objeto con "code"/"precision" es
+                    # una moneda, pais o idioma (ej: US Dollar), no una persona
+                    if k in ("name", "nickname") and ("code" in obj or "precision" in obj):
+                        continue
                     return v
             for v in obj.values():
                 r = self._find_username(v, depth + 1)

@@ -35,7 +35,7 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.10.1"
+VERSION = "0.10.2"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -245,6 +245,20 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
                         session_check = chk
                 if session_check is None:
                     session_check = auth.verify_session(url)
+                # datos personales del usuario (nombre) si no aparecio todavia
+                if session_check and session_check.get("authenticated") and not session_check.get("username"):
+                    try:
+                        extra = auth.fetch_user_profile(url)
+                        if extra:
+                            base = session_check.get("profile") or {}
+                            base["user_data"] = extra
+                            session_check["profile"] = base
+                            found = auth._find_username(extra)
+                            if found:
+                                session_check["username"] = found
+                                session_check["signals"].append("username_detected")
+                    except Exception as exc:
+                        log_event("auth_profile_error", request_id=g.get("request_id"), error=str(exc))
         else:
             session_check = {
                 "verified": False,
