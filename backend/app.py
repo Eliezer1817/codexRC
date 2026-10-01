@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.18.0"
+VERSION = "0.18.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -583,6 +583,7 @@ def start_hunter():
         "api_js": bool(data.get("opt_api_js", True)),
         "idor": bool(data.get("opt_idor", True)),
         "params_plus": bool(data.get("opt_params_plus", True)),
+        "csp": bool(data.get("opt_csp", True)),
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
 
@@ -700,6 +701,7 @@ def start_hunter():
                 battery("api_js", "api_js", run_api_js)
                 battery("bac_api", "api", lambda: deep.test_api(url, api_hits))
                 battery("idor", "idor", lambda: deep.test_idor(url, api_hits))
+                battery("csp", "csp", lambda: deep.test_csp(url))
                 battery("params_plus", "params_plus", lambda: _bateria_get(
                     hunter, {"param_targets": deep.discover_hidden_params(url, spider_out["pages"])}))
 

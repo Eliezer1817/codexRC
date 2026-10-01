@@ -271,6 +271,35 @@ class DeepHunter:
                     r"\s*[:=]\s*[\"\'][^\"\']{12,}[\"\']"), "credencial hardcodeada"),
     )
 
+    def _scan_postmessage(self, text: str, source: str,
+                          findings: List[Dict[str, Any]]) -> None:
+        """Detecta listeners de postMessage sin validacion de origin (solo
+        lectura estatica del JS: nunca envia mensajes ni payloads)."""
+        for m in re.finditer(
+                r"addEventListener\s*\(\s*[\"\']message[\"\']", text or ""):
+            win = text[m.end(): m.end() + 400]
+            has_origin = re.search(r"\b(e|ev|event|msg)\s*\.\s*origin\b|"
+                                   r"[\"\']https?://", win)
+            sinks = [s for s in ("innerHTML", "document.write", "eval(",
+                                 "location.href", "location.assign",
+                                 "insertAdjacentHTML", "srcdoc")
+                     if s in win]
+            if not has_origin:
+                sev = "alta" if sinks else "media"
+                ev = win[:120].replace("\n", " ").strip()
+                findings.append({
+                    "severity": sev,
+                    "type": "postMessage XSS (listener sin origen)",
+                    "param": "-", "target": source,
+                    "evidence": f"listener de message sin chequeo de origin"
+                                + (f" · sink cercano: {sinks[0]}" if sinks else "")
+                                + f" · contexto: {ev[:80]}",
+                    "verdict": "candidata postMessage XSS: revisar si el listener "
+                               "escribe datos del mensaje en el DOM"})
+                self.log(f"[api-js] 💥 postMessage sin origin en {urlparse(source).path}"
+                         + (f" (sink: {sinks[0]})" if sinks else ""))
+            break  # un reporte por archivo basta como inventario
+
     def _scan_secrets(self, text: str, source: str, findings: List[Dict[str, Any]]) -> None:
         """Busca credenciales/keys filtradas en JS publico (solo patrones de
         deteccion, nunca valida ni usa la credencial)."""
@@ -407,6 +436,7 @@ class DeepHunter:
                 continue
             self._scan_js_text(base_url, r.text, specs, queue, seen_files)
             self._scan_secrets(r.text, js, findings)
+            self._scan_postmessage(r.text, js, findings)
         self.api_specs.update(specs)
         hits = list(specs.keys())[:40]
         if hits:
@@ -418,6 +448,63 @@ class DeepHunter:
             self.log(f"[api-js] {len(seen_files)} archivos JS analizados, "
                      f"sin rutas API nuevas")
         return findings, hits
+
+    def test_csp(self, base_url: str) -> List[Dict[str, Any]]:
+        """Lee la cabecera CSP del objetivo y marca configuraciones debiles
+        (solo lectura de cabeceras, cero payloads)."""
+        findings: List[Dict[str, Any]] = []
+        self._pause()
+        try:
+            r = self.session.get(base_url, timeout=self.timeout, allow_redirects=True)
+        except Exception:
+            self.log("[csp] sin respuesta del objetivo")
+            return findings
+        csp = r.headers.get("content-security-policy") or ""
+        csp_ro = r.headers.get("content-security-policy-report-only") or ""
+        xfo = (r.headers.get("x-frame-options") or "").lower()
+        if not csp:
+            findings.append({
+                "severity": "media", "type": "Bypass de CSP (ausente)",
+                "param": "-", "target": base_url,
+                "evidence": "sin cabecera Content-Security-Policy"
+                            + (" (solo report-only presente)" if csp_ro else ""),
+                "verdict": "sin CSP: cualquier XSS reflejado/DOM se ejecuta sin freno"})
+            self.log("[csp] 💥 el objetivo NO tiene CSP" +
+                     (" (solo report-only)" if csp_ro else ""))
+            return findings
+        self.log(f"[csp] analizando CSP ({len(csp)} caracteres)")
+        weak = []
+        for pat, why in (
+                (r"script-src[^;]*'unsafe-inline'", "script-src permite unsafe-inline"),
+                (r"script-src[^;]*'unsafe-eval'", "script-src permite unsafe-eval"),
+                (r"script-src[^;]*\*", "script-src con wildcard *"),
+                (r"script-src[^;]*https?://\*\.", "script-src con dominio wildcard"),
+                (r"default-src[^;]*'unsafe-inline'", "default-src permite unsafe-inline"),
+                (r"default-src[^;]*\*", "default-src con wildcard *"),
+                (r"(?!.*(script-src|default-src))", "sin directiva script-src ni default-src"),
+        ):
+            if pat == r"(?!.*(script-src|default-src))":
+                if "script-src" not in csp and "default-src" not in csp:
+                    weak.append(why)
+            elif re.search(pat, csp):
+                weak.append(why)
+        if weak:
+            findings.append({
+                "severity": "alta" if any("unsafe-inline" in w for w in weak) else "media",
+                "type": "Bypass de CSP (configuracion debil)",
+                "param": "-", "target": base_url,
+                "evidence": "; ".join(weak[:4])
+                            + f" · x-frame-options: {xfo or 'ausente'}",
+                "verdict": "CSP debil: un XSS puede ejecutarse dentro de estas reglas"})
+            self.log(f"[csp] 💥 CSP debil: {'; '.join(weak[:3])}")
+        else:
+            findings.append({
+                "severity": "info", "type": "CSP presente",
+                "param": "-", "target": base_url,
+                "evidence": f"{csp[:180]}",
+                "verdict": "CSP estricta aparente"})
+            self.log("[csp] CSP estricta: sin reglas debiles obvias")
+        return findings
 
     def test_idor(self, base_url: str, api_hits: List[str]):
         """Bateria IDOR (lectura A->B): sobre endpoints API que responden con
