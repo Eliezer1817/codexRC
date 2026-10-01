@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.24.0"
+VERSION = "0.25.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -587,7 +587,8 @@ def start_scan():
     return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
 
 
-HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers", "xss_dom", "report"]
+HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers",
+                "xss_dom", "veritas", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -674,12 +675,14 @@ def start_hunter():
         "csp": bool(data.get("opt_csp", True)),
         "blind": bool(data.get("opt_blind", False)),  # ESCRIBE en el blanco
         "xss_pro": bool(data.get("opt_xss_pro", False)),  # avanzados: stored POSTEA marcador
+        "veritas": bool(data.get("opt_veritas", True)),  # navegador real contra FP
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
     workers = max(1, min(int(data.get("workers") or 4), 8))
     # GHOST-SHIELD: evasion WAF con memoria (jitter + cooldown por origen)
     opt_waf = bool(data.get("opt_waf", True))
+    opt_veritas = bool(data.get("opt_veritas", True))
 
     job_id = uuid.uuid4().hex[:8]
     job = {
@@ -826,6 +829,21 @@ def start_hunter():
                 battery("xss_forms", "forms", lambda: _bateria_forms(hunter, spider_out))
                 battery("xss_headers", "headers", lambda: _bateria_headers(hunter, spider_out))
                 battery("xss_dom", "dom", lambda: _bateria_dom(hunter, spider_out))
+
+                def run_veritas():
+                    if not opt_veritas:
+                        emit("[veritas] desactivado por el operador")
+                        return []
+                    from core.veritas import Veritas
+                    v = Veritas(emit, max_verify=8)
+                    if not v.available():
+                        emit("[veritas] Chrome headless no encontrado en el "
+                             "sistema: hallazgos quedan como reflexiones")
+                        return []
+                    v.verify_all(job["findings"])
+                    return []   # muta hallazgos in place: confirmados y descartes
+
+                battery("veritas", "veritas", run_veritas)
 
                 job["status"] = "finished"
                 node_state("report", "success", 0.0)

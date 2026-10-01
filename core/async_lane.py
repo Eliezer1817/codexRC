@@ -79,8 +79,10 @@ class AsyncLane:
                 ev = h._evidence(r, mark)
                 h.log(f"💥 [xss] GET {urlparse(url).path}?{param}= · REFLEJADA · "
                       f"contexto: {ctx} · crudos: " + "".join(c for c, ok in raw.items() if ok))
-                return h._finding("XSS reflejado", _norm(url), param, "GET",
-                                  gravedad, f"{razon} · contexto {ctx}", ev, ctx)
+                fnd = h._finding("XSS reflejado", _norm(url), param, "GET",
+                                gravedad, f"{razon} · contexto {ctx}", ev, ctx)
+                fnd["raw"] = raw          # crudos sobrevivientes: alimento de VERITAS
+                return fnd
             except Exception as exc:
                 h.log(f"[xss] XX {urlparse(url).path}?{param}= · async: {str(exc)[:60]}")
                 return None

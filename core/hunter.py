@@ -951,8 +951,10 @@ class XSSHunter:
         tag = "💥"
         self.log(f"{tag} [xss] {method} {urlparse(url).path}?{param}= · REFLEJADA · "
                  f"contexto: {ctx} · crudos: " + "".join(c for c, ok in raw.items() if ok))
-        return self._finding("XSS reflejado", _norm(url), param, method, gravedad,
-                              f"{razon} · contexto {ctx}", ev, ctx)
+        finding = self._finding("XSS reflejado", _norm(url), param, method, gravedad,
+                                f"{razon} · contexto {ctx}", ev, ctx)
+        finding["raw"] = raw          # que caracteres sobrevivieron (para VERITAS)
+        return finding
 
     # ---------- bateria 1: parametros GET ----------
     def test_params(self, targets: List[Dict[str, Any]], max_params: int = 60) -> List[Dict[str, Any]]:
