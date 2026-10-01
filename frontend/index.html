@@ -126,7 +126,7 @@
 </head>
 <body>
   <header>
-    <h1><span>codex</span>RC <span class="badge">local</span></h1>
+    <h1><span>codex</span>RC <span class="badge">local</span> <span class="badge" id="verBadge" style="margin-left:.4rem">v?</span></h1>
     <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.5.0</span> · <span id="backendStatus">comprobando backend...</span></div>
   </header>
 
@@ -189,6 +189,13 @@
   </main>
 
   <script>
+    // Muestra la version del backend al cargar: si cambia, el auto-update funciono
+    fetch('/health').then(r => r.json()).then(d => {
+      const b = document.getElementById('verBadge');
+      if (b && d.version) b.textContent = 'v' + d.version;
+    }).catch(() => {});
+</script>
+<script>
     const NODES = [
       { id: "recon", label: "Recon" },
       { id: "tech_detect", label: "Tech Detect" },
