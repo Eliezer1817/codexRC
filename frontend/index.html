@@ -187,9 +187,9 @@
     /* canvas de nodos */
     .canvas-area { padding: 1.25rem; overflow: auto; }
     .pipeline {
-      display: flex; flex-wrap: wrap; gap: 1rem;
+      display: flex; flex-wrap: wrap; gap: 0.9rem 0.45rem;
       align-items: center; justify-content: center;
-      min-height: 200px; margin-bottom: 1.5rem;
+      margin-bottom: 1.5rem;
     }
     .node {
       background: #000;
@@ -228,8 +228,17 @@
     .node.failed::before, .node.failed::after { border-color: var(--red); }
     .node.failed .label, .node.failed .status { color: var(--red); }
 
-    .arrow { display: flex; align-items: center; color: #24352c; font-size: 1.1rem; animation: flow 1.4s ease-in-out infinite; }
-    @keyframes flow { 50% { opacity: 0.35; } }
+    .arrow { display: flex; align-items: center; color: #24352c; font-size: 1.1rem; }
+    .conn { width: 26px; height: 2px; background: #1a2a20; position: relative; overflow: hidden; flex: 0 0 auto; }
+    .conn.done { background: #0d5c2e; }
+    .conn.err { background: var(--red); }
+    .conn.flow { background: #0a3d1c; }
+    .conn.flow::after {
+      content: ""; position: absolute; top: 0; left: -10px;
+      width: 10px; height: 2px; background: var(--green);
+      box-shadow: 0 0 8px var(--green); animation: flow-dot 0.8s linear infinite;
+    }
+    @keyframes flow-dot { to { left: 26px; } }
 
     /* ventana de resultados: NEGRA OPACA */
     .results {
@@ -280,6 +289,43 @@
     ::-webkit-scrollbar-track { background: #000; }
     ::-webkit-scrollbar-thumb { background: #14211a; }
     ::-webkit-scrollbar-thumb:hover { background: #1d2a22; }
+
+    /* ===== paneles de resultados por seccion ===== */
+    .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.9rem; margin-bottom: 1.2rem; }
+    .card { background: #000; border: 1px solid var(--border); border-radius: 3px; display: flex; flex-direction: column; }
+    .card-head {
+      display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+      padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+      color: var(--green); font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .card-head .count { color: var(--gray); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.04em; text-transform: none; text-align: right; }
+    .card-body { padding: 0.7rem 0.8rem; }
+    .card-body .empty { color: var(--muted); font-size: 0.8rem; }
+    .row { display: flex; justify-content: space-between; gap: 0.8rem; padding: 0.28rem 0; font-size: 0.82rem; border-bottom: 1px solid #0a120d; }
+    .row:last-child { border-bottom: none; }
+    .row .k { color: var(--muted); flex: 0 0 auto; }
+    .row .v { color: var(--text); text-align: right; word-break: break-word; }
+    .row .v.good { color: var(--green); font-weight: 600; }
+    .row .v.bad { color: var(--red); font-weight: 600; }
+    .row .v.dim { color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; }
+    .chip { background: #05140b; border: 1px solid var(--green-dark); color: var(--text); font-size: 0.78rem; padding: 0.25rem 0.55rem; border-radius: 2px; }
+    .chip b { color: var(--green); }
+    .chip i { color: var(--gray); font-style: normal; margin-left: 0.3rem; }
+    .chip.mono { font-family: ui-monospace, 'Courier New', monospace; }
+    .bar { height: 6px; background: #0a120d; border-radius: 3px; margin: 0.45rem 0; overflow: hidden; }
+    .bar .fill { height: 100%; background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: var(--glow); }
+    .mono { font-family: ui-monospace, 'Courier New', monospace; }
+    .small { font-size: 0.72rem; }
+    details.sub summary { cursor: pointer; color: var(--green); font-size: 0.78rem; margin: 0.35rem 0; }
+    details.sub div { color: var(--gray); line-height: 1.7; word-break: break-all; }
+    #liveDot {
+      display: none; width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green); box-shadow: var(--glow);
+      animation: liveblink 0.9s infinite; margin-left: auto;
+    }
+    @keyframes liveblink { 50% { opacity: 0.25; } }
 
     /* ===== PC GRANDE ===== */
     @media (min-width: 1280px) {
@@ -407,13 +453,37 @@
         <!-- nodes injected by JS -->
       </div>
 
+      <div class="modules" id="modules">
+        <div class="card">
+          <div class="card-head">Tecnologías <span class="count" id="cTech">—</span></div>
+          <div class="card-body" id="bTech"><div class="empty">esperando escaneo…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Seguridad <span class="count" id="cSec">—</span></div>
+          <div class="card-body" id="bSec"><div class="empty">esperando escaneo…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Dominios <span class="count" id="cDom">—</span></div>
+          <div class="card-body" id="bDom"><div class="empty">esperando escaneo…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Vulnerabilidades <span class="count" id="cCve">—</span></div>
+          <div class="card-body" id="bCve"><div class="empty">esperando escaneo…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head">Autenticación <span class="count" id="cAuth">—</span></div>
+          <div class="card-body" id="bAuth"><div class="empty">esperando escaneo…</div></div>
+        </div>
+      </div>
+
       <div class="results">
         <div class="titlebar">
           <span class="dots"><i></i><i></i><i></i></span>
-          <span>results://stdout</span>
+          <span>terminal://codexrc</span>
+          <span id="liveDot"></span>
         </div>
         <div class="body">
-          <h3>Resultados del pipeline</h3>
+          <h3>Terminal en vivo</h3>
           <div id="connectionSummary">Sin diagnóstico todavía.</div>
           <p id="logLink"></p>
           <pre id="output"></pre>
@@ -465,11 +535,16 @@
     }).catch(() => {});
 
     const NODES = [
+      { id: "input", label: "TARGET" },
       { id: "recon", label: "RECON" },
-      { id: "tech_detect", label: "TECH-DETECT" },
-      { id: "cve_match", label: "CVE-MATCH" },
-      { id: "auth_status", label: "AUTH-STATUS" },
+      { id: "tech_detect", label: "TECH" },
+      { id: "auth_status", label: "AUTH" },
+      { id: "security_audit", label: "SECURITY" },
+      { id: "domain_map", label: "DOMAIN" },
+      { id: "cve_match", label: "CVE" },
+      { id: "report", label: "REPORT" },
     ];
+    const ICONS = { pending: "·", running: "»", success: "✓", failed: "✗" };
 
     function renderPipeline(statusMap = {}) {
       const container = document.getElementById("pipeline");
@@ -480,15 +555,15 @@
         div.className = `node ${st.status || "pending"}`;
         div.innerHTML = `
           <div class="label">${n.label}</div>
-          <div class="status">${st.status || "pending"}</div>
+          <div class="status">${ICONS[st.status] || "·"} ${st.status || "pending"}</div>
           ${st.duration != null ? `<div class="duration">${st.duration}s</div>` : ""}
         `;
         container.appendChild(div);
         if (i < NODES.length - 1) {
-          const arrow = document.createElement("div");
-          arrow.className = "arrow";
-          arrow.textContent = ">>>";
-          container.appendChild(arrow);
+          const nxt = statusMap[NODES[i + 1].id] || { status: "pending" };
+          const conn = document.createElement("div");
+          conn.className = "conn " + (nxt.status === "running" ? "flow" : nxt.status === "success" ? "done" : nxt.status === "failed" ? "err" : "");
+          container.appendChild(conn);
         }
       });
     }
@@ -524,6 +599,134 @@
       document.getElementById("authBearer").style.display = v === "bearer" ? "block" : "none";
     });
 
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+
+    function logLine(msg) {
+      const out = document.getElementById("output");
+      const nearBottom = out.scrollHeight - out.scrollTop - out.clientHeight < 80;
+      out.textContent += (out.textContent ? "\n" : "") + msg;
+      if (nearBottom) out.scrollTop = out.scrollHeight;
+    }
+
+    function resetCards() {
+      ["Tech", "Sec", "Dom", "Cve", "Auth"].forEach(k => {
+        document.getElementById("c" + k).textContent = "…";
+        document.getElementById("b" + k).innerHTML = '<div class="empty">escaneando…</div>';
+      });
+    }
+
+    function renderTech(techs) {
+      document.getElementById("cTech").textContent = techs.length + " detectadas";
+      document.getElementById("bTech").innerHTML = techs.length
+        ? '<div class="chips">' + techs.map(t =>
+            `<span class="chip" title="fuente: ${esc(t.source || "?")}"><b>${esc(t.name)}</b>${t.version ? `<i>${esc(t.version)}</i>` : ""}</span>`
+          ).join("") + "</div>"
+        : '<div class="empty">ninguna tecnología detectada</div>';
+    }
+
+    function renderSec(sa) {
+      const score = sa.headers_score || {};
+      const grade = score.total ? (score.present >= 6 ? "A" : score.present >= 4 ? "B" : score.present >= 2 ? "C" : "D") : "?";
+      document.getElementById("cSec").textContent =
+        (sa.waf && sa.waf.detected ? "WAF: " + sa.waf.waf : "sin WAF") + " · TLS " + (sa.tls && sa.tls.grade ? sa.tls.grade : "?");
+      const wafHtml = sa.waf && sa.waf.detected
+        ? `<div class="row"><span class="k">WAF / CDN</span><span class="v good">${esc(sa.waf.waf)}</span></div>`
+        : '<div class="row"><span class="k">WAF / CDN</span><span class="v dim">sin detectar</span></div>';
+      const tls = sa.tls || {};
+      const tlsHtml = tls.enabled
+        ? `<div class="row"><span class="k">Certificado TLS</span><span class="v ${tls.valid ? "good" : "bad"}">${esc(tls.protocol || "")}${tls.days_left != null ? " · vence en " + tls.days_left + "d" : ""}</span></div>
+           <div class="row"><span class="k">Emisor</span><span class="v">${esc(tls.issuer || "")}</span></div>`
+        : '<div class="row"><span class="k">Certificado TLS</span><span class="v dim">sin acceso (¿http o timeout?)</span></div>';
+      const pct = score.total ? Math.round(100 * (score.present || 0) / score.total) : 0;
+      const cookiesHtml = (sa.cookies || []).map(ck =>
+        `<div class="row"><span class="k mono">${esc(ck.name)}</span><span class="v">${ck.secure ? "✓secure " : ""}${ck.httponly ? "✓httponly " : ""}${ck.samesite ? "✓samesite=" + esc(ck.samesite) : ""}</span></div>`
+      ).join("");
+      document.getElementById("bSec").innerHTML = wafHtml + tlsHtml +
+        `<div class="row"><span class="k">Cabeceras seguras</span><span class="v">${score.present || 0}/${score.total || 0}</span></div>
+         <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
+         <div class="row"><span class="k">Nivel</span><span class="v ${grade === "A" ? "good" : grade === "B" ? "" : "bad"}">${grade}</span></div>` +
+        (cookiesHtml ? '<div class="row"><span class="k">Cookies</span></div>' + cookiesHtml : "");
+    }
+
+    function renderDom(dm) {
+      const subs = dm.subdomains || {};
+      document.getElementById("cDom").textContent =
+        subs.count ? subs.count + " subdominios" : (dm.ips || []).length + " IPs";
+      const ips = (dm.ips || []).map(ip => `<span class="chip mono">${esc(ip)}</span>`).join("");
+      const subHtml = subs.count
+        ? `<div class="row"><span class="k">Subdominios</span><span class="v good">${subs.count} encontrados</span></div>
+           <details class="sub"><summary>ver los primeros ${subs.sample.length}</summary><div>${subs.sample.map(s => esc(s)).join("<br/>")}</div></details>`
+        : '<div class="row"><span class="k">Subdominios</span><span class="v dim">0 (o crt.sh no respondió)</span></div>';
+      const notes = (dm.notes || []).map(n => `<div class="row"><span class="k dim small">${esc(n)}</span></div>`).join("");
+      document.getElementById("bDom").innerHTML =
+        `<div class="row"><span class="k">Host</span><span class="v mono">${esc(dm.host || "")}</span></div>
+         <div class="row"><span class="k">IPs</span></div><div class="chips">${ips || '<div class="empty">sin IPs</div>'}</div>` + subHtml + notes;
+    }
+
+    function renderCve(rep) {
+      const total = rep.total_cves_found || 0;
+      const high = (rep.high_priority || []).length;
+      document.getElementById("cCve").textContent = total + " CVE · " + high + " altas";
+      const techsHtml = (rep.technologies || []).map(t => {
+        const n = (t.cves || []).filter(c => !c.error).length;
+        return `<div class="row"><span class="k">${esc(t.technology)}</span><span class="v">${n} CVEs${t.high_cvss_count ? ` · <span class="bad">${t.high_cvss_count} críticos</span>` : ""}</span></div>`;
+      }).join("");
+      const highHtml = (rep.high_priority || []).slice(0, 8).map(c =>
+        `<div class="row"><span class="k mono small">${esc(c.cve_id)}</span><span class="v small">CVSS ${esc(String(c.cvss ?? "?"))}</span></div>`).join("");
+      document.getElementById("bCve").innerHTML =
+        (total
+          ? `<div class="row"><span class="k">Total</span><span class="v ${high ? "bad" : "good"}">${total} CVEs · ${high} de prioridad alta</span></div>`
+          : '<div class="empty">sin CVEs conocidos para lo detectado</div>') +
+        techsHtml + (high ? '<div class="row"><span class="k">Prioridad alta (CVSS ≥ 7)</span></div>' + highHtml : "");
+    }
+
+    function renderAuth(job, authNode) {
+      const chk = (authNode.data || {}).session_check || {};
+      const conn = job.connection || {};
+      const ok = chk.authenticated;
+      document.getElementById("cAuth").textContent = ok ? "sesión OK" : (conn.auth_configured ? "sin sesión" : "sin auth");
+      const who = chk.username ? " · " + esc(chk.username) : "";
+      document.getElementById("bAuth").innerHTML =
+        `<div class="row"><span class="k">Método</span><span class="v">${esc(conn.auth_method || authNode.data?.auth_info?.method || "ninguno")}</span></div>
+         <div class="row"><span class="k">Sesión</span><span class="v ${ok ? "good" : "bad"}">${ok ? "✓ CONFIRMADA" + who : "✗ no confirmada"}</span></div>
+         ${chk.url ? `<div class="row"><span class="k">Verificada contra</span><span class="v mono small">${esc(chk.url)}</span></div>` : ""}
+         ${!ok && chk.reason ? `<div class="row"><span class="k">Motivo</span><span class="v dim">${esc(chk.reason)}</span></div>` : ""}`;
+    }
+
+    function renderCards(job) {
+      const R = job.results || {};
+      const ok = (name) => R[name] && R[name].status === "success" && R[name].data;
+      if (ok("tech_detect")) renderTech(R.tech_detect.data.technologies || []);
+      if (ok("security_audit")) renderSec(R.security_audit.data.security_audit || {});
+      if (ok("domain_map")) renderDom(R.domain_map.data.domain_map || {});
+      if (ok("cve_match")) renderCve(R.cve_match.data.cve_report || {});
+      if (R.auth_status) renderAuth(job, R.auth_status);
+    }
+
+    function finishScan(job) {
+      const btn = document.getElementById("btnScan");
+      btn.disabled = false;
+      btn.textContent = ">> Iniciar Pipeline";
+      document.getElementById("liveDot").style.display = "none";
+      const c = job.connection || {};
+      const failed = (job.diagnostics && job.diagnostics.failed_nodes) || [];
+      const dur = (job.diagnostics && job.diagnostics.duration) || "?";
+      const auth = c.authenticated
+        ? `<b>SESIÓN CONFIRMADA</b>${c.username ? ` · usuario: <b>${esc(c.username)}</b>` : ""}`
+        : (c.auth_configured ? `sesión NO confirmada · ${esc(c.verification_reason || "sin verificación")}` : "sin autenticación configurada");
+      document.getElementById("connectionSummary").innerHTML =
+        `objetivo: ${c.target_reachable ? "<b>respondió</b>" : "sin respuesta"} · ${auth} · ` +
+        `${failed.length ? `<b style="color:#ff2e4c">${failed.length} nodos fallaron (${esc(failed.join(", "))})</b>` : "todos los nodos OK"} · ${dur}s`;
+      logLine("═════════ ESCANEO COMPLETADO ═════════");
+      if (job.log_url) logLine("log completo descargable: " + job.log_url);
+      if (job.status === "failed") logLine("✗ JOB FALLÓ: " + (job.error || "?"));
+      if (job.log_url) {
+        document.getElementById("logLink").innerHTML = `<a href="${job.log_url}" download>&gt;&gt; descargar log completo (${esc(job.log_file || "")})</a>`;
+      }
+    }
+
     async function startScan() {
       const url = document.getElementById("targetUrl").value.trim();
       if (!url) return alert("Pon una URL");
@@ -553,13 +756,14 @@
 
       const btn = document.getElementById("btnScan");
       btn.disabled = true;
-      btn.textContent = "EJECUTANDO...";
-      document.getElementById("output").textContent = ">> objetivo: " + url + "\n>> pipeline en ejecución...";
+      btn.textContent = "ESCANEANDO...";
+      document.getElementById("liveDot").style.display = "inline-block";
+      document.getElementById("output").textContent = "";
+      document.getElementById("connectionSummary").textContent = "Trabajando…";
       document.getElementById("logLink").textContent = "";
-
-      const runningMap = {};
-      NODES.forEach(n => runningMap[n.id] = { status: "running" });
-      renderPipeline(runningMap);
+      resetCards();
+      renderPipeline({ input: { status: "success" } });
+      logLine("→ objetivo: " + url);
 
       try {
         const res = await fetch("/api/scan", {
@@ -567,31 +771,35 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Error");
+        const started = await res.json();
+        if (!res.ok) throw new Error(started.error || started.message || "Error al iniciar");
 
-        const statusMap = {};
-        if (data.results) {
-          for (const [k, v] of Object.entries(data.results)) {
-            statusMap[k] = { status: v.status, duration: v.duration };
-          }
-        }
-        renderPipeline(statusMap);
-        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
-        const c = data.connection || {};
-        const auth = c.authenticated
-          ? `<b>SESIÓN CONFIRMADA</b>${c.username ? ` · usuario: <b>${c.username}</b>` : ""}`
-          : (c.auth_configured ? `sesión NO confirmada · ${c.verification_reason || "sin verificación"}` : "sin autenticación configurada");
-        document.getElementById("connectionSummary").innerHTML =
-          `backend: ${c.backend || "?"} · objetivo: ${c.target_reachable ? "<b>respondió</b>" : "sin respuesta"} · ${auth} · request: ${data.diagnostics?.request_id || "-"}`;
-        if (data.log_url) {
-          document.getElementById("logLink").innerHTML = `<a href="${data.log_url}" download>&gt;&gt; descargar log completo (${data.log_file})</a>`;
-        }
+        logLine("→ job " + started.job_id + " lanzado · 6 nodos trabajando en el motor…");
+        let last = 0;
+        const poll = setInterval(async () => {
+          try {
+            const r = await fetch("/api/jobs/" + started.job_id);
+            if (!r.ok) return;
+            const job = await r.json();
+            const sm = { input: { status: "success" } };
+            for (const [k, v] of Object.entries((job.pipeline || {}).nodes || {})) sm[k] = v;
+            if (job.status === "finished") sm.report = { status: "success" };
+            if (job.status === "failed") sm.report = { status: "failed" };
+            renderPipeline(sm);
+            const lines = job.live_log || [];
+            for (; last < lines.length; last++) logLine(lines[last].msg);
+            renderCards(job);
+            if (job.status !== "running") {
+              clearInterval(poll);
+              finishScan(job);
+            }
+          } catch (e) { /* seguimos intentando */ }
+        }, 900);
       } catch (err) {
-        document.getElementById("output").textContent = "ERROR: " + err.message;
-        document.getElementById("connectionSummary").textContent = "El backend no devolvió un resultado. Revisa /api/status y reports/backend.log.";
+        logLine("✗ ERROR: " + err.message);
+        document.getElementById("connectionSummary").textContent = "El backend no respondió. ¿Está corriendo en :8000?";
+        document.getElementById("liveDot").style.display = "none";
         renderPipeline();
-      } finally {
         btn.disabled = false;
         btn.textContent = ">> Iniciar Pipeline";
       }

@@ -26,16 +26,21 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import threading
+
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
+from core.deep_scan import DomainMap, cookie_flags, detect_waf, tls_audit
 from core.pipeline import Pipeline
 from core.recon import Recon
 from core.tech_detect import TechDetector
 
+NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_map", "cve_match"]
+
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.12.0"
+VERSION = "0.13.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -190,15 +195,23 @@ def build_auth(data: Dict[str, Any], target_url: str = None) -> AuthManager:
     return auth
 
 
-def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
-    """Ejecuta el pipeline completo dentro del backend."""
+def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Ejecuta el pipeline completo actualizando el job en vivo (nodo a nodo)."""
     scan_started = time.perf_counter()
     log_event("scan_started", request_id=g.get("request_id"), url=safe_url(url), auth_requested=bool(
         data.get("cookies") or data.get("bearer_token") or data.get("username")
     ))
     auth = build_auth(data, target_url=url)
     session = auth.get_session()
-    pipeline = Pipeline()
+
+    def emit(msg: str) -> None:
+        if job is not None:
+            job.setdefault("live_log", []).append({"ts": utc_now(), "msg": msg})
+
+    def node_state(name: str, status: str, duration=None, error=None) -> None:
+        if job is not None:
+            nodes = job.setdefault("pipeline", {}).setdefault("nodes", {})
+            nodes[name] = {"status": status, "duration": duration, "error": error}
 
     def node_recon(ctx: Dict[str, Any]) -> Dict[str, Any]:
         return {"recon": Recon(session).run(ctx["url"])}
@@ -228,8 +241,6 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
             if vurl:
                 session_check = auth.verify_session(vurl)
             else:
-                # auto: endpoints de cuenta protegidos (credentials) o
-                # descubiertos al vuelo (cookies/bearer)
                 candidatos = list(getattr(auth, "auto_verify_urls", []) or [])
                 if not candidatos:
                     try:
@@ -271,23 +282,101 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
             "session_check": session_check,
         }
 
-    pipeline.add_node("recon", node_recon)
-    pipeline.add_node("tech_detect", node_tech)
-    pipeline.add_node("cve_match", node_cve)
-    pipeline.add_node("auth_status", node_auth_info)
-    results = pipeline.run({"url": url})
+    def node_security(ctx: Dict[str, Any]) -> Dict[str, Any]:
+        recon = ctx.get("recon", {})
+        headers = recon.get("headers", {}) or {}
+        waf = detect_waf(headers)
+        tls = tls_audit(ctx["url"])
+        cookies = cookie_flags(headers)
+        present = len(recon.get("security_headers", {}) or {})
+        missing = len(recon.get("missing_security_headers", []) or [])
+        total = present + missing
+        return {
+            "security_audit": {
+                "waf": waf,
+                "tls": tls,
+                "cookies": cookies,
+                "headers_score": {"present": present, "total": total},
+            }
+        }
+
+    def node_domain(ctx: Dict[str, Any]) -> Dict[str, Any]:
+        return {"domain_map": DomainMap().run(ctx["url"])}
+
+    NODE_FUNCS = {
+        "recon": node_recon,
+        "tech_detect": node_tech,
+        "auth_status": node_auth_info,
+        "security_audit": node_security,
+        "domain_map": node_domain,
+        "cve_match": node_cve,
+    }
+
+    # resumenes legibles por nodo (para el log en vivo)
+    def human_line(name: str, out: Dict[str, Any]) -> str:
+        try:
+            if name == "recon":
+                r = out["recon"]
+                bits = [f"HTTP {r.get('status_code')}"]
+                if r.get("server"):
+                    bits.append(f"server: {str(r.get('server'))[:40]}")
+                bits.append(f"{len(r.get('headers') or {})} cabeceras")
+                return "RECON · " + " · ".join(bits)
+            if name == "tech_detect":
+                techs = [t.get("name", "?") for t in out.get("technologies", [])][:6]
+                n = len(out.get("technologies", []))
+                return f"TECH-DETECT · {n} tecnologias: " + (", ".join(techs) if techs else "ninguna")
+            if name == "auth_status":
+                chk = out.get("session_check", {})
+                ok = chk.get("authenticated")
+                who = chk.get("username")
+                return "AUTH · sesion " + ("CONFIRMADA" if ok else "no confirmada") + (f" · usuario: {who}" if who else "")
+            if name == "security_audit":
+                sa = out["security_audit"]
+                waf = sa["waf"].get("waf") or "sin WAF/CDN detectado"
+                tls = sa["tls"]
+                tls_txt = f"TLS {tls.get('protocol', '?')}, vence en {tls.get('days_left')}d" if tls.get("enabled") else "TLS: sin acceso"
+                return f"SECURITY · WAF: {waf} · {tls_txt} · cabeceras seguras: {sa['headers_score']['present']}/{sa['headers_score']['total']}"
+            if name == "domain_map":
+                dm = out["domain_map"]
+                ips = ", ".join(dm.get("ips", [])[:3]) or "?"
+                return f"DOMAIN · IPs: {ips} · subdominios: {dm['subdomains']['count']}"
+            if name == "cve_match":
+                rep = out["cve_report"]
+                return f"CVE · {rep.get('total_cves_found', 0)} CVEs conocidos · {len(rep.get('high_priority', []))} de prioridad alta"
+        except Exception:
+            pass
+        return f"{name} completado"
+
+    ctx: Dict[str, Any] = {"url": url}
+    results: Dict[str, Any] = {}
+    emit(f"objetivo fijado: {url}")
+    emit(f"pipeline armado · {len(NODE_ORDER)} nodos · motor trabajando...")
+
+    for name in NODE_ORDER:
+        node_state(name, "running")
+        emit(f">> {name} ejecutando...")
+        t0 = time.perf_counter()
+        try:
+            out = NODE_FUNCS[name](ctx)
+            if isinstance(out, dict):
+                ctx.update(out)
+            dur = round(time.perf_counter() - t0, 3)
+            entry = {"status": "success", "data": out, "error": None, "duration": dur}
+            node_state(name, "success", dur)
+            emit(f"OK {name} ({dur}s) · {human_line(name, out)}")
+        except Exception as exc:
+            dur = round(time.perf_counter() - t0, 3)
+            entry = {"status": "failed", "data": {}, "error": str(exc), "duration": dur}
+            node_state(name, "failed", dur, str(exc)[:200])
+            emit(f"XX {name} fallo ({dur}s): {str(exc)[:140]}")
+        results[name] = entry
+        if job is not None:
+            job.setdefault("results", {})[name] = entry
 
     scan = {
-        "pipeline": pipeline.get_status(),
-        "results": {
-            name: {
-                "status": result.status.value,
-                "data": result.data,
-                "error": result.error,
-                "duration": result.duration,
-            }
-            for name, result in results.items()
-        },
+        "pipeline": {"nodes": {n: (job or {}).get("pipeline", {}).get("nodes", {}).get(n) or {} for n in NODE_ORDER}},
+        "results": results,
         "auth_method": auth.auth_method,
         "authenticated": auth.is_authenticated(),
     }
@@ -369,46 +458,45 @@ def start_scan():
     data = request.get_json(silent=True) or {}
     url = str(data.get("url", "")).strip()
     if not valid_target(url):
-        return jsonify({"error": "url debe ser una URL http(s) válida"}), 400
-
-    try:
-        scan = execute_scan(url, data)
-    except Exception as exc:
-        log_event("scan_failed", request_id=g.get("request_id"), url=safe_url(url), error_type=type(exc).__name__, error=str(exc))
-        return jsonify({
-            "error": "scan_failed",
-            "message": str(exc),
-            "request_id": g.get("request_id"),
-            "version": VERSION,
-        }), 500
-
-    scan.setdefault("connection", {
-        "backend": "connected",
-        "target_reachable": False,
-        "auth_configured": False,
-        "authenticated": False,
-        "verification_reason": "diagnostic_unavailable",
-    })
-    scan.setdefault("diagnostics", {"request_id": g.get("request_id"), "completed_nodes": 0, "failed_nodes": []})
+        return jsonify({"error": "url debe ser una URL http(s) valida"}), 400
 
     job_id = uuid.uuid4().hex[:8]
     job = {
         "id": job_id,
         "url": url,
         "created_at": utc_now(),
-        "status": "finished",
+        "status": "running",
         "version": VERSION,
-        **scan,
+        "pipeline": {"nodes": {n: {"status": "pending"} for n in NODE_ORDER}},
+        "live_log": [],
+        "results": {},
     }
-    report_path = save_scan_log(job)
-    job["log_file"] = str(Path(report_path).relative_to(ROOT))
-    job["log_url"] = f"/api/jobs/{job_id}/log"
-    # Reescribe incluyendo la ruta de descarga en el propio informe.
-    save_scan_log(job)
-    job.setdefault("diagnostics", {})["report_file"] = job["log_file"]
-    log_event("scan_finished", request_id=g.get("request_id"), job_id=job_id, url=safe_url(url), report=job["log_file"])
     JOBS[job_id] = job
-    return jsonify(job)
+
+    request_id = g.get("request_id")
+
+    def run_job() -> None:
+        # el hilo corre fuera del ciclo de request de Flask: proveer contexto
+        with app.app_context():
+            g.request_id = request_id
+            try:
+                scan = execute_scan(url, data, job=job)
+                job.update(scan)
+                job["status"] = "finished"
+                report_path = save_scan_log(job)
+                job["log_file"] = str(Path(report_path).relative_to(ROOT))
+                job["log_url"] = f"/api/jobs/{job_id}/log"
+                save_scan_log(job)
+                job.setdefault("diagnostics", {})["report_file"] = job["log_file"]
+                log_event("scan_finished", request_id=g.get("request_id"), job_id=job_id, url=safe_url(url), report=job["log_file"])
+            except Exception as exc:
+                job["status"] = "failed"
+                job["error"] = str(exc)
+                job.setdefault("live_log", []).append({"ts": utc_now(), "msg": f"XX ERROR FATAL: {str(exc)[:200]}"})
+                log_event("scan_failed", request_id=g.get("request_id"), url=safe_url(url), error_type=type(exc).__name__, error=str(exc))
+
+    threading.Thread(target=run_job, daemon=True).start()
+    return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
 
 
 @app.get("/api/jobs")
@@ -439,19 +527,22 @@ def download_job_log(job_id: str):
 def pipeline_schema():
     return jsonify({
         "nodes": [
-            {"id": "input", "label": "URL Input", "type": "input"},
-            {"id": "recon", "label": "Recon", "type": "process"},
-            {"id": "tech_detect", "label": "Tech Detect", "type": "process"},
-            {"id": "auth", "label": "Auth", "type": "process"},
-            {"id": "cve_match", "label": "CVE Matcher", "type": "process"},
-            {"id": "report", "label": "Report", "type": "output"},
+            {"id": "input", "label": "TARGET", "type": "input"},
+            {"id": "recon", "label": "RECON", "type": "process"},
+            {"id": "tech_detect", "label": "TECH-DETECT", "type": "process"},
+            {"id": "auth_status", "label": "AUTH-STATUS", "type": "process"},
+            {"id": "security_audit", "label": "SECURITY", "type": "process"},
+            {"id": "domain_map", "label": "DOMAIN-MAP", "type": "process"},
+            {"id": "cve_match", "label": "CVE-MATCH", "type": "process"},
+            {"id": "report", "label": "REPORT", "type": "output"},
         ],
         "edges": [
             {"from": "input", "to": "recon"},
             {"from": "recon", "to": "tech_detect"},
-            {"from": "tech_detect", "to": "cve_match"},
-            {"from": "input", "to": "auth"},
-            {"from": "auth", "to": "cve_match"},
+            {"from": "tech_detect", "to": "auth_status"},
+            {"from": "auth_status", "to": "security_audit"},
+            {"from": "security_audit", "to": "domain_map"},
+            {"from": "domain_map", "to": "cve_match"},
             {"from": "cve_match", "to": "report"},
         ],
     })
