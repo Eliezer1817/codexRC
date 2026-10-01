@@ -957,10 +957,27 @@ class XSSHunter:
     # ---------- bateria 1: parametros GET ----------
     def test_params(self, targets: List[Dict[str, Any]], max_params: int = 60) -> List[Dict[str, Any]]:
         self.log("[xss] === bateria GET: parametros de URL ===")
-        findings = self._parallel(
-            lambda t: self.test_param(t["url"], t["param"]), targets[:max_params])
+        tgts = targets[:max_params]
+        findings: List[Dict[str, Any]] = []
+        lane = "hilos"
+        if self.workers > 1 and len(tgts) >= 6:
+            try:
+                from core.async_lane import AsyncLane   # import lazy: sin ciclo
+                findings = AsyncLane(self).run(tgts)
+                lane = "async"
+            except ImportError:
+                findings = self._parallel(
+                    lambda t: self.test_param(t["url"], t["param"]), tgts)
+                self.log("[xss] SLIPSTREAM no disponible (falta httpx) · usando hilos")
+            except Exception as exc:
+                self.log(f"[xss] carril async fallo ({str(exc)[:60]}) · reintento con hilos")
+                findings = self._parallel(
+                    lambda t: self.test_param(t["url"], t["param"]), tgts)
+        elif tgts:
+            findings = self._parallel(
+                lambda t: self.test_param(t["url"], t["param"]), tgts)
         self.log(f"[xss] GET terminado · {len(findings)} reflexiones encontradas "
-                 f"({self.workers} worker{'s' if self.workers > 1 else ''})")
+                 f"(carril {lane}, {self.workers} workers)")
         return findings
 
     # ---------- bateria 2: formularios ----------
