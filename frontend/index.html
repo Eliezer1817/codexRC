@@ -22,7 +22,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
     body {
-      font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: #000;
       color: var(--text);
       min-height: 100vh;
@@ -260,6 +260,9 @@
     #connectionSummary b { color: var(--green); }
     #logLink { font-size: 0.8rem; margin-bottom: 0.6rem; }
     #logLink a { color: var(--green-dim); }
+    pre, textarea {
+      font-family: ui-monospace, 'Cascadia Mono', 'Roboto Mono', 'Courier New', monospace;
+    }
     pre {
       background: #000;
       border: 1px solid #101a14;
