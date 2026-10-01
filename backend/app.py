@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.15.0"
+VERSION = "0.16.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -578,6 +578,8 @@ def start_hunter():
         "dom": bool(data.get("opt_dom", True)),
         "paths": bool(data.get("opt_paths", True)),
         "api": bool(data.get("opt_api", True)),
+        "api_js": bool(data.get("opt_api_js", True)),
+        "idor": bool(data.get("opt_idor", True)),
         "params_plus": bool(data.get("opt_params_plus", True)),
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
@@ -685,9 +687,17 @@ def start_hunter():
                         "details": [f for f in found]}}
                     return found
 
-                # baterias activas seguras: superficie, BAC API, params ocultos
+                # baterias activas seguras: superficie, API-JS, BAC API, IDOR, params ocultos
                 battery("surface", "paths", run_paths)
+
+                def run_api_js():
+                    fnd, hits = deep.discover_api_from_js(url, spider_out.get("js_endpoints", []))
+                    api_hits.extend(hits)
+                    return fnd
+
+                battery("api_js", "api_js", run_api_js)
                 battery("bac_api", "api", lambda: deep.test_api(url, api_hits))
+                battery("idor", "idor", lambda: deep.test_idor(url, api_hits))
                 battery("params_plus", "params_plus", lambda: _bateria_get(
                     hunter, {"param_targets": deep.discover_hidden_params(url, spider_out["pages"])}))
 

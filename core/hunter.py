@@ -9,6 +9,7 @@ analisis de contexto. Nunca ejecuta JavaScript ni dispara payloads reales.
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 import re
+import json
 import secrets
 import time
 
@@ -238,6 +239,7 @@ class DeepHunter:
         "api/profile", "api/settings", "api/config", "api/wallet", "api/balance",
         "api/transactions", "api/orders", "api/admin", "api/auth/me",
         "api/auth/session", "api/v1/me", "api/v1/user", "api/v1/account",
+        "api/user/profile", "api/customer", "api/customer/profile",
     )
 
     PARAM_NAMES = (
@@ -273,6 +275,167 @@ class DeepHunter:
             if f'"{k}"' in low or f"'{k}'" in low or f"{k}:" in low:
                 keys.append(k)
         return keys[:6]
+
+
+    # cookies de WAF/CDN que se conservan en el contraste anonimo
+    WAF_COOKIE_PREFIXES = ("cf_", "__cf", "_cf", "__cfr", "akamai", "__ddg")
+
+    def _anon_copy(self) -> requests.Session:
+        """Copia de la sesion SIN cookies de aplicacion (auth) pero CON la
+        clearance del WAF, para contrastar autorizacion real y no un bloqueo
+        TLS. Si el WAF responde challenge, el contraste se marca no concluyente."""
+        s = requests.Session()
+        for c in self.session.cookies:
+            if c.name.lower().startswith(self.WAF_COOKIE_PREFIXES):
+                s.cookies.set(c.name, c.value, domain=c.domain, path=c.path)
+        for k, v in self.session.headers.items():
+            if k.lower() not in ("cookie",):
+                s.headers[k] = v
+        return s
+
+    def _waf_block(self, status: int, text: str) -> bool:
+        if status not in (403, 429, 503):
+            return False
+        low = text[:600].lower()
+        return any(x in low for x in ("cloudflare", "cf-ray", "challenge",
+                                      "captcha", "ddos protection", "attention required"))
+
+    def _ip_echo(self, text: str) -> bool:
+        """True si el unico dato 'address' es el eco de la IP del cliente."""
+        return bool(re.search(r'"address"\s*:\s*"?\d{1,3}(\.\d{1,3}){3}', text))
+
+    def _pii(self, text: str) -> list:
+        keys = self._pii_keys(text)
+        if keys == ["address"] and self._ip_echo(text):
+            return []
+        return keys
+
+    def discover_api_from_js(self, base_url: str, js_urls: List[str]):
+        """Baja los bundles JS (con sesion heredada: ve el panel logueado) y
+        extrae rutas API reales del codigo. Devuelve (findings, nuevos_hits)."""
+        findings: List[Dict[str, Any]] = []
+        hits: List[str] = []
+        seen_paths: Set[str] = set()
+        for js in list(js_urls)[:15]:
+            try:
+                r = self.session.get(js, timeout=self.timeout)
+            except Exception:
+                continue
+            if r.status_code != 200 or len(r.text) < 50:
+                continue
+            for m in re.finditer(r'["\'`](/api/[A-Za-z0-9_\-/.]{2,70})["\'`]', r.text):
+                p = m.group(1)
+                if p not in seen_paths:
+                    seen_paths.add(p)
+                    hits.append(urljoin(base_url, p))
+            for m in re.finditer(r'(?:fetch|axios(?:\.\w+)?|\$\.(?:get|post)|\.open)\(\s*["\'`]([^"\'`]{4,120})["\'`]',
+                                 r.text):
+                t = m.group(1)
+                if t.startswith("/") and not t.startswith("//") and "?" not in t[:1]:
+                    if "." in t.rsplit("/", 1)[-1] and len(t.rsplit("/", 1)[-1].split(".")[-1]) <= 5:
+                        continue  # archivo estatico, no endpoint
+                    if t not in seen_paths:
+                        seen_paths.add(t)
+                        hits.append(urljoin(base_url, t))
+        hits = hits[:40]
+        if hits:
+            self.log(f"[api-js] {len(hits)} rutas API descubiertas en bundles JS:")
+            for h in hits[:10]:
+                self.log(f"[api-js]   {urlparse(h).path}")
+        else:
+            self.log("[api-js] sin rutas API nuevas en los bundles analizados")
+        return findings, hits
+
+    def test_idor(self, base_url: str, api_hits: List[str]):
+        """Bateria IDOR (lectura A->B): sobre endpoints API que responden con
+        sesion, prueba identificadores vecinos (id=1,2, path numerico) buscando
+        datos privados de OTROS usuarios. Solo GETs: nunca escribe ni modifica."""
+        findings: List[Dict[str, Any]] = []
+        probes_done = 0
+        base = list(api_hits) + [urljoin(base_url, "/" + a) for a in self.API_DEFAULTS]
+        cands = list(dict.fromkeys(base))[:20]
+        if not cands:
+            self.log("[idor] sin endpoints API para probar IDOR")
+            return findings
+        self.log(f"[idor] probando lectura A->B (ids vecinos) en {len(cands)} endpoints")
+        for u in cands:
+            self._pause()
+            try:
+                rb = self.session.get(u, timeout=self.timeout, allow_redirects=False)
+            except Exception:
+                continue
+            if rb.status_code != 200 or "json" not in (rb.headers.get("content-type") or "").lower():
+                continue
+            try:
+                base_json = json.loads(rb.text)
+            except Exception:
+                base_json = None
+            base_pii = self._pii(rb.text)
+            base_email = self._json_find(base_json, ("email", "username", "first_name"))
+            # variante 1: path con id numerico -> vecino
+            m = re.search(r"/(\d+)(/?)$", u)
+            path_variants = []
+            if m and int(m.group(1)) != 1:
+                path_variants.append(re.sub(r"/\d+(/?)$", "/1\\1", u))
+            # variante 2: parametros id/user_id
+            param_variants = []
+            sep = "&" if "?" in u else "?"
+            for p in ("id", "user_id"):
+                for v in ("1", "2"):
+                    param_variants.append(f"{u}{sep}{p}={v}")
+            for pv in path_variants + param_variants:
+                if probes_done >= 60:
+                    break
+                probes_done += 1
+                self._pause()
+                try:
+                    rp = self.session.get(pv, timeout=self.timeout, allow_redirects=False)
+                except Exception:
+                    continue
+                if rp.status_code != 200:
+                    continue
+                if self._waf_block(rp.status_code, rp.text):
+                    continue
+                pii_p = self._pii(rp.text)
+                if not pii_p:
+                    continue
+                try:
+                    pj = json.loads(rp.text)
+                except Exception:
+                    pj = None
+                p_email = self._json_find(pj, ("email", "username", "first_name"))
+                if base_pii and p_email and p_email == base_email:
+                    continue  # mismo usuario, el endpoint ignoro el id
+                findings.append({
+                    "severity": "alta", "type": "IDOR (lectura A->B)",
+                    "param": urlparse(pv).query or "-",
+                    "target": pv,
+                    "evidence": f"datos privados de otro registro (campos: {', '.join(pii_p)})"
+                                + (f" · identidad: {p_email}" if p_email else ""),
+                    "verdict": "candidata IDOR: confirmar identidad ajena"})
+                self.log(f"[idor] 💥 posible IDOR en {urlparse(pv).path}"
+                         + (f"?{urlparse(pv).query}" if urlparse(pv).query else "")
+                         + f" ({', '.join(pii_p)})")
+        if probes_done:
+            self.log(f"[idor] {probes_done} sondas de lectura A->B completadas")
+        return findings
+
+    @staticmethod
+    def _json_find(obj, keys: tuple):
+        """Busca el primer valor de las claves dadas en un JSON anidado."""
+        if not isinstance(obj, (dict, list)):
+            return None
+        stack = [obj]
+        while stack:
+            cur = stack.pop()
+            if isinstance(cur, dict):
+                for k, v in cur.items():
+                    if k in keys and isinstance(v, str) and v:
+                        return v
+                    stack.append(v)
+            elif isinstance(cur, list):
+                stack.extend(cur)
+        return None
 
     def test_paths(self, base_url: str):
         """Sondea el diccionario de rutas. Detecta (1) respuestas reales distintas
