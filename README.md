@@ -1,20 +1,21 @@
 # codexRC
 
-**Automated Web Security Auditing Tool** con backend único y dashboard web local.
+**Automated Web Security Auditing Tool** con backend único, dashboard web local y modo HUNTER de caza activa.
 
-> Solo usar en objetivos que tengas autorización para auditar.
+> Solo usar en objetivos que tengas autorización para auditar. Las sondas son de lectura A→B: contrastan el acceso con y sin sesión, sin alterar datos del objetivo.
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask.
-- **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher y pipeline se ejecutan dentro del backend.
-- **Frontend:** `frontend/index.html` solo presenta la interfaz y llama a la API `/api/*`.
-- **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría.
-- `backend/main.py` existe solo como compatibilidad y reexporta la aplicación Flask; no es un segundo backend.
-- **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` y puede descargarse desde el dashboard; los eventos generales quedan en `reports/backend.log` en formato JSONL, con rotación automática y `request_id`.
-- **Versión:** se muestra en la esquina del dashboard y en `GET /api/info`.
-- **Verificación de sesión:** después de autenticar, el backend consulta una URL protegida, detecta redirecciones al login y busca el nombre visible del usuario.
-- **Diagnóstico:** cada respuesta incluye `connection` y `diagnostics` para saber si el backend respondió, el objetivo fue alcanzable, la sesión fue verificada, qué usuario se detectó y qué solicitud revisar en los logs.
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.20.0**).
+- **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
+  - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
+  - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
+  - `core/auth.py` — login automático por formulario HTML o API JSON (SPAs Angular/React), autodetección de endpoint de autenticación, CSRF y cabeceras Origin/Referer.
+- **Frontend:** `frontend/index.html` (dashboard de escaneo) y `frontend/hunter.html` (terminal de caza). Solo presentan la interfaz y llaman a la API `/api/*`.
+- **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría. Compatible con `armv7l` (32 bits): el bypass de Cloudflare usa `cloudscraper`, sin binarios precompilados.
+- **GHOSTHOOK:** `ghosthook/worker.js` — colector de blind XSS gratuito para Cloudflare Workers + KV (ver más abajo).
+- **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` descargable desde el dashboard; los eventos generales quedan en `reports/backend.log` en JSONL con rotación automática y `request_id`.
+- **Diagnóstico:** cada respuesta incluye `connection` y `diagnostics` (backend respondió, objetivo alcanzable, sesión verificada, usuario detectado).
 
 ## Inicio en Termux
 
@@ -34,41 +35,77 @@ Luego abre en el navegador del teléfono:
 
 **http://127.0.0.1:8000**
 
-También puedes iniciar directamente con:
+El modo HUNTER está disponible en **http://127.0.0.1:8000/hunter.html**.
 
-```bash
-python backend/app.py
-```
+## Modo HUNTER (caza activa)
+
+Pipeline de 7 nodos con sesión heredada del escáner (pruebas autenticadas). Abre con `frontend/hunter.html`.
+
+**Baterías de solo lectura (activas por defecto):**
+
+- **SPIDER** — mapea páginas, parámetros, formularios y archivos JS de la superficie.
+- **SURFACE** — sondea rutas comunes para descubrir superficie real bajo shells SPA, APIs JSON expuestas, rutas protegidas y archivos sensibles (`.env`/`.git`, sin extraer valores).
+- **API-JS** — sigue los chunks lazy de Angular/webpack recursivamente y extrae las rutas API reales con su verbo (`get*` de lectura; los `do*` de escritura quedan excluidos siempre).
+- **BAC-API** — contraste GET logueado vs. anónimo en endpoints API JSON: detecta datos privados accesibles sin sesión.
+- **IDOR** — lectura A→B sobre endpoints API con sesión probando ids vecinos (query, path y body JSON), con evidencia de identidad.
+- **PARAMS+** — fuerza 32 nombres de parámetros comunes en páginas dinámicas.
+- **CORPUS XSS** — reflexión GET/formularios/headers/DOM con marcadores inertes: detecta contexto exacto y qué caracteres sobreviven crudos, sin disparar payloads funcionales.
+- **CSP** — lee la cabecera CSP y reporta reglas débiles (unsafe-inline, wildcards, ausencia de script-src) y `X-Frame-Options`.
+
+**Baterías opt-in (activables con los toggles de la UI):**
+
+- **BLIND / GHOSTHOOK** (opt_blind) — ESCRIBE en el blanco: siembra el payload del colector GHOSTHOOK en el campo de texto más largo de cada formulario. Solo en programas que permitan stored/blind XSS o en labs propios. Requiere `blind_endpoint` (la URL del worker desplegado).
+- **XSS-PRO** (opt_xss_pro) — seis vectores avanzados:
+  1. **postMessage XSS** — listeners de `message` sin chequeo de origen con sinks peligrosos, por análisis estático de páginas y chunks.
+  2. **Carga dinámica de script** — `createElement('script')`/`getScript` con src influible por query/hash.
+  3. **mXSS** — sinks de re-serialización (`innerHTML = x.innerHTML`) y contenedores mutables (svg/math/noscript/template).
+  4. **Dangling markup** — reflexión en atributo con comilla cruda: exfiltración pasiva sin JS; sube a alta cuando la CSP bloquea scripts inline.
+  5. **XSS almacenado** — marcador inerte POST que reaparece en otra página (escritura mínima, igual filosofía que BLIND).
+  6. **CSP bypass** — unsafe-inline, allowlist JSONP, wildcard `https:`, `base-uri` ausente, `strict-dynamic`, `object-src`.
+
+**FILTRACIÓN DE DATOS:** los hallazgos que exponen datos de usuarios (emails, balances, perfiles ajenos) se separan de los hallazgos técnicos: el endpoint `GET /api/jobs` devuelve la sección `leaks` aparte y la UI los muestra en la caja roja **FILTRACIÓN DE DATOS DE USUARIOS**, arriba de todo.
+
+## GHOSTHOOK (colector blind XSS)
+
+Worker de Cloudflare (KV gratuito) incluido en `ghosthook/worker.js`:
+
+- `/x.js` — payload que captura URL, cookies visibles, referrer, formularios y dump del DOM.
+- `/c` — recibe beacons (POST, `sendBeacon` y fallback `Image()` para cuando la CSP bloquea `connect-src`).
+- `/panel?token=...` y `/hit` — lectura de las capturas con token.
+
+Para desplegarlo: crea un worker en tu cuenta de Cloudflare con un namespace KV y pega `worker.js` cambiando `TOKEN` y el binding por los tuyos. Nunca commitees tu token real: el archivo del repo usa un placeholder.
 
 ## API principal
 
 - `GET /health` — estado del backend.
 - `GET /api/info` — nombre y versión actual.
 - `GET /api/status` — estado operativo, hora de inicio y jobs en memoria.
-- `POST /api/scan` — ejecuta el pipeline completo en el backend.
-- `GET /api/jobs` — lista los escaneos realizados en la sesión.
+- `POST /api/scan` — ejecuta el pipeline completo de escaneo.
+- `POST /api/hunter` — ejecuta una caza (opciones `opt_*` por batería).
+- `GET /api/jobs` — lista los escaneos de la sesión (incluye sección `leaks`).
 - `GET /api/jobs/<id>` — consulta un escaneo.
-- `GET /api/jobs/<id>/log` — descarga el archivo JSON completo del escaneo.
-- `GET /api/pipeline/schema` — devuelve la estructura visual del pipeline.
+- `GET /api/jobs/<id>/log` — descarga el JSON completo del escaneo.
+- `GET /api/pipeline/schema` — estructura visual del pipeline.
 
 Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no se devuelven en la respuesta de autenticación.
 
-## Funcionalidades
+## Funcionalidades del escaneo
 
-- Autenticación por cookies, login automático, Bearer token y header personalizado.
+- Autenticación por cookies, login automático (formularios HTML o API JSON de SPAs), Bearer token y header personalizado.
+- Auto-descubrimiento del endpoint de login para apps Angular/React/Vue: basta URL base, usuario y contraseña.
+- Verificación de sesión contra una URL protegida, con detección de redirecciones al login y nombre visible del usuario.
 - Reconocimiento de headers, redirecciones, cookies y headers de seguridad.
-- Detección tecnológica.
-- Correlación de CVEs mediante CIRCL.
+- Detección tecnológica y correlación de CVEs mediante CIRCL.
 - Dashboard visual del pipeline.
 
-Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación, por ejemplo `/account` o `/dashboard`. El resultado queda en `connection` y en `results.auth_status.data.session_check` con `authenticated`, `username`, `final_url`, `status_code`, `response_time`, `signals` y `reason`. Si se deja vacío, se usa la URL objetivo, pero una página pública no permite confirmar por completo que la sesión sea válida.
+Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación (p. ej. `/account` o `/dashboard`). Si se deja vacía, se usa la URL objetivo.
 
 ## Auto-update en Termux (desde GitHub)
 
 Flujo: editas en GitHub → haces commit → Termux detecta el commit → `git pull` automático → el servidor se reinicia → tu localhost queda actualizado al instante.
 
 ```bash
-bash auto_update.sh        # vigila cada 20 segundos
+bash auto_update.sh         # vigila cada 20 segundos
 bash auto_update.sh 10      # vigila cada 10 segundos
 ```
 
