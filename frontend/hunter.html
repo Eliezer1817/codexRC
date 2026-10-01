@@ -173,6 +173,7 @@
             <label><input type="checkbox" id="optSsti" checked /> SSTI-BAIT: inyección de plantillas con fingerprint del motor (Jinja · Twig · Velocity · ERB · Smarty)</label>
             <label><input type="checkbox" id="optCache" checked /> CACHE-BAIT: entradas unkeyed + web cache deception (pasivo, no envenena)</label>
             <label><input type="checkbox" id="optGraphql" checked /> GRAPHQL: endpoint oculto · introspección · field suggestions · batching</label>
+            <label><input type="checkbox" id="optCov" /> COV-BAIT (etapa 1): cobertura de código en navegador real · detecta funciones ocultas que ejecuta cada sonda</label>
           </div>
           <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
           <label style="margin-top:0.8rem">LOTE · cola de blancos (una URL por línea)</label>
@@ -361,6 +362,7 @@ esperando objetivo...</pre>
         opt_ssti: document.getElementById("optSsti").checked,
         opt_cache: document.getElementById("optCache").checked,
         opt_graphql: document.getElementById("optGraphql").checked,
+        opt_cov: document.getElementById("optCov").checked,
         inherit_session: document.getElementById("optInherit").checked,
       };
       const btn = document.getElementById("btnBatch");
@@ -430,6 +432,7 @@ esperando objetivo...</pre>
         opt_ssti: document.getElementById("optSsti").checked,
         opt_cache: document.getElementById("optCache").checked,
         opt_graphql: document.getElementById("optGraphql").checked,
+        opt_cov: document.getElementById("optCov").checked,
       };
       const user = document.getElementById("authUser").value.trim();
       if (user) {

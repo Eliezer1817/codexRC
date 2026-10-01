@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.30.0"
+VERSION = "0.31.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -589,7 +589,7 @@ def start_scan():
 
 HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
                 "xss_dom", "sqli", "path", "ssti", "cache", "graphql", "stealth",
-                "veritas", "chain", "self_tune", "report"]
+                "cov", "veritas", "chain", "self_tune", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -682,6 +682,7 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
         "ssti": bool(data.get("opt_ssti", True)),  # SSTI-BAIT: plantillas con fingerprint (lectura)
         "cache": bool(data.get("opt_cache", True)),  # CACHE-BAIT: poisoning/deception (pasivo)
         "graphql": bool(data.get("opt_graphql", True)),  # GraphQL: esquema y batching (lectura)
+        "cov": bool(data.get("opt_cov", False)),  # COV-BAIT: cobertura de codigo (navegador real)
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
@@ -899,6 +900,12 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                     return GraphqlBait(session, emit).run(url)
 
                 battery("graphql", "graphql", run_graphql)
+
+                def run_cov():
+                    from core.cov_bait import CovBait
+                    return CovBait(session, emit).run(url, spider_out)
+
+                battery("cov", "cov", run_cov)
 
                 def run_stealth():
                     from core.stealth_bait import StealthBait
