@@ -8,7 +8,7 @@
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.21.1**).
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.22.0**).
 - **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
   - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
   - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
@@ -17,6 +17,8 @@
 - **Termux:** únicamente inicia el backend y mantiene disponible `localhost`; no contiene lógica de auditoría. Compatible con `armv7l` (32 bits): el bypass de Cloudflare usa `cloudscraper`, sin binarios precompilados.
 - **GHOSTHOOK:** `ghosthook/worker.js` — colector de blind XSS gratuito para Cloudflare Workers + KV (ver más abajo).
 - **Logs:** cada escaneo se guarda en `reports/codexrc_<id>.json` descargable desde el dashboard; los eventos generales quedan en `reports/backend.log` en JSONL con rotación automática y `request_id`.
+- **PIPE-HUNT (modo tubería):** `waybackurls sitio.com | python3 hunt_pipe.py --xsspro --workers 8` — recibe URLs desde cualquier herramienta por stdin, las caza con el Hunter del backend local y resume los hallazgos. Con `--no-wait` solo encola y sigue.
+- **OVERDRIVE (velocidad):** las baterías del corpus (GET y formularios) y los módulos de sonda de XSS-PRO (dangling, base tag, redirect) ejecutan sus sondas en paralelo con hasta 8 workers (por defecto 4). En benchmark contra el lab: 5.4x más rápido con 8 workers, con exactamente los mismos hallazgos. El parámetro `workers` (1-8) se controla desde la interfaz del Hunter o la API; con 1 queda el modo secuencial clásico.
 - **Estabilidad:** el índice de jobs está protegido con lock (dos cazas simultáneas nunca pisan el estado de la otra), con tope de 40 jobs en memoria y log vivo limitado. Un job que supera 45 minutos es marcado como colgado por el watchdog (la UI nunca queda en "running" eterno). Al reiniciar el servidor, los jobs se recuperan del disco y una caza interrumpida aparece como "interrupted" con su explicación. La sesión heredada se guarda por origen: cazas contra sitios distintos nunca se cruzan credenciales. Cualquier error no manejado responde JSON sin tumbar el proceso, y `auto_update.sh` verifica `/health` tras cada reinicio y resucita al servidor si cayó.
 - **Diagnóstico:** cada respuesta incluye `connection` y `diagnostics` (backend respondió, objetivo alcanzable, sesión verificada, usuario detectado).
 

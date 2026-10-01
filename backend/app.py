@@ -118,7 +118,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.21.1"
+VERSION = "0.22.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -671,6 +671,8 @@ def start_hunter():
         "xss_pro": bool(data.get("opt_xss_pro", False)),  # avanzados: stored POSTEA marcador
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
+    # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
+    workers = max(1, min(int(data.get("workers") or 4), 8))
 
     job_id = uuid.uuid4().hex[:8]
     job = {
@@ -754,7 +756,8 @@ def start_hunter():
                 job["results"]["param_map"] = {"status": "success", "data": {
                     "targets": spider_out["param_targets"], "forms": spider_out["forms"]}}
 
-                hunter = XSSHunter(session, emit, delay=float(data.get("delay", 0.15)))
+                hunter = XSSHunter(session, emit, delay=float(data.get("delay", 0.15)),
+                                   workers=workers)
                 deep = DeepHunter(session, emit, delay=float(data.get("delay", 0.15)))
                 api_hits: list = []
 
@@ -798,7 +801,7 @@ def start_hunter():
                     timeout=15.0).plant(spider_out, data.get("blind_endpoint", "")))
                 battery("xss_pro", "xss_pro", lambda: XSSPro(
                     session, emit, delay=float(data.get("delay", 0.15)),
-                    timeout=15.0).run(url, spider_out))
+                    timeout=15.0, workers=workers).run(url, spider_out))
                 battery("params_plus", "params_plus", lambda: _bateria_get(
                     hunter, {"param_targets": deep.discover_hidden_params(url, spider_out["pages"])}))
 

