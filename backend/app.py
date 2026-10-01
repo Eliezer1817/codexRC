@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.35.0"
+VERSION = "0.36.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -515,6 +515,25 @@ def dashboard():
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "codexRC-backend", "version": VERSION, "time": utc_now()})
+
+
+@app.post("/api/re")
+def api_re():
+    """REVERSE: ingenieria inversa (DEX/class/ELF: estructura interna)."""
+    data = request.get_json(silent=True) or {}
+    path = (data.get("path") or "").strip()
+    top = int(data.get("top") or 30)
+    if not path:
+        return jsonify({"error": "falta 'path' (apk, jar, dex, binario...)"}), 400
+    import os
+    if not os.path.exists(path):
+        return jsonify({"error": "path inexistente", "path": path}), 404
+    from core.re_engine import analyze_path
+    try:
+        res = analyze_path(path, top=top)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"target": path, "count": len(res), "findings": res})
 
 
 @app.post("/api/bin")
