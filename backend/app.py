@@ -41,7 +41,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.14.0"
+VERSION = "0.14.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -204,6 +204,11 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
     ))
     auth = build_auth(data, target_url=url)
     session = auth.get_session()
+    cfg = _auth_config_of(data)
+    if cfg:
+        LAST_AUTH_CONFIG.clear()
+        LAST_AUTH_CONFIG.update(cfg)
+        LAST_AUTH_CONFIG["_for_url"] = url
 
     def emit(msg: str) -> None:
         if job is not None:
@@ -503,6 +508,16 @@ def start_scan():
 HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers", "xss_dom", "report"]
 
 
+AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
+               "username", "password", "login_url", "username_field", "password_field",
+               "success_indicator", "verification_url")
+LAST_AUTH_CONFIG: Dict[str, Any] = {}
+
+
+def _auth_config_of(data: Dict[str, Any]) -> Dict[str, Any]:
+    return {k: data[k] for k in AUTH_FIELDS if data.get(k)}
+
+
 @app.post("/api/hunter")
 def start_hunter():
     """HUNTER MODE: arana + corpus XSS automatico, con log de terminal detallado."""
@@ -549,7 +564,22 @@ def start_hunter():
                 emit(f"[hunter] objetivo fijado: {url}")
                 emit("[hunter] modo pasivo: sondas de reflexion, sin payloads ni ejecucion")
 
-                auth = build_auth(data, target_url=url)
+                if _auth_config_of(data):
+                    emit("[hunter] auth: usando las credenciales provistas en este formulario")
+                    hunter_data = data
+                elif data.get("inherit_auth") and LAST_AUTH_CONFIG:
+                    emit("[hunter] auth: HEREDANDO la sesion del ultimo escaneo "
+                         f"({', '.join(k for k in LAST_AUTH_CONFIG if k != '_for_url')})")
+                    hunter_data = dict(LAST_AUTH_CONFIG)
+                    hunter_data["_inherited"] = True
+                else:
+                    emit("[hunter] auth: SIN sesion, cazando como visitante anonimo")
+                    hunter_data = {k: v for k, v in data.items()
+                                   if k in ("cookies", "bearer_token", "custom_header_name",
+                                            "custom_header_value", "username", "password",
+                                            "login_url", "username_field", "password_field",
+                                            "success_indicator", "verification_url")}
+                auth = build_auth(hunter_data, target_url=url)
                 session = auth.get_session()
 
                 node_state("spider", "running")
