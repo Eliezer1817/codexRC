@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codexRC · HUNTER MODE</title>
+  <style>
+    :root {
+      --bg: #000000; --panel: #000000; --border: #10381f;
+      --green: #00c853; --green-dim: #009a42; --green-dark: #0a2e18;
+      --text: #eef5f0; --gray: #b0c2b6; --muted: #8fa396;
+      --amber: #ffb000; --red: #ff2e4c;
+      --glow: 0 0 8px rgba(0, 200, 83, 0.4);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: "Courier New", ui-monospace, monospace;
+      font-size: 18px; line-height: 1.5; padding: 0.8rem; max-width: 1500px; margin: 0 auto;
+    }
+    a { color: var(--green); text-decoration: none; }
+    header { border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; margin-bottom: 1rem; }
+    .prompt { font-size: 1.3rem; font-weight: bold; color: var(--green); text-shadow: var(--glow); letter-spacing: 0.1em; }
+    .prompt .ver { color: var(--muted); font-size: 0.8rem; margin-left: 0.5rem; }
+    nav { display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem; }
+    nav a { color: var(--muted); padding: 0.15rem 0.6rem; border: 1px solid transparent; }
+    nav a.on { color: var(--green); border-color: var(--border); background: var(--green-dark); }
+    main { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 1rem; }
+    .card-head {
+      padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border);
+      color: var(--green); font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .card-body { padding: 0.8rem; }
+    label { display: block; color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0.25rem; }
+    input[type="url"], input[type="text"], input[type="number"] {
+      width: 100%; background: #020a05; border: 1px solid var(--border); color: var(--text);
+      padding: 0.55rem 0.6rem; font-family: inherit; font-size: 0.95rem; border-radius: 2px;
+    }
+    input:focus { outline: none; border-color: var(--green); box-shadow: var(--glow); }
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-top: 0.5rem; }
+    .checks label { display: flex; align-items: center; gap: 0.4rem; margin: 0; color: var(--text); font-size: 0.82rem; cursor: pointer; }
+    .checks input { width: 1rem; height: 1rem; accent-color: var(--green); }
+    button {
+      width: 100%; margin-top: 1rem; background: var(--green-dark); border: 1px solid var(--green-dim);
+      color: var(--green); font-family: inherit; font-weight: bold; font-size: 1rem;
+      padding: 0.7rem; cursor: pointer; letter-spacing: 0.08em; border-radius: 2px;
+    }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    button:hover:not(:disabled) { background: var(--green); color: #001a08; box-shadow: var(--glow); }
+    .hint { color: var(--muted); font-size: 0.72rem; margin-top: 0.5rem; line-height: 1.45; }
+
+    .pipeline { display: flex; flex-wrap: wrap; gap: 0.8rem 0.4rem; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    .node {
+      background: #000; border: 1px solid #182420; padding: 0.6rem 0.8rem;
+      min-width: 104px; text-align: center; position: relative; border-radius: 2px; transition: all 0.25s;
+    }
+    .node .label { font-size: 0.85rem; letter-spacing: 0.05em; }
+    .node .status { font-size: 0.68rem; margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    .node .duration { font-size: 0.65rem; color: var(--muted); }
+    .node.pending { opacity: 0.55; }
+    .node.running { border-color: var(--amber); box-shadow: 0 0 14px rgba(255,176,0,0.25); animation: pulse 1.1s infinite; }
+    .node.running .status { color: var(--amber); }
+    @keyframes pulse { 50% { box-shadow: 0 0 22px rgba(255,176,0,0.4); } }
+    .node.success { border-color: var(--green-dim); }
+    .node.success .label, .node.success .status { color: var(--green); }
+    .node.failed { border-color: var(--red); }
+    .node.failed .label, .node.failed .status { color: var(--red); }
+    .conn { width: 24px; height: 2px; background: #1a2a20; position: relative; overflow: hidden; flex: 0 0 auto; }
+    .conn.done { background: #0d5c2e; }
+    .conn.flow { background: #0a3d1c; }
+    .conn.flow::after {
+      content: ""; position: absolute; top: 0; left: -10px; width: 10px; height: 2px;
+      background: var(--green); box-shadow: 0 0 8px var(--green); animation: flowdot 0.8s linear infinite;
+    }
+    @keyframes flowdot { to { left: 24px; } }
+
+    .term {
+      background: #000; border: 1px solid var(--border); border-radius: 2px; margin-bottom: 1rem;
+    }
+    .term .titlebar {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.8rem;
+      border-bottom: 1px solid var(--border); font-size: 0.8rem; color: var(--muted);
+    }
+    .term .titlebar .dots { display: inline-flex; gap: 4px; }
+    .term .titlebar .dots i { width: 9px; height: 9px; border-radius: 50%; background: #1d2a22; }
+    #liveDot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: var(--glow); animation: blink 0.9s infinite; }
+    @keyframes blink { 50% { opacity: 0.25; } }
+    #output {
+      padding: 0.8rem; font-size: 0.8rem; line-height: 1.6; white-space: pre-wrap;
+      word-break: break-all; min-height: 220px; max-height: 60vh; overflow-y: auto;
+      font-family: "Courier New", ui-monospace, monospace; color: var(--gray);
+    }
+    .finding { border: 1px solid var(--border); border-left: 4px solid var(--muted); padding: 0.7rem 0.9rem; margin-bottom: 0.7rem; border-radius: 2px; }
+    .finding.alta { border-left-color: var(--red); }
+    .finding.media { border-left-color: var(--amber); }
+    .finding.baja { border-left-color: var(--green-dim); }
+    .sev { font-size: 0.7rem; font-weight: bold; padding: 0.1rem 0.5rem; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .sev.alta { background: var(--red); color: #000; }
+    .sev.media { background: var(--amber); color: #000; }
+    .sev.baja { background: var(--green-dim); color: #000; }
+    .sev.info { background: #2a3a30; color: var(--gray); }
+    .finding h4 { font-size: 0.95rem; color: var(--text); margin: 0.3rem 0; }
+    .finding .target { font-size: 0.78rem; color: var(--green); word-break: break-all; }
+    .finding .reason { font-size: 0.8rem; color: var(--gray); margin: 0.3rem 0; }
+    .finding pre.ev {
+      background: #04120a; border: 1px solid var(--green-dark); padding: 0.4rem; font-size: 0.72rem;
+      overflow-x: auto; margin: 0.4rem 0; color: var(--muted); white-space: pre-wrap; word-break: break-all;
+    }
+    .veredicto { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; }
+    .veredicto b { color: var(--muted); font-weight: 400; }
+    .veredicto span { color: var(--gray); }
+    #summary { color: var(--text); font-size: 0.85rem; line-height: 1.7; margin-bottom: 0.8rem; }
+    #summary b { color: var(--green); }
+    #summary .alta { color: var(--red); font-weight: bold; }
+    #summary .media { color: var(--amber); font-weight: bold; }
+    #logLink { font-size: 0.78rem; margin-bottom: 1rem; }
+    #logLink a { color: var(--green-dim); }
+    .empty { color: var(--muted); font-size: 0.82rem; }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      body { font-size: 16px; padding: 0.5rem; }
+      #output { max-height: 45vh; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="prompt">CODEXRC // HUNTER MODE<span class="ver" id="appVersion">v?</span></div>
+    <nav>
+      <a href="/">escáner</a>
+      <a href="/hunter.html" class="on">hunter</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside>
+      <div class="card">
+        <div class="card-head">Configurar la caza</div>
+        <div class="card-body">
+          <label>URL objetivo</label>
+          <input type="url" id="targetUrl" placeholder="https://sitio.com" />
+          <label>Páginas máximas de la araña</label>
+          <input type="number" id="maxPages" value="25" min="1" max="100" />
+          <label>Baterías del corpus</label>
+          <div class="checks">
+            <label><input type="checkbox" id="optGet" checked /> XSS GET</label>
+            <label><input type="checkbox" id="optForms" checked /> Forms</label>
+            <label><input type="checkbox" id="optHeaders" checked /> Cabeceras</label>
+            <label><input type="checkbox" id="optDom" checked /> DOM</label>
+          </div>
+          <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
+          <p class="hint">
+            Modo 100% pasivo: envía marcadores benignos (kxss...) y deduce la
+            explotabilidad por reflexión y contexto. Sin payloads, sin ejecución,
+            sin cuentas. Detallado línea por línea en la terminal.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <section>
+      <div class="pipeline" id="pipeline"></div>
+
+      <div class="term">
+        <div class="titlebar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span>root@codexrc:~# hunter --verbose</span>
+          <span id="liveDot" style="display:none"></span>
+        </div>
+        <pre id="output">codexRC HUNTER · motor de pruebas automáticas
+esperando objetivo...</pre>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Hallazgos <span id="fCount" style="color:var(--muted)"></span></div>
+        <div class="card-body">
+          <div id="summary"></div>
+          <div id="findings"><div class="empty">sin hallazgos todavía…</div></div>
+        </div>
+      </div>
+      <p id="logLink"></p>
+    </section>
+  </main>
+
+  <script>
+    const NODES = [
+      { id: "spider", label: "SPIDER" },
+      { id: "param_map", label: "PARAMS" },
+      { id: "xss_get", label: "XSS-GET" },
+      { id: "xss_forms", label: "XSS-FORMS" },
+      { id: "xss_headers", label: "XSS-HEAD" },
+      { id: "xss_dom", label: "XSS-DOM" },
+      { id: "report", label: "REPORT" },
+    ];
+    const ICONS = { pending: "·", running: "»", success: "✓", failed: "✗" };
+    const pipelineEl = document.getElementById("pipeline");
+
+    function renderPipeline(statusMap = {}) {
+      pipelineEl.innerHTML = "";
+      NODES.forEach((n, i) => {
+        const st = statusMap[n.id] || { status: "pending" };
+        const div = document.createElement("div");
+        div.className = `node ${st.status || "pending"}`;
+        div.innerHTML = `
+          <div class="label">${n.label}</div>
+          <div class="status">${ICONS[st.status] || "·"} ${st.status || "pending"}</div>
+          ${st.duration != null ? `<div class="duration">${st.duration}s</div>` : ""}
+        `;
+        pipelineEl.appendChild(div);
+        if (i < NODES.length - 1) {
+          const nxt = statusMap[NODES[i + 1].id] || { status: "pending" };
+          const conn = document.createElement("div");
+          conn.className = "conn " + (nxt.status === "running" ? "flow" : nxt.status === "success" ? "done" : nxt.status === "failed" ? "err" : "");
+          pipelineEl.appendChild(conn);
+        }
+      });
+    }
+    renderPipeline();
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+
+    function logLine(msg) {
+      const out = document.getElementById("output");
+      const nearBottom = out.scrollHeight - out.scrollTop - out.clientHeight < 100;
+      out.textContent += "\n" + msg;
+      if (nearBottom) out.scrollTop = out.scrollHeight;
+    }
+
+    function renderFindings(findings) {
+      const box = document.getElementById("findings");
+      document.getElementById("fCount").textContent = findings.length ? "· " + findings.length : "";
+      if (!findings.length) return;
+      box.innerHTML = findings.map(f => {
+        const v = f.veredicto || {};
+        return `
+        <div class="finding ${f.severity}">
+          <span class="sev ${f.severity}">${esc(f.severity)}</span>
+          <span class="sev info" style="margin-left:4px">${esc(f.type || "")}</span>
+          <h4>${esc(f.param || "")} <span style="color:var(--muted)">· ${esc(f.method || "")} · contexto: ${esc(f.context || "?")}</span></h4>
+          <div class="target">${esc(f.target || "")}</div>
+          <div class="reason">${esc(f.reason || "")}</div>
+          <pre class="ev">${esc(f.evidence || "")}</pre>
+          <div class="veredicto">
+            <b>gravedad:</b><span>${esc(v.gravedad || f.severity)}</span>
+            <b>¿paga?:</b><span>${esc(v.paga || "?")}</span>
+            <b>¿primeros?:</b><span>${esc(v.primeros || "?")}</span>
+            <b>¿reglas OK?:</b><span>${esc(v.reglas || "?")}</span>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function finishHunt(job) {
+      const btn = document.getElementById("btnHunt");
+      btn.disabled = false;
+      btn.textContent = ">> Iniciar Caza";
+      document.getElementById("liveDot").style.display = "none";
+      const s = job.summary || {};
+      document.getElementById("summary").innerHTML =
+        `CAZA TERMINADA · <b>${s.total || 0} hallazgos</b> · ` +
+        `<span class="alta">${s.alta || 0} altos</span> · ` +
+        `<span class="media">${s.media || 0} medios</span> · ${s.baja || 0} bajos · ${s.info || 0} info`;
+      logLine("═════════ CAZA TERMINADA ═════════");
+      if (job.log_url) {
+        document.getElementById("logLink").innerHTML =
+          `<a href="${job.log_url}" download>&gt;&gt; descargar informe completo (${esc(job.log_file || "")})</a>`;
+      }
+      if (job.status === "failed") logLine("✗ CAZA FALLÓ: " + (job.error || "?"));
+    }
+
+    async function startHunt() {
+      const url = document.getElementById("targetUrl").value.trim();
+      if (!url) return alert("Pon una URL");
+      const body = {
+        url,
+        max_pages: parseInt(document.getElementById("maxPages").value) || 25,
+        opt_get: document.getElementById("optGet").checked,
+        opt_forms: document.getElementById("optForms").checked,
+        opt_headers: document.getElementById("optHeaders").checked,
+        opt_dom: document.getElementById("optDom").checked,
+      };
+      const btn = document.getElementById("btnHunt");
+      btn.disabled = true;
+      btn.textContent = "CAZANDO...";
+      document.getElementById("liveDot").style.display = "inline-block";
+      document.getElementById("output").textContent = "root@codexrc:~# hunter " + url;
+      document.getElementById("summary").textContent = "";
+      document.getElementById("findings").innerHTML = '<div class="empty">cazando…</div>';
+      document.getElementById("fCount").textContent = "";
+      document.getElementById("logLink").textContent = "";
+      renderPipeline();
+
+      try {
+        const res = await fetch("/api/hunter", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const started = await res.json();
+        if (!res.ok) throw new Error(started.error || "Error al iniciar");
+        logLine("→ job " + started.job_id + " · araña + corpus XSS en marcha");
+        let last = 0;
+        const poll = setInterval(async () => {
+          try {
+            const r = await fetch("/api/jobs/" + started.job_id);
+            if (!r.ok) return;
+            const job = await r.json();
+            renderPipeline(job.pipeline?.nodes || {});
+            const lines = job.live_log || [];
+            for (; last < lines.length; last++) logLine(lines[last].msg);
+            if (job.findings && job.findings.length) renderFindings(job.findings);
+            if (job.status !== "running") {
+              clearInterval(poll);
+              finishHunt(job);
+            }
+          } catch (e) { /* seguimos intentando */ }
+        }, 900);
+      } catch (err) {
+        logLine("✗ ERROR: " + err.message);
+        document.getElementById("liveDot").style.display = "none";
+        btn.disabled = false;
+        btn.textContent = ">> Iniciar Caza";
+      }
+    }
+
+    fetch("/api/status").then(r => r.json()).then(d => {
+      document.getElementById("appVersion").textContent = "v" + (d.version || "?");
+    }).catch(() => {});
+  </script>
+</body>
+</html>

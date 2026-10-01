@@ -31,6 +31,7 @@ import threading
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
 from core.deep_scan import DomainMap, cookie_flags, detect_waf, tls_audit
+from core.hunter import Spider, XSSHunter
 from core.pipeline import Pipeline
 from core.recon import Recon
 from core.tech_detect import TechDetector
@@ -40,7 +41,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.13.0"
+VERSION = "0.14.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -499,6 +500,132 @@ def start_scan():
     return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
 
 
+HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers", "xss_dom", "report"]
+
+
+@app.post("/api/hunter")
+def start_hunter():
+    """HUNTER MODE: arana + corpus XSS automatico, con log de terminal detallado."""
+    data = request.get_json(silent=True) or {}
+    url = str(data.get("url", "")).strip()
+    if not valid_target(url):
+        return jsonify({"error": "url debe ser una URL http(s) valida"}), 400
+
+    opts = {
+        "get": bool(data.get("opt_get", True)),
+        "forms": bool(data.get("opt_forms", True)),
+        "headers": bool(data.get("opt_headers", True)),
+        "dom": bool(data.get("opt_dom", True)),
+    }
+    max_pages = min(int(data.get("max_pages") or 25), 100)
+
+    job_id = uuid.uuid4().hex[:8]
+    job = {
+        "id": job_id,
+        "type": "hunter",
+        "url": url,
+        "created_at": utc_now(),
+        "status": "running",
+        "version": VERSION,
+        "options": opts,
+        "pipeline": {"nodes": {n: {"status": "pending"} for n in HUNTER_NODES}},
+        "live_log": [],
+        "findings": [],
+        "results": {},
+    }
+    JOBS[job_id] = job
+
+    def node_state(name, status, duration=None, error=None):
+        job["pipeline"]["nodes"][name] = {"status": status, "duration": duration, "error": error}
+
+    request_id = g.get("request_id")
+
+    def run_hunter():
+        with app.app_context():
+            g.request_id = request_id
+            def emit(msg):
+                job["live_log"].append({"ts": utc_now(), "msg": msg})
+            try:
+                emit(f"[hunter] objetivo fijado: {url}")
+                emit("[hunter] modo pasivo: sondas de reflexion, sin payloads ni ejecucion")
+
+                auth = build_auth(data, target_url=url)
+                session = auth.get_session()
+
+                node_state("spider", "running")
+                t0 = time.perf_counter()
+                spider_out = Spider(session, timeout=15).run(url, emit, max_pages=max_pages)
+                node_state("spider", "success", round(time.perf_counter() - t0, 2))
+                job["results"]["spider"] = {"status": "success", "data": {"summary": {
+                    "pages": spider_out["pages"],
+                    "param_count": len(spider_out["param_targets"]),
+                    "form_count": len(spider_out["forms"]),
+                    "js_endpoints": spider_out["js_endpoints"],
+                    "dom_candidates": len(spider_out["dom_candidates"]),
+                }}}
+
+                node_state("param_map", "running")
+                t0 = time.perf_counter()
+                emit("[params] inventario de objetivos:")
+                for t in spider_out["param_targets"][:80]:
+                    emit(f"[params]   {t['param']} en {urlparse(t['url']).path or '/'}")
+                node_state("param_map", "success", round(time.perf_counter() - t0, 2))
+                job["results"]["param_map"] = {"status": "success", "data": {
+                    "targets": spider_out["param_targets"], "forms": spider_out["forms"]}}
+
+                hunter = XSSHunter(session, emit, delay=float(data.get("delay", 0.15)))
+
+                def battery(node, key, runner):
+                    if not opts.get(key):
+                        node_state(node, "success", 0.0)
+                        job["results"][node] = {"status": "success", "data": {"skipped": True}}
+                        return []
+                    node_state(node, "running")
+                    t0 = time.perf_counter()
+                    before = len(job["findings"])
+                    found = runner() or []
+                    for f in found:
+                        job["findings"].append(f)
+                    node_state(node, "success", round(time.perf_counter() - t0, 2))
+                    job["results"][node] = {"status": "success", "data": {
+                        "found": len(job["findings"]) - before,
+                        "details": [f for f in found]}}
+                    return found
+
+                # las 4 baterias del corpus
+                battery("xss_get", "get", lambda: _bateria_get(hunter, spider_out))
+                battery("xss_forms", "forms", lambda: _bateria_forms(hunter, spider_out))
+                battery("xss_headers", "headers", lambda: _bateria_headers(hunter, spider_out))
+                battery("xss_dom", "dom", lambda: _bateria_dom(hunter, spider_out))
+
+                job["status"] = "finished"
+                node_state("report", "success", 0.0)
+                job["summary"] = {
+                    "total": len(job["findings"]),
+                    "alta": len([f for f in job["findings"] if f["severity"] == "alta"]),
+                    "media": len([f for f in job["findings"] if f["severity"] == "media"]),
+                    "baja": len([f for f in job["findings"] if f["severity"] == "baja"]),
+                    "info": len([f for f in job["findings"] if f["severity"] == "info"]),
+                }
+                emit(f"[hunter] ═══ CAZA TERMINADA ═══ {job['summary']['total']} hallazgos "
+                     f"({job['summary']['alta']} altos · {job['summary']['media']} medios)")
+                report_path = save_scan_log(job)
+                job["log_file"] = str(Path(report_path).relative_to(ROOT))
+                job["log_url"] = f"/api/jobs/{job_id}/log"
+                save_scan_log(job)
+                log_event("hunter_finished", request_id=g.get("request_id"), url=safe_url(url),
+                          summary=job["summary"])
+            except Exception as exc:
+                job["status"] = "failed"
+                job["error"] = str(exc)
+                emit(f"[hunter] XX ERROR FATAL: {str(exc)[:200]}")
+                log_event("hunter_failed", request_id=g.get("request_id"), url=safe_url(url),
+                          error_type=type(exc).__name__, error=str(exc))
+
+    threading.Thread(target=run_hunter, daemon=True).start()
+    return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
+
+
 @app.get("/api/jobs")
 def list_jobs():
     return jsonify(list(JOBS.values()))
@@ -551,3 +678,23 @@ def pipeline_schema():
 if __name__ == "__main__":
     print("\ncodexRC backend running at http://127.0.0.1:8000\n")
     app.run(host="0.0.0.0", port=8000, debug=False)
+
+def _bateria_get(hunter, spider_out):
+    return hunter.test_params(spider_out.get("param_targets", []))
+
+
+def _bateria_forms(hunter, spider_out):
+    return hunter.test_forms(spider_out)
+
+
+def _bateria_headers(hunter, spider_out):
+    return hunter.test_headers(spider_out)
+
+
+def _bateria_dom(hunter, spider_out):
+    return hunter.test_dom(spider_out)
+
+
+@app.route("/hunter.html")
+def hunter_page():
+    return send_from_directory(app.static_folder, "hunter.html")
