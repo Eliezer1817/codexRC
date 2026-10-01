@@ -60,42 +60,20 @@
 
     /* header */
     header {
-      padding: 0.9rem 1.25rem;
+      padding: 0.85rem 1.25rem;
       border-bottom: 1px solid var(--border);
       background: #000;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.5rem;
+      justify-content: center;
     }
-    .prompt { font-size: 1.05rem; letter-spacing: 0.04em; white-space: nowrap; color: var(--text); }
-    .prompt .user { color: var(--gray); }
-    .prompt .path { color: var(--text); }
-    .prompt .cmd { color: var(--gray); }
-    .cursor {
-      display: inline-block;
-      width: 0.6em; height: 1.05em;
-      background: var(--green);
-      vertical-align: text-bottom;
-      margin-left: 0.15rem;
-      animation: blink 1s steps(1) infinite;
-      box-shadow: var(--glow);
+    .prompt {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: var(--text);
     }
-    @keyframes blink { 50% { opacity: 0; } }
-    .badge {
-      font-size: 0.68rem;
-      color: var(--gray);
-      border: 1px solid #2a3d32;
-      padding: 0.12rem 0.55rem;
-      margin-left: 0.45rem;
-      background: #000;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .sysinfo { font-size: 0.8rem; color: var(--muted); text-align: right; line-height: 1.5; }
-    #backendStatus.online { color: var(--green); }
-    #backendStatus.offline { color: var(--red); }
+    .prompt .ver { color: var(--green); margin-left: 0.5rem; letter-spacing: 0.05em; }
 
     main { flex: 1; display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 0; max-width: 1600px; width: 100%; margin: 0 auto; }
 
@@ -316,8 +294,7 @@
       main { grid-template-columns: 1fr; }
       .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 1rem; }
       header { padding: 0.7rem 0.9rem; }
-      .prompt { font-size: 0.9rem; }
-      .sysinfo { text-align: left; }
+      .prompt { font-size: 1rem; }
       .canvas-area { padding: 0.9rem; }
       .pipeline { gap: 0.7rem; min-height: 0; margin-bottom: 1rem; }
       .node { min-width: 108px; padding: 0.6rem 0.6rem; }
@@ -335,8 +312,7 @@
       #connectionSummary { font-size: 0.8rem; }
     }
     @media (max-width: 380px) {
-      .prompt { font-size: 0.78rem; }
-      .badge { font-size: 0.6rem; padding: 0.05rem 0.35rem; }
+      .prompt { font-size: 0.92rem; }
       .node { min-width: 92px; }
     }
 </style>
@@ -345,15 +321,7 @@
   <canvas id="matrix"></canvas>
 
   <header>
-    <div class="prompt">
-      <span class="user">root@codex</span><span class="path">:~/scan</span><span class="cmd">$ ./codexrc</span><span class="cursor"></span>
-      <span class="badge">local</span>
-      <span class="badge" id="verBadge">v?</span>
-    </div>
-    <div class="sysinfo">
-      codexRC // visual pipeline // <span id="appVersion">v0.5.0</span>
-      <span id="backendStatus">comprobando backend...</span>
-    </div>
+    <div class="prompt">CODEXRC<span class="ver" id="appVersion">v?</span></div>
   </header>
 
   <main>
@@ -489,7 +457,7 @@
 
     // ===== version del backend =====
     fetch('/health').then(r => r.json()).then(d => {
-      const b = document.getElementById('verBadge');
+      const b = document.getElementById('appVersion');
       if (b && d.version) b.textContent = 'v' + d.version;
     }).catch(() => {});
 
@@ -543,15 +511,8 @@
     })();
 
     fetch("/api/status").then(r => r.json()).then(info => {
-      const s = document.getElementById("backendStatus");
       if (info.version) document.getElementById("appVersion").textContent = "v" + info.version;
-      s.textContent = info.backend === "connected" ? "// backend conectado" : "// backend offline";
-      s.className = info.backend === "connected" ? "online" : "offline";
-    }).catch(() => {
-      const s = document.getElementById("backendStatus");
-      s.textContent = "// backend offline";
-      s.className = "offline";
-    });
+    }).catch(() => {});
 
     document.getElementById("authMethod").addEventListener("change", (e) => {
       const v = e.target.value;
