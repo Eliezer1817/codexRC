@@ -1,5 +1,7 @@
 # codexRC
 
+![CodexRC](assets/banner.jpg)
+
 **Automated Web Security Auditing Tool** con backend único, dashboard web local y modo HUNTER de caza activa.
 
 > Solo usar en objetivos que tengas autorización para auditar. Las sondas son de lectura A→B: contrastan el acceso con y sin sesión, sin alterar datos del objetivo.
