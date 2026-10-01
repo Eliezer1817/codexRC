@@ -278,15 +278,21 @@ class AuthManager:
         if not form and not has_password_input:
             # ---------- 4. SPA / API JSON login ----------
             step("modo", "api_json (sin formulario HTML detectado)")
+            # candidatos de campo de usuario: el explicito primero, luego comunes
+            user_keys = [username_field] if username_field else []
+            user_keys += [k for k in ("username", "email", "login") if k not in user_keys]
             json_attempts = [
-                {"username": username, "password": password},
-                {"email": username, "password": password},
+                {ukey: username, "password": password} for ukey in user_keys
             ]
             for payload in json_attempts:
+                from urllib.parse import urlparse as _up
+                _origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
                 headers_json = {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
                     "X-Requested-With": "XMLHttpRequest",
+                    "Origin": _origin,
+                    "Referer": _origin + "/",
                 }
                 try:
                     login_resp = self.session.post(
