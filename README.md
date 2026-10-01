@@ -62,3 +62,17 @@ Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no
 - Dashboard visual del pipeline.
 
 Para una comprobación confiable, completa **URL protegida para verificar sesión** con una ruta que requiera autenticación, por ejemplo `/account` o `/dashboard`. El resultado queda en `connection` y en `results.auth_status.data.session_check` con `authenticated`, `username`, `final_url`, `status_code`, `response_time`, `signals` y `reason`. Si se deja vacío, se usa la URL objetivo, pero una página pública no permite confirmar por completo que la sesión sea válida.
+
+## Auto-update en Termux (desde GitHub)
+
+Flujo: editas en GitHub → haces commit → Termux detecta el commit → `git pull` automático → el servidor se reinicia → tu localhost queda actualizado al instante.
+
+```bash
+bash auto_update.sh        # vigila cada 20 segundos
+bash auto_update.sh 10      # vigila cada 10 segundos
+```
+
+- Requiere que la carpeta sea un clon `git` (no un zip descargado).
+- Usa `termux-wake-lock` si tenés Termux:API, para que Android no duerma el proceso.
+- Toda la actividad queda en `auto_update.log`.
+- Ctrl+C detiene el watcher y el servidor.

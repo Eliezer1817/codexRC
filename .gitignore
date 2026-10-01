@@ -19,3 +19,5 @@ cookies.txt
 .DS_Store
 .idea/
 .vscode/
+auto_update.log
+.server.pid
