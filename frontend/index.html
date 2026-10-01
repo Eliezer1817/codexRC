@@ -169,8 +169,33 @@
     button:disabled { opacity: 0.45; cursor: not-allowed; animation: pulse-dim 1.2s ease-in-out infinite; }
     @keyframes pulse-dim { 50% { box-shadow: 0 0 12px rgba(0, 200, 83, 0.25); } }
 
-    .auth-section { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px dashed #14211a; }
-    .hint { font-size: 0.7rem; color: var(--muted); margin-top: -0.5rem; margin-bottom: 0.8rem; line-height: 1.45; }
+    .auth-section { margin-top: 1.2rem; padding-top: 0.9rem; border-top: 3px double var(--green-dark); }
+    .hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem; margin-bottom: 0.8rem; line-height: 1.45; }
+    details.info { margin: -0.55rem 0 0.95rem; }
+    details.info summary {
+      cursor: pointer;
+      color: var(--green-dim);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      list-style: none;
+      user-select: none;
+      outline: none;
+    }
+    details.info summary::-webkit-details-marker { display: none; }
+    details.info summary::before { content: "[ ? ] "; color: var(--muted); }
+    details.info summary:hover, details.info[open] summary { color: var(--green); }
+    details.info[open] summary::before { content: "[ x ] "; }
+    details.info p {
+      font-size: 0.78rem;
+      color: var(--gray);
+      line-height: 1.6;
+      padding: 0.55rem 0.7rem;
+      border-left: 2px solid var(--green-dark);
+      margin-top: 0.4rem;
+      background: #020603;
+    }
+    details.info p b { color: var(--text); }
+    details.info p code { color: var(--green); }
     .hint b { color: var(--gray); }
     .hint code { color: var(--green-dim); }
 
@@ -227,8 +252,6 @@
       border: 1px solid var(--border);
       border-radius: 2px;
       padding: 0;
-      max-height: 55vh;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
@@ -245,7 +268,7 @@
     }
     .titlebar .dots { display: flex; gap: 0.35rem; }
     .titlebar .dots i { width: 8px; height: 8px; border: 1px solid #1d2a22; background: #000; border-radius: 50%; }
-    .results .body { padding: 0.9rem; overflow-y: auto; flex: 1; }
+    .results .body { padding: 0.9rem; }
     .results h3 { font-size: 0.72rem; margin-bottom: 0.6rem; color: var(--green); letter-spacing: 0.12em; text-transform: uppercase; }
     .results h3::before { content: "$ "; color: var(--muted); }
     #connectionSummary { margin-bottom: 0.6rem; color: var(--gray); font-size: 0.75rem; line-height: 1.5; }
@@ -276,12 +299,10 @@
       .sidebar { padding: 1.6rem; }
       .node { min-width: 170px; padding: 1.1rem 1.4rem; }
       .node .label { font-size: 1rem; }
-      .results { max-height: 65vh; }
       pre { font-size: 0.8rem; }
     }
     @media (min-width: 821px) and (max-width: 1279px) {
       .canvas-area { padding: 1.5rem; }
-      .results { max-height: 58vh; }
     }
     /* ===== CELULAR ===== */
     @media (max-width: 820px) {
@@ -296,7 +317,6 @@
       .node .label { font-size: 0.75rem; }
       .node .status { font-size: 0.6rem; }
       .arrow { font-size: 0.9rem; }
-      .results { max-height: none; }
       .results .body { padding: 0.7rem; }
       pre { font-size: 0.68rem; padding: 0.6rem; }
       input, select, textarea { font-size: 16px; }
@@ -331,6 +351,10 @@
       <h2>Nuevo escaneo</h2>
       <label>URL objetivo</label>
       <input type="url" id="targetUrl" placeholder="https://example.com" value="https://example.com" />
+      <details class="info">
+        <summary>¿qué pongo aquí?</summary>
+        <p>La dirección del sitio que querés escanear, con <code>https://</code> al inicio. Ejemplo: <code>https://vellius.com</code>. Poné la página principal: el motor encuentra el resto solo.</p>
+      </details>
 
       <div class="auth-section">
         <h2>Autenticación</h2>
@@ -341,30 +365,55 @@
           <option value="credentials">Usuario + Contraseña</option>
           <option value="bearer">Bearer Token</option>
         </select>
+        <details class="info">
+          <summary>¿qué significa cada uno?</summary>
+          <p><b>Ninguno:</b> sitios que se ven sin cuenta.<br/><b>Usuario + Contraseña:</b> el motor entra solo con tus datos (el más fácil, recomendado).<br/><b>Cookies:</b> pegás las cookies de tu navegador, para logins difíciles.<br/><b>Bearer Token:</b> apps que usan tokens tipo JWT.</p>
+        </details>
 
         <div id="authCookies" style="display:none">
-          <label>Cookies (name=value; ...)</label>
+          <label>Cookies</label>
           <textarea id="cookiesRaw" rows="3" placeholder="sessionid=abc; token=xyz"></textarea>
+          <details class="info">
+            <summary>¿de dónde las saco?</summary>
+            <p>Entrá al sitio en tu navegador, menú → "Herramientas para desarrolladores" → pestaña "Application" → "Cookies". Copiá cada una como <code>nombre=valor</code> separada por punto y coma.</p>
+          </details>
         </div>
 
         <label>URL protegida para verificar sesión</label>
         <input type="url" id="verificationUrl" placeholder="se descubre sola (opcional)" />
-        <p class="hint">Página o API que solo responde con sesión iniciada. <b>Apps modernas:</b> usá una URL de API que devuelva tus datos, ej: <code>/api/account/init</code>. Se descubre sola: dejala en blanco. OJO: no pongas la página de login aquí.</p>
+        <details class="info">
+          <summary>¿qué es esto?</summary>
+          <p>Una dirección que SOLO responde con tu sesión iniciada, por ejemplo una API que devuelve tus datos: <code>/api/account/init</code>. <b>Dejala vacía:</b> el motor la encuentra solo. IMPORTANTE: no pongas la página de login aquí, en apps JavaScript siempre parece "no logueado".</p>
+        </details>
 
         <div id="authCreds" style="display:none">
           <label>Usuario</label>
-          <input type="text" id="username" placeholder="usuario o email" />
+          <input type="text" id="username" placeholder="tu usuario o email" />
+          <details class="info">
+            <summary>¿qué pongo aquí?</summary>
+            <p>El mismo usuario o email que usás para entrar al sitio. Ejemplo: <code>tucorreo@outlook.com</code>.</p>
+          </details>
           <label>Contraseña</label>
           <input type="password" id="password" />
-          <p class="hint"><b>Simple: solo pon tu usuario y contraseña.</b> Dejá los otros campos en blanco y el motor encuentra <b>solo</b> la página de login y el endpoint real desde la URL objetivo.</p>
+          <details class="info">
+            <summary>¿por qué fallaría el login?</summary>
+            <p>Tu clave tal cual la escribís al entrar. Si el login falla, casi siempre es el <b>autocompletado del navegador</b> que puso otra cosa: escribí los dos campos a mano. El nodo AUTH-STATUS te muestra el mensaje exacto del servidor cuando algo sale mal.</p>
+          </details>
           <label>URL de login</label>
           <input type="url" id="loginUrl" placeholder="se descubre sola (opcional)" />
-          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó. Cuando entrás, ahí aparecen <b>tu nombre y los datos de tu cuenta</b>.</p>
+          <details class="info">
+            <summary>¿cuándo la uso?</summary>
+            <p>Solo si ya sabés dónde está el login, ej: <code>https://sitio.com/login</code>. Vacía = el motor la encuentra analizando el sitio solo (recomendado).</p>
+          </details>
         </div>
 
         <div id="authBearer" style="display:none">
           <label>Bearer Token</label>
           <input type="text" id="bearerToken" placeholder="eyJhbGciOi..." />
+          <details class="info">
+            <summary>¿de dónde lo saco?</summary>
+            <p>En el navegador, herramientas de desarrollador → pestaña "Network" → tocá un pedido a la API → buscá el encabezado <code>Authorization: Bearer ...</code> y copiá lo que sigue de "Bearer".</p>
+          </details>
         </div>
       </div>
 
