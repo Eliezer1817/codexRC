@@ -1,0 +1,18 @@
+{
+  "bac-ajax-nopriv": {
+    "n": 1408,
+    "protected_pct": 68.32386363636364
+  },
+  "ipn-downgrade": {
+    "n": 24,
+    "protected_pct": 4.166666666666667
+  },
+  "upload-unchecked": {
+    "n": 18,
+    "protected_pct": 55.55555555555556
+  },
+  "role-from-request": {
+    "n": 13,
+    "protected_pct": 92.3076923076923
+  }
+}
