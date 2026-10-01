@@ -3,131 +3,369 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>codexRC – Visual Pipeline</title>
+  <title>codexRC // terminal</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --panel: #1a1d27;
-      --border: #2a2f3a;
-      --text: #e6e9f0;
-      --muted: #8b93a7;
-      --accent: #6c5ce7;
-      --success: #00b894;
-      --running: #fdcb6e;
-      --failed: #e17055;
-      --pending: #636e72;
+      --bg: #010302;
+      --panel: #030805;
+      --border: #0a3d1c;
+      --green: #00ff41;
+      --green-dim: #00b32d;
+      --green-dark: #003b0f;
+      --text: #b6ffcb;
+      --muted: #2e8b4f;
+      --amber: #ffb000;
+      --red: #ff2e4c;
+      --glow: 0 0 8px rgba(0, 255, 65, 0.55);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Share Tech Mono', 'Courier New', Courier, monospace;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
+
+    /* ===== lluvia matrix de fondo ===== */
+    #matrix {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.13;
+      pointer-events: none;
+    }
+
+    /* ===== scanlines CRT ===== */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 255, 65, 0.03) 0px,
+        rgba(0, 255, 65, 0.03) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    }
+
+    header, main { position: relative; z-index: 2; }
+
+    /* ===== header terminal ===== */
     header {
-      padding: 1rem 1.5rem;
+      padding: 0.9rem 1.25rem;
       border-bottom: 1px solid var(--border);
+      background: rgba(2, 8, 4, 0.92);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--panel);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      box-shadow: 0 2px 18px rgba(0, 255, 65, 0.08);
     }
-    header h1 { font-size: 1.25rem; font-weight: 600; }
-    header h1 span { color: var(--accent); }
-    .badge { font-size: 0.7rem; background: var(--accent); color: white; padding: 0.15rem 0.5rem; border-radius: 999px; margin-left: 0.5rem; }
-    main { flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 0; }
+    .prompt {
+      font-size: 1.05rem;
+      text-shadow: var(--glow);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .prompt .user { color: var(--green-dim); }
+    .prompt .path { color: var(--green); }
+    .prompt .cmd { color: var(--text); }
+    .cursor {
+      display: inline-block;
+      width: 0.6em;
+      height: 1.05em;
+      background: var(--green);
+      vertical-align: text-bottom;
+      margin-left: 0.15rem;
+      animation: blink 1s steps(1) infinite;
+      box-shadow: var(--glow);
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .badge {
+      font-size: 0.68rem;
+      color: var(--green);
+      border: 1px solid var(--green-dark);
+      padding: 0.1rem 0.5rem;
+      margin-left: 0.45rem;
+      background: rgba(0, 255, 65, 0.05);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .sysinfo {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: right;
+      line-height: 1.5;
+    }
+    #backendStatus.online { color: var(--green); text-shadow: var(--glow); }
+    #backendStatus.offline { color: var(--red); }
+
+    main { flex: 1; display: grid; grid-template-columns: 330px 1fr; gap: 0; }
+
+    /* ===== panel lateral ===== */
     .sidebar {
-      background: var(--panel);
+      background: rgba(2, 10, 5, 0.88);
       border-right: 1px solid var(--border);
       padding: 1.25rem;
       overflow-y: auto;
+      backdrop-filter: blur(2px);
     }
-    .sidebar h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 1rem; }
-    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.3rem; }
-    input, select, button, textarea {
-      width: 100%;
-      padding: 0.55rem 0.75rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.9rem;
+    .sidebar h2 {
+      font-size: 0.8rem;
+      color: var(--green);
       margin-bottom: 0.9rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: var(--glow);
     }
+    .sidebar h2::before { content: "> "; color: var(--green-dim); }
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      background: rgba(0, 10, 3, 0.9);
+      color: var(--green);
+      font-family: inherit;
+      font-size: 0.85rem;
+      margin-bottom: 0.85rem;
+      border-radius: 2px;
+      caret-color: var(--green);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.25), inset 0 0 6px rgba(0, 255, 65, 0.05);
+    }
+    select { color: var(--text); }
+    select option { background: #020804; color: var(--text); }
+    textarea { resize: vertical; }
+    ::placeholder { color: #1d5c33; }
+
     button {
-      background: var(--accent);
-      border: none;
-      cursor: pointer;
+      width: 100%;
+      padding: 0.65rem;
+      background: transparent;
+      border: 1px solid var(--green);
+      color: var(--green);
+      font-family: inherit;
+      font-size: 0.9rem;
       font-weight: 600;
-      transition: opacity 0.15s;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      margin-top: 0.4rem;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      text-shadow: var(--glow);
     }
-    button:hover { opacity: 0.9; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    .canvas-area {
-      padding: 1.5rem;
-      overflow: auto;
-      position: relative;
+    button:hover:not(:disabled) {
+      background: var(--green);
+      color: #00160a;
+      box-shadow: 0 0 18px rgba(0, 255, 65, 0.5);
+      text-shadow: none;
     }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      animation: pulse-dim 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse-dim { 50% { box-shadow: 0 0 14px rgba(0, 255, 65, 0.3); } }
+
+    .auth-section { margin-top: 1.1rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+    .hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: -0.5rem;
+      margin-bottom: 0.8rem;
+      line-height: 1.45;
+    }
+    .hint b { color: var(--green-dim); }
+    .hint code { color: var(--green); }
+
+    /* ===== canvas de nodos ===== */
+    .canvas-area { padding: 1.25rem; overflow: auto; }
     .pipeline {
       display: flex;
       flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: flex-start;
+      gap: 1rem;
+      align-items: center;
       justify-content: center;
-      min-height: 280px;
-      margin-bottom: 2rem;
+      min-height: 200px;
+      margin-bottom: 1.5rem;
     }
     .node {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      min-width: 140px;
+      background: rgba(0, 12, 5, 0.85);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1.1rem;
+      min-width: 138px;
       text-align: center;
       position: relative;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.25s;
+      border-radius: 2px;
     }
-    .node.running { border-color: var(--running); box-shadow: 0 0 12px rgba(253,203,110,0.25); }
-    .node.success { border-color: var(--success); }
-    .node.failed { border-color: var(--failed); }
-    .node.pending { border-color: var(--pending); opacity: 0.7; }
-    .node .label { font-weight: 600; font-size: 0.95rem; }
-    .node .status { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; text-transform: uppercase; }
-    .node .duration { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+    /* esquinas de bracket estilo HUD */
+    .node::before, .node::after {
+      content: "";
+      position: absolute;
+      width: 10px; height: 10px;
+      border-color: var(--green-dark);
+      border-style: solid;
+      transition: border-color 0.25s;
+    }
+    .node::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .node::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+    .node .label { font-size: 0.88rem; letter-spacing: 0.06em; color: var(--text); }
+    .node .status { font-size: 0.68rem; margin-top: 0.35rem; text-transform: uppercase; letter-spacing: 0.12em; }
+    .node .duration { font-size: 0.65rem; color: var(--muted); margin-top: 0.15rem; }
+
+    .node.pending { opacity: 0.55; }
+    .node.pending .status { color: #274d36; }
+    .node.running {
+      border-color: var(--amber);
+      box-shadow: 0 0 16px rgba(255, 176, 0, 0.25), inset 0 0 12px rgba(255, 176, 0, 0.05);
+      animation: running-pulse 1.1s ease-in-out infinite;
+    }
+    .node.running::before, .node.running::after { border-color: var(--amber); }
+    .node.running .status { color: var(--amber); text-shadow: 0 0 8px rgba(255, 176, 0, 0.6); }
+    @keyframes running-pulse {
+      50% { box-shadow: 0 0 26px rgba(255, 176, 0, 0.45), inset 0 0 16px rgba(255, 176, 0, 0.08); }
+    }
+    .node.success {
+      border-color: var(--green);
+      box-shadow: 0 0 16px rgba(0, 255, 65, 0.35), inset 0 0 12px rgba(0, 255, 65, 0.06);
+    }
+    .node.success::before, .node.success::after { border-color: var(--green); }
+    .node.success .label { color: var(--green); text-shadow: var(--glow); }
+    .node.success .status { color: var(--green-dim); }
+    .node.failed {
+      border-color: var(--red);
+      box-shadow: 0 0 16px rgba(255, 46, 76, 0.35);
+    }
+    .node.failed::before, .node.failed::after { border-color: var(--red); }
+    .node.failed .label, .node.failed .status { color: var(--red); text-shadow: 0 0 8px rgba(255, 46, 76, 0.6); }
+
     .arrow {
       display: flex;
       align-items: center;
-      color: var(--muted);
-      font-size: 1.4rem;
+      color: var(--green-dark);
+      font-size: 1.1rem;
+      text-shadow: var(--glow);
+      animation: flow 1.4s ease-in-out infinite;
     }
+    @keyframes flow { 50% { opacity: 0.35; } }
+
+    /* ===== ventana de resultados ===== */
     .results {
-      background: var(--panel);
+      background: rgba(0, 10, 4, 0.9);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
-      max-height: 420px;
-      overflow-y: auto;
+      border-radius: 2px;
+      padding: 0;
+      max-height: 55vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 22px rgba(0, 255, 65, 0.07);
     }
-    .results h3 { font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--muted); }
+    .results .titlebar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 255, 65, 0.04);
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green-dim);
+      flex-shrink: 0;
+    }
+    .titlebar .dots { display: flex; gap: 0.35rem; }
+    .titlebar .dots i {
+      width: 8px; height: 8px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 65, 0.08);
+      border-radius: 50%;
+    }
+    .results .body {
+      padding: 0.9rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .results h3 {
+      font-size: 0.72rem;
+      margin-bottom: 0.6rem;
+      color: var(--green);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .results h3::before { content: "$ "; color: var(--green-dim); }
+    #connectionSummary {
+      margin-bottom: 0.6rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.5;
+    }
+    #connectionSummary b { color: var(--green); }
+    #logLink { font-size: 0.72rem; margin-bottom: 0.6rem; }
+    #logLink a { color: var(--green); text-shadow: var(--glow); }
     pre {
-      background: var(--bg);
-      padding: 1rem;
-      border-radius: 8px;
-      font-size: 0.78rem;
+      background: rgba(0, 5, 2, 0.85);
+      border: 1px solid #062012;
+      padding: 0.9rem;
+      font-size: 0.72rem;
+      line-height: 1.5;
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-word;
+      color: var(--green-dim);
+      border-radius: 2px;
     }
-    .auth-section { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--border); }
-    .hint { font-size: 0.75rem; color: var(--muted); margin-top: -0.5rem; margin-bottom: 0.8rem; }
+
+    /* scrollbar verde */
+    ::-webkit-scrollbar { width: 9px; height: 9px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--green-dark); border-radius: 0; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+    /* ===== responsive: en telefono 1 columna ===== */
+    @media (max-width: 820px) {
+      main { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
+      .sysinfo { text-align: left; }
+    }
   </style>
 </head>
 <body>
+  <canvas id="matrix"></canvas>
+
   <header>
-    <h1><span>codex</span>RC <span class="badge">local</span> <span class="badge" id="verBadge" style="margin-left:.4rem">v?</span></h1>
-    <div style="font-size:0.85rem;color:var(--muted)">Visual Pipeline · n8n-style · <span id="appVersion">v0.5.0</span> · <span id="backendStatus">comprobando backend...</span></div>
+    <div class="prompt">
+      <span class="user">root@codex</span><span class="path">:~/scan</span><span class="cmd">$ ./codexrc</span><span class="cursor"></span>
+      <span class="badge">local</span>
+      <span class="badge" id="verBadge">v?</span>
+    </div>
+    <div class="sysinfo">
+      codexRC // visual pipeline // <span id="appVersion">v0.5.0</span>
+      <span id="backendStatus">comprobando backend...</span>
+    </div>
   </header>
 
   <main>
@@ -137,7 +375,7 @@
       <input type="url" id="targetUrl" placeholder="https://example.com" value="https://example.com" />
 
       <div class="auth-section">
-        <h2>Autenticación (opcional)</h2>
+        <h2>Autenticación</h2>
         <label>Método</label>
         <select id="authMethod">
           <option value="none">Ninguno (público)</option>
@@ -151,19 +389,19 @@
           <textarea id="cookiesRaw" rows="3" placeholder="sessionid=abc; token=xyz"></textarea>
         </div>
 
-        <label>URL protegida para verificar sesión (opcional, se descubre sola)</label>
-        <input type="url" id="verificationUrl" placeholder="https://example.com/api/account (opcional)" />
-        <p class="hint">Página o API que solo responde con sesión iniciada. <b>Apps modernas:</b> usá una URL de API que devuelva tus datos, ej: <code>https://vellius.com/api/account/init</code> (el motor la prueba con GET y POST, y con sesión da 200, sin sesión da 401). OJO: no pongas la página de login aquí, en apps JavaScript siempre parece "no logueado".</p>
+        <label>URL protegida para verificar sesión</label>
+        <input type="url" id="verificationUrl" placeholder="se descubre sola (opcional)" />
+        <p class="hint">Página o API que solo responde con sesión iniciada. <b>Apps modernas:</b> usá una URL de API que devuelva tus datos, ej: <code>/api/account/init</code>. Se descubre sola: dejala en blanco. OJO: no pongas la página de login aquí.</p>
 
         <div id="authCreds" style="display:none">
-          <label>Usuario (usuario o email, el que usás para entrar)</label>
-          <input type="text" id="username" placeholder="tucorreo@example.com" />
+          <label>Usuario</label>
+          <input type="text" id="username" placeholder="usuario o email" />
           <label>Contraseña</label>
           <input type="password" id="password" />
-          <p class="hint"><b>Simple: solo pon tu usuario y contraseña.</b> Dejá los otros campos en blanco y el motor encuentra <b>solo</b> la página de login y el endpoint real desde la URL objetivo. Si ya conocés la URL de login, podés ponerla para ahorrar tiempo.</p>
-          <label>URL de login (opcional, se descubre sola)</label>
-          <input type="url" id="loginUrl" placeholder="https://sitio.com/login (opcional)" />
-          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó: login encontrado, endpoint descubierto, credenciales rechazadas, o si hace falta GHOSTGATE (navegador real). Cuando entrás, ahí también aparecen <b>tu nombre y los datos de tu cuenta</b>.</p>
+          <p class="hint"><b>Simple: solo pon tu usuario y contraseña.</b> Dejá los otros campos en blanco y el motor encuentra <b>solo</b> la página de login y el endpoint real desde la URL objetivo.</p>
+          <label>URL de login</label>
+          <input type="url" id="loginUrl" placeholder="se descubre sola (opcional)" />
+          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó. Cuando entrás, ahí aparecen <b>tu nombre y los datos de tu cuenta</b>.</p>
         </div>
 
         <div id="authBearer" style="display:none">
@@ -172,7 +410,7 @@
         </div>
       </div>
 
-      <button id="btnScan" onclick="startScan()">Iniciar Pipeline</button>
+      <button id="btnScan" onclick="startScan()">&gt;&gt; Iniciar Pipeline</button>
       <p class="hint">El backend debe estar corriendo en :8000</p>
     </aside>
 
@@ -182,27 +420,67 @@
       </div>
 
       <div class="results">
-        <h3>Resultados del pipeline</h3>
-        <div id="connectionSummary" style="margin-bottom:0.75rem;color:var(--muted);font-size:0.82rem">Sin diagnóstico todavía.</div>
-        <p id="logLink" style="font-size:0.8rem;margin-bottom:0.75rem"></p>
-        <pre id="output">Esperando escaneo...</pre>
+        <div class="titlebar">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span>results://stdout</span>
+        </div>
+        <div class="body">
+          <h3>Resultados del pipeline</h3>
+          <div id="connectionSummary">Sin diagnóstico todavía.</div>
+          <p id="logLink"></p>
+          <pre id="output"></pre>
+        </div>
       </div>
     </section>
   </main>
 
   <script>
-    // Muestra la version del backend al cargar: si cambia, el auto-update funciono
+    // ===== lluvia matrix (liviana, para Termux) =====
+    (function () {
+      const c = document.getElementById('matrix');
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      let cols = 0, drops = [];
+      const chars = "01<>[]{}/\\|=+*#$%&@!?ABCDEF";
+      function resize() {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+        cols = Math.floor(c.width / 22);
+        drops = Array(cols).fill(0).map(() => Math.random() * -50);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+      let last = 0;
+      function draw(ts) {
+        requestAnimationFrame(draw);
+        if (ts - last < 66) return; // ~15fps: barato para el celu
+        last = ts;
+        ctx.fillStyle = 'rgba(1, 3, 2, 0.16)';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.font = '15px monospace';
+        for (let i = 0; i < cols; i++) {
+          const ch = chars[Math.floor(Math.random() * chars.length)];
+          const x = i * 22, y = drops[i] * 20;
+          ctx.fillStyle = Math.random() < 0.06 ? '#b6ffcb' : '#00b32d';
+          ctx.fillText(ch, x, y);
+          if (y > c.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        }
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    // ===== version del backend =====
     fetch('/health').then(r => r.json()).then(d => {
       const b = document.getElementById('verBadge');
       if (b && d.version) b.textContent = 'v' + d.version;
     }).catch(() => {});
-</script>
-<script>
+
     const NODES = [
-      { id: "recon", label: "Recon" },
-      { id: "tech_detect", label: "Tech Detect" },
-      { id: "cve_match", label: "CVE Matcher" },
-      { id: "auth_status", label: "Auth Status" },
+      { id: "recon", label: "RECON" },
+      { id: "tech_detect", label: "TECH-DETECT" },
+      { id: "cve_match", label: "CVE-MATCH" },
+      { id: "auth_status", label: "AUTH-STATUS" },
     ];
 
     function renderPipeline(statusMap = {}) {
@@ -221,7 +499,7 @@
         if (i < NODES.length - 1) {
           const arrow = document.createElement("div");
           arrow.className = "arrow";
-          arrow.textContent = "→";
+          arrow.textContent = ">>>";
           container.appendChild(arrow);
         }
       });
@@ -229,10 +507,34 @@
 
     renderPipeline();
 
+    // ===== secuencia de arranque tipo terminal =====
+    const BOOT = [
+      "[ OK ] codexRC core cargado",
+      "[ OK ] modulo GHOSTGATE listo",
+      "[ OK ] auto-descubrimiento SPA activo",
+      "[ .. ] esperando objetivo...",
+    ];
+    (function boot() {
+      const out = document.getElementById("output");
+      let i = 0;
+      (function next() {
+        if (i >= BOOT.length) return;
+        out.textContent += (i ? "\n" : "") + BOOT[i];
+        i++;
+        setTimeout(next, 220);
+      })();
+    })();
+
     fetch("/api/status").then(r => r.json()).then(info => {
+      const s = document.getElementById("backendStatus");
       if (info.version) document.getElementById("appVersion").textContent = "v" + info.version;
-      document.getElementById("backendStatus").textContent = info.backend === "connected" ? "backend conectado" : "backend con problemas";
-    }).catch(() => {});
+      s.textContent = info.backend === "connected" ? "// backend conectado" : "// backend offline";
+      s.className = info.backend === "connected" ? "online" : "offline";
+    }).catch(() => {
+      const s = document.getElementById("backendStatus");
+      s.textContent = "// backend offline";
+      s.className = "offline";
+    });
 
     document.getElementById("authMethod").addEventListener("change", (e) => {
       const v = e.target.value;
@@ -270,11 +572,10 @@
 
       const btn = document.getElementById("btnScan");
       btn.disabled = true;
-      btn.textContent = "Ejecutando...";
-      document.getElementById("output").textContent = "Pipeline en ejecución...";
+      btn.textContent = "EJECUTANDO...";
+      document.getElementById("output").textContent = ">> objetivo: " + url + "\n>> pipeline en ejecución...";
       document.getElementById("logLink").textContent = "";
 
-      // Mark all as running visually
       const runningMap = {};
       NODES.forEach(n => runningMap[n.id] = { status: "running" });
       renderPipeline(runningMap);
@@ -288,7 +589,6 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || "Error");
 
-        // Update node statuses
         const statusMap = {};
         if (data.results) {
           for (const [k, v] of Object.entries(data.results)) {
@@ -298,18 +598,21 @@
         renderPipeline(statusMap);
         document.getElementById("output").textContent = JSON.stringify(data, null, 2);
         const c = data.connection || {};
-        const auth = c.authenticated ? `Sesión confirmada${c.username ? ` · usuario: ${c.username}` : ""}` : (c.auth_configured ? `Sesión no confirmada · ${c.verification_reason || "sin verificación"}` : "Sin autenticación configurada");
-        document.getElementById("connectionSummary").textContent = `Backend: ${c.backend || "desconocido"} · Objetivo: ${c.target_reachable ? "respondió" : "sin respuesta"} · ${auth} · request: ${data.diagnostics?.request_id || "-"}`;
+        const auth = c.authenticated
+          ? `<b>SESIÓN CONFIRMADA</b>${c.username ? ` · usuario: <b>${c.username}</b>` : ""}`
+          : (c.auth_configured ? `sesión NO confirmada · ${c.verification_reason || "sin verificación"}` : "sin autenticación configurada");
+        document.getElementById("connectionSummary").innerHTML =
+          `backend: ${c.backend || "?"} · objetivo: ${c.target_reachable ? "<b>respondió</b>" : "sin respuesta"} · ${auth} · request: ${data.diagnostics?.request_id || "-"}`;
         if (data.log_url) {
-          document.getElementById("logLink").innerHTML = `<a href="${data.log_url}" download>Descargar log completo (${data.log_file})</a>`;
+          document.getElementById("logLink").innerHTML = `<a href="${data.log_url}" download>&gt;&gt; descargar log completo (${data.log_file})</a>`;
         }
       } catch (err) {
-        document.getElementById("output").textContent = "Error: " + err.message;
+        document.getElementById("output").textContent = "ERROR: " + err.message;
         document.getElementById("connectionSummary").textContent = "El backend no devolvió un resultado. Revisa /api/status y reports/backend.log.";
         renderPipeline();
       } finally {
         btn.disabled = false;
-        btn.textContent = "Iniciar Pipeline";
+        btn.textContent = ">> Iniciar Pipeline";
       }
     }
   </script>
