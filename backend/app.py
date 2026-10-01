@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.28.0"
+VERSION = "0.29.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -588,7 +588,7 @@ def start_scan():
 
 
 HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
-                "xss_dom", "sqli", "veritas", "chain", "self_tune", "report"]
+                "xss_dom", "sqli", "stealth", "veritas", "chain", "self_tune", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -676,6 +676,7 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
         "xss_pro": bool(data.get("opt_xss_pro", False)),  # avanzados: stored POSTEA marcador
         "veritas": bool(data.get("opt_veritas", True)),  # navegador real contra FP
         "sqli": bool(data.get("opt_sqli", True)),  # SQLI-BAIT: inyeccion SQL activa
+        "stealth": bool(data.get("opt_stealth", True)),  # STEALTH-BAIT: superficie oculta (lectura)
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
@@ -869,6 +870,13 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                         return []
                     v.verify_all(job["findings"])
                     return []   # muta hallazgos in place: confirmados y descartes
+
+                def run_stealth():
+                    from core.stealth_bait import StealthBait
+                    return StealthBait(session, emit, delay=float(
+                        data.get("delay", 0.15))).run(url, spider_out)
+
+                battery("stealth", "stealth", run_stealth)
 
                 def run_sqli():
                     from core.sqli_bait import SqlBait

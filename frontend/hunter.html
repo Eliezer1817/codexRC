@@ -168,6 +168,7 @@
             <label><input type="checkbox" id="optWaf" checked /> Evasión WAF (GHOST-SHIELD)</label>
             <label><input type="checkbox" id="optVeritas" checked /> Verificar XSS en navegador real (VERITAS)</label>
             <label><input type="checkbox" id="optSqli" checked /> SQLi-BAIT: inyección SQL activa (error · boolean · time · stacked)</label>
+            <label><input type="checkbox" id="optStealth" checked /> STEALTH-BAIT: superficie oculta (params ocultos · LFI · SSTI · CRLF · cache · GraphQL)</label>
           </div>
           <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
           <label style="margin-top:0.8rem">LOTE · cola de blancos (una URL por línea)</label>
@@ -351,6 +352,7 @@ esperando objetivo...</pre>
         opt_waf: document.getElementById("optWaf").checked,
         opt_veritas: document.getElementById("optVeritas").checked,
         opt_sqli: document.getElementById("optSqli").checked,
+        opt_stealth: document.getElementById("optStealth").checked,
         inherit_session: document.getElementById("optInherit").checked,
       };
       const btn = document.getElementById("btnBatch");
@@ -415,6 +417,7 @@ esperando objetivo...</pre>
         opt_waf: document.getElementById("optWaf").checked,
         opt_veritas: document.getElementById("optVeritas").checked,
         opt_sqli: document.getElementById("optSqli").checked,
+        opt_stealth: document.getElementById("optStealth").checked,
       };
       const user = document.getElementById("authUser").value.trim();
       if (user) {

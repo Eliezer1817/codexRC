@@ -62,6 +62,9 @@ PARAM_WEIGHTS = {
     "file": 8, "path": 7, "url": 7, "redirect": 6, "next": 5, "return": 5,
     "token": 8, "key": 7, "amount": 7, "price": 7, "action": 6, "type": 3,
     "cat_id": 7, "order": 6, "item": 5, "ref": 3, "lang": 2, "view": 3,
+    # superficie de archivos/plantillas (LFI/SSTI pagan en la tabla)
+    "tpl": 6, "template": 6, "file": 8, "doc": 5, "load": 5,
+    "include": 6, "source": 5, "resource": 4, "next": 5, "return_to": 5,
 }
 
 # basura de tracking: no merecen ni una sonda
