@@ -189,6 +189,13 @@ class Brain:
                            "budget": self.budget_for(s)})
         scored.sort(key=lambda x: -x["score"])
 
+        # AUTOCORRECCION: subir presupuesto de parametros con historial
+        try:
+            from core.self_tune import SelfTune
+            scored = SelfTune(self.emit).apply(scored)
+        except Exception:
+            pass
+
         total = len(spider_out.get("param_targets", []))
         self.emit(f"[brain] {total} objetivos crudos -> {len(scored)} con valor "
                   f"({total - len(scored)} descartados como tracking/assets)")

@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.27.0"
+VERSION = "0.28.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -588,7 +588,7 @@ def start_scan():
 
 
 HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
-                "xss_dom", "sqli", "veritas", "report"]
+                "xss_dom", "sqli", "veritas", "chain", "self_tune", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -878,10 +878,27 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
 
                 battery("veritas", "veritas", run_veritas)
 
+                # ---- ENCADENAR HALLAZGOS (cadenas de impacto combinado)
+                node_state("chain", "running")
+                t0 = time.perf_counter()
+                from core.chain import Chainer
+                chains = Chainer(emit).run(job["findings"])
+                node_state("chain", "success", round(time.perf_counter() - t0, 2))
+                job["results"]["chain"] = {"status": "success", "data": {"chains": chains}}
+
+                # ---- AUTOCORRECCION (memoria de rendimiento)
+                node_state("self_tune", "running")
+                t0 = time.perf_counter()
+                from core.self_tune import SelfTune
+                SelfTune(emit).record(job["findings"],
+                                     brain_out.get("fingerprint", {}))
+                node_state("self_tune", "success", round(time.perf_counter() - t0, 2))
+
                 job["status"] = "finished"
                 node_state("report", "success", 0.0)
                 job["summary"] = {
                     "total": len(job["findings"]),
+                    "chains": len(chains),
                     "alta": len([f for f in job["findings"] if f["severity"] == "alta"]),
                     "media": len([f for f in job["findings"] if f["severity"] == "media"]),
                     "baja": len([f for f in job["findings"] if f["severity"] == "baja"]),

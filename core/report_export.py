@@ -91,6 +91,18 @@ def build_txt(job: Dict[str, Any]) -> str:
             L.append(f"        blanco: {f.get('target', '?')}")
             L.append(f"        razon : {f.get('reason', '')[:150]}")
 
+    chains = (job.get("results", {}).get("chain", {})
+              .get("data", {}).get("chains", []))
+    if chains:
+        L.append("")
+        L.append(" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        L.append(" !!  CADENAS DE IMPACTO COMBINADO - CRITICO        !!")
+        L.append(" !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        for c in chains:
+            L.append(f" [CADENA] {c.get('name', '?')} · severidad: {c.get('severity', '?').upper()}")
+            L.append(f"          piezas: {', '.join(c.get('parts', []))}")
+            L.append(f"          porque: {c.get('reason', '')[:150]}")
+
     L.append("")
     L.append(" HALLAZGOS TECNICOS")
     L.append(sub)
