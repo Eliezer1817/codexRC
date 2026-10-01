@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.25.2"
+VERSION = "0.26.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -588,7 +588,7 @@ def start_scan():
 
 
 HUNTER_NODES = ["spider", "param_map", "xss_get", "xss_forms", "xss_headers",
-                "xss_dom", "veritas", "report"]
+                "xss_dom", "sqli", "veritas", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -675,6 +675,7 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
         "blind": bool(data.get("opt_blind", False)),  # ESCRIBE en el blanco
         "xss_pro": bool(data.get("opt_xss_pro", False)),  # avanzados: stored POSTEA marcador
         "veritas": bool(data.get("opt_veritas", True)),  # navegador real contra FP
+        "sqli": bool(data.get("opt_sqli", True)),  # SQLI-BAIT: inyeccion SQL activa
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
@@ -853,6 +854,12 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                         return []
                     v.verify_all(job["findings"])
                     return []   # muta hallazgos in place: confirmados y descartes
+
+                def run_sqli():
+                    from core.sqli_bait import SqlBait
+                    return SqlBait(hunter).run(spider_out.get("param_targets", []))
+
+                battery("sqli", "sqli", run_sqli)
 
                 battery("veritas", "veritas", run_veritas)
 
