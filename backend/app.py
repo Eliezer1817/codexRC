@@ -160,6 +160,11 @@ def build_auth(data: Dict[str, Any]) -> AuthManager:
             login_url=str(data["login_url"]),
             username=str(data["username"]),
             password=str(data["password"]),
+            username_field=data.get("username_field"),
+            password_field=data.get("password_field"),
+            success_indicator=data.get("success_indicator"),
+            failure_indicator=data.get("failure_indicator"),
+            verify_url=data.get("verify_url"),
         )
     return auth
 

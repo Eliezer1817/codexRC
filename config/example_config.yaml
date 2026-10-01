@@ -10,12 +10,15 @@ auth:
   # Method 1: cookies
   cookies_file: "cookies.txt"
 
-  # Method 2: credentials
+  # Method 2: credentials (login autenticado, con relevo GHOSTGATE si hay Cloudflare)
   # login_url: "https://example.com/login"
   # username: "testuser"
   # password: "testpass"
-  # username_field: "username"
-  # password_field: "password"
+  # username_field: "username"      # opcional: autodeteccion activada
+  # password_field: "password"       # opcional: autodeteccion activada
+  # success_indicator: "dashboard"   # opcional: texto que aparece solo si entro
+  # failure_indicator: "incorrect"   # opcional: texto que aparece si falla
+  # verify_url: "https://example.com/perfil"  # opcional: pagina protegida para confirmar la sesion
 
   # Method 3: bearer
   # token: "eyJhbGciOi..."
