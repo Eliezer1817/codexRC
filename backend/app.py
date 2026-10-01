@@ -35,7 +35,7 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.11.1"
+VERSION = "0.11.2"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -325,7 +325,14 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
 
 @app.get("/")
 def dashboard():
-    return send_from_directory(app.static_folder, "index.html")
+    # el navegador del celular (y a veces tabs viejas) cachean el HTML viejo
+    # y el usuario no vuelve a ver los cambios aunque el server ya este
+    # actualizado. Forzamos "no-store" para que SIEMPRE pida la version fresca.
+    resp = send_from_directory(app.static_folder, "index.html")
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @app.get("/health")
