@@ -633,5 +633,13 @@
       }
     }
   </script>
+<script>
+  // seguro extra: si el navegador quedo con un scroll horizontal viejo
+  // guardado (de una version anterior), lo reseteamos siempre a 0.
+  function resetHScroll() { if (window.scrollX !== 0) window.scrollTo(0, window.scrollY); }
+  window.addEventListener('load', resetHScroll);
+  window.addEventListener('resize', resetHScroll);
+  window.addEventListener('orientationchange', resetHScroll);
+</script>
 </body>
 </html>
