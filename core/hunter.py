@@ -263,6 +263,7 @@ class DeepHunter:
         self.log = log
         self.delay = delay
         self.timeout = timeout
+        self.api_specs: Dict[str, str] = {}
 
     def _pause(self) -> None:
         time.sleep(self.delay)
@@ -310,40 +311,76 @@ class DeepHunter:
             return []
         return keys
 
+    def _origin_headers(self, base_url: str) -> Dict[str, str]:
+        """Cabeceras de navegador para POST de lectura (Origin/Referer/XHR)."""
+        return {"Origin": base_url.rstrip("/"),
+                "Referer": base_url.rstrip("/") + "/",
+                "X-Requested-With": "XMLHttpRequest"}
+
+    def _post_read(self, sess, u: str):
+        """POST de lectura (JSON vacio) contra un endpoint tipo getPage/init.
+        Solo se invoca sobre rutas cuyo ultimo segmento NO empieza con 'do'."""
+        return sess.post(u, json={}, timeout=self.timeout, allow_redirects=False)
+
+    def _scan_js_text(self, base_url, text, specs, queue, seen_files):
+        """Extrae chunks lazy y rutas API (con verbo) de un archivo JS."""
+        for m in re.finditer(r'["' + "'" + r'`](chunk-[A-Z0-9]{6,12}\.js)["' + "'" + r'`]', text):
+            cu = urljoin(base_url, "/" + m.group(1))
+            if cu not in seen_files and len(seen_files) < 40:
+                seen_files.add(cu)
+                queue.append(cu)
+        api_bases = [m.group(1) for m in
+                     re.finditer(r'apiUrl\s*[:=]\s*["' + "'" + r'`](/api[^"' + "'" + r'`]*)["' + "'" + r'`]', text)]
+        bases = api_bases or ["/api"]
+        for m in re.finditer(r'\.(?:get|post)\(\s*["' + "'" + r'`](/[a-zA-Z0-9_][a-zA-Z0-9_/-]{2,70})["' + "'" + r'`]', text):
+            route, is_get = m.group(1), m.group(0).startswith(".get")
+            if route.rsplit("/", 1)[-1].startswith("do"):
+                continue  # endpoint de escritura: jamas se toca
+            for b in bases:
+                u = urljoin(base_url, b.rstrip("/") + route)
+                if u not in specs:
+                    specs[u] = "GET" if is_get else "POST"
+        for m in re.finditer(r'["' + "'" + r'`](/(?:api|account|auth|user|wallet|settings|balance|payment|referral|dashboard)/[a-zA-Z0-9_/-]{2,60})["' + "'" + r'`]', text):
+            route = m.group(1)
+            if route.rsplit("/", 1)[-1].startswith("do"):
+                continue
+            u = urljoin(base_url, route)
+            if u not in specs:
+                specs[u] = "POST"
+
     def discover_api_from_js(self, base_url: str, js_urls: List[str]):
-        """Baja los bundles JS (con sesion heredada: ve el panel logueado) y
-        extrae rutas API reales del codigo. Devuelve (findings, nuevos_hits)."""
+        """Baja los bundles JS CON SESION HEREDADA, sigue los chunks lazy de
+        Angular/webpack recursivamente y extrae las rutas API reales con su
+        verbo. Los endpoints de escritura (do*) se excluyen siempre.
+        Devuelve (findings, hits). El verbo queda en self.api_specs."""
         findings: List[Dict[str, Any]] = []
-        hits: List[str] = []
-        seen_paths: Set[str] = set()
+        specs: Dict[str, str] = {}
+        queue: List[str] = []
+        seen_files: Set[str] = set()
         for js in list(js_urls)[:15]:
+            if js not in seen_files:
+                seen_files.add(js)
+                queue.append(js)
+        while queue and len(seen_files) < 40:
+            js = queue.pop(0)
+            self._pause()
             try:
                 r = self.session.get(js, timeout=self.timeout)
             except Exception:
                 continue
             if r.status_code != 200 or len(r.text) < 50:
                 continue
-            for m in re.finditer(r'["\'`](/api/[A-Za-z0-9_\-/.]{2,70})["\'`]', r.text):
-                p = m.group(1)
-                if p not in seen_paths:
-                    seen_paths.add(p)
-                    hits.append(urljoin(base_url, p))
-            for m in re.finditer(r'(?:fetch|axios(?:\.\w+)?|\$\.(?:get|post)|\.open)\(\s*["\'`]([^"\'`]{4,120})["\'`]',
-                                 r.text):
-                t = m.group(1)
-                if t.startswith("/") and not t.startswith("//") and "?" not in t[:1]:
-                    if "." in t.rsplit("/", 1)[-1] and len(t.rsplit("/", 1)[-1].split(".")[-1]) <= 5:
-                        continue  # archivo estatico, no endpoint
-                    if t not in seen_paths:
-                        seen_paths.add(t)
-                        hits.append(urljoin(base_url, t))
-        hits = hits[:40]
+            self._scan_js_text(base_url, r.text, specs, queue, seen_files)
+        self.api_specs.update(specs)
+        hits = list(specs.keys())[:40]
         if hits:
-            self.log(f"[api-js] {len(hits)} rutas API descubiertas en bundles JS:")
-            for h in hits[:10]:
-                self.log(f"[api-js]   {urlparse(h).path}")
+            self.log(f"[api-js] {len(seen_files)} archivos JS analizados "
+                     f"(incl. chunks lazy) -> {len(hits)} rutas API:")
+            for h in hits[:12]:
+                self.log(f"[api-js]   [{specs[h]}] {urlparse(h).path}")
         else:
-            self.log("[api-js] sin rutas API nuevas en los bundles analizados")
+            self.log(f"[api-js] {len(seen_files)} archivos JS analizados, "
+                     f"sin rutas API nuevas")
         return findings, hits
 
     def test_idor(self, base_url: str, api_hits: List[str]):
@@ -360,10 +397,16 @@ class DeepHunter:
         self.log(f"[idor] probando lectura A->B (ids vecinos) en {len(cands)} endpoints")
         for u in cands:
             self._pause()
+            verb = self.api_specs.get(u, "GET")
             try:
-                rb = self.session.get(u, timeout=self.timeout, allow_redirects=False)
+                if verb == "POST":
+                    rb = self._post_read(self.session, u)
+                else:
+                    rb = self.session.get(u, timeout=self.timeout, allow_redirects=False)
             except Exception:
                 continue
+            if urlparse(u).path.rstrip("/").rsplit("/", 1)[-1].startswith("do"):
+                continue  # escritura: fuera
             if rb.status_code != 200 or "json" not in (rb.headers.get("content-type") or "").lower():
                 continue
             try:
@@ -380,7 +423,7 @@ class DeepHunter:
             # variante 2: parametros id/user_id
             param_variants = []
             sep = "&" if "?" in u else "?"
-            for p in ("id", "user_id"):
+            for p in ("id", "user_id", "uid", "user"):
                 for v in ("1", "2"):
                     param_variants.append(f"{u}{sep}{p}={v}")
             for pv in path_variants + param_variants:
@@ -389,7 +432,10 @@ class DeepHunter:
                 probes_done += 1
                 self._pause()
                 try:
-                    rp = self.session.get(pv, timeout=self.timeout, allow_redirects=False)
+                    if verb == "POST":
+                        rp = self._post_read(self.session, pv)
+                    else:
+                        rp = self.session.get(pv, timeout=self.timeout, allow_redirects=False)
                 except Exception:
                     continue
                 if rp.status_code != 200:
@@ -525,8 +571,13 @@ class DeepHunter:
                  f"(con sesion vs anonimo, solo GETs)")
         for u in cands[:30]:
             self._pause()
+            verb = self.api_specs.get(u, "GET")
             try:
                 ra = self.session.get(u, timeout=self.timeout, allow_redirects=False)
+                if ra.status_code in (404, 405) and verb == "POST":
+                    for k, v in self._origin_headers(base_url).items():
+                        self.session.headers.setdefault(k, v)
+                    ra = self._post_read(self.session, u)
             except Exception:
                 continue
             if ra.status_code != 200:
@@ -537,7 +588,13 @@ class DeepHunter:
             # contraste anonimo: sesion sin cookies de aplicacion (con clearance WAF)
             self._pause()
             try:
-                rn = self._anon_copy().get(u, timeout=self.timeout, allow_redirects=False)
+                anon = self._anon_copy()
+                for k, v in self._origin_headers(base_url).items():
+                    anon.headers.setdefault(k, v)
+                if verb == "POST":
+                    rn = self._post_read(anon, u)
+                else:
+                    rn = anon.get(u, timeout=self.timeout, allow_redirects=False)
                 anon_ok = rn.status_code == 200
                 pii_n = self._pii(rn.text) if anon_ok else []
                 anon_waf = (not anon_ok) and self._waf_block(rn.status_code, rn.text)
@@ -629,6 +686,7 @@ class XSSHunter:
         self.log = log
         self.delay = delay
         self.timeout = timeout
+        self.api_specs: Dict[str, str] = {}
 
     @staticmethod
     def _mark() -> str:
