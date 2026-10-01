@@ -147,27 +147,27 @@
 
     button {
       width: 100%;
-      padding: 0.65rem;
-      background: #000;
-      border: 1px solid var(--green-dim);
-      color: var(--green);
+      padding: 0.75rem;
+      background: #00b34a;
+      border: none;
+      color: #000;
       font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.1em;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
-      border-radius: 2px;
-      margin-top: 0.4rem;
-      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      border-radius: 3px;
+      margin-top: 0.5rem;
+      box-shadow: 0 0 18px rgba(0, 200, 83, 0.45);
+      transition: background 0.15s, box-shadow 0.15s;
     }
     button:hover:not(:disabled) {
-      background: var(--green-dim);
-      color: #000;
-      box-shadow: 0 0 16px rgba(0, 200, 83, 0.4);
+      background: #00e05c;
+      box-shadow: 0 0 26px rgba(0, 200, 83, 0.7);
     }
-    button:disabled { opacity: 0.45; cursor: not-allowed; animation: pulse-dim 1.2s ease-in-out infinite; }
-    @keyframes pulse-dim { 50% { box-shadow: 0 0 12px rgba(0, 200, 83, 0.25); } }
+    button:disabled { opacity: 0.35; cursor: not-allowed; animation: pulse-dim 1.2s ease-in-out infinite; }
+    @keyframes pulse-dim { 50% { box-shadow: 0 0 22px rgba(0, 200, 83, 0.6); } }
 
     .auth-section { margin-top: 1.4rem; }
     .auth-section h2 {
