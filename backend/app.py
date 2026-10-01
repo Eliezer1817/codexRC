@@ -35,7 +35,7 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.10.0"
+VERSION = "0.10.1"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -217,6 +217,14 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
         if auth.auth_method:
             session_check = None
             vurl = str(data.get("verification_url") or "").strip()
+            # una pagina de login NUNCA sirve para verificar sesion (en apps
+            # JavaScript siempre parece "no logueado"): si el campo tiene un
+            # login, ignorarlo y autodescubrir un endpoint de cuenta.
+            _vp = urlparse(vurl).path.lower()
+            if vurl and any(k in _vp for k in ("login", "signin", "sign-in", "entrar", "iniciar-sesion")):
+                log_event("auth_discovery", request_id=g.get("request_id"),
+                          verification_url_ignored=vurl)
+                vurl = ""
             if vurl:
                 session_check = auth.verify_session(vurl)
             else:
