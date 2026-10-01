@@ -98,10 +98,13 @@ class Spider:
             if not p.scheme.startswith("http"):
                 return
             path = (p.path or "").lower()
-            if path.endswith(SKIP_EXT):
-                # los .js si se analizan (endpoints ocultos), el resto se ignora
-                if path.endswith(".js") and len(js_seen) < max_js_files:
+            if path.endswith(".js"):
+                # los .js se analizan aparte (endpoints ocultos + chunks lazy);
+                # nunca se encolan como pagina
+                if len(js_seen) < max_js_files:
                     js_seen.add(_norm(full))
+                return
+            if path.endswith(SKIP_EXT):
                 return
             add_param_target(full)
             if _norm(full) not in visited:
@@ -201,6 +204,7 @@ class Spider:
             "param_targets": param_targets,
             "forms": forms,
             "js_endpoints": sorted(js_endpoints)[:40],
+            "js_files": sorted(js_seen)[:max_js_files],
             "dom_candidates": dom_candidates[:20],
         }
 

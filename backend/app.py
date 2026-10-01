@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.17.1"
+VERSION = "0.17.2"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -691,7 +691,7 @@ def start_hunter():
                 battery("surface", "paths", run_paths)
 
                 def run_api_js():
-                    fnd, hits = deep.discover_api_from_js(url, spider_out.get("js_endpoints", []))
+                    fnd, hits = deep.discover_api_from_js(url, spider_out.get("js_files", []))
                     api_hits.extend(hits)
                     return fnd
 
