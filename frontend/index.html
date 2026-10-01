@@ -156,12 +156,14 @@
         <p class="hint">Debe ser una página que solo se vea con sesión. Si vuelve al login, la sesión se marcará como inválida.</p>
 
         <div id="authCreds" style="display:none">
-          <label>Login URL</label>
-          <input type="url" id="loginUrl" placeholder="https://example.com/login" />
-          <label>Usuario</label>
-          <input type="text" id="username" />
+          <label>URL de login (la página donde vos te logueás)</label>
+          <input type="url" id="loginUrl" placeholder="https://sitio.com/login" />
+          <p class="hint">Poné la página de login como la ves en tu navegador. Si el sitio es una app moderna sin formulario visible, el motor descubre <b>solo</b> el endpoint real en su JavaScript. Si ya lo conocés, también podés pegarlo directo (ej: <code>https://sitio.com/api/auth/doSignin</code>).</p>
+          <label>Usuario (usuario o email, el que usás para entrar)</label>
+          <input type="text" id="username" placeholder="tucorreo@example.com" />
           <label>Contraseña</label>
           <input type="password" id="password" />
+          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó: endpoint descubierto, credenciales rechazadas, o si hace falta GHOSTGATE (navegador real).</p>
         </div>
 
         <div id="authBearer" style="display:none">

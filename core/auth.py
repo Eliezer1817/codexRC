@@ -277,42 +277,60 @@ class AuthManager:
         # Turnstile incrustado en el form: requiere resolucion humana (GHOSTGATE completo)
         if not form and not has_password_input:
             # ---------- 4. SPA / API JSON login ----------
-            step("modo", "api_json (sin formulario HTML detectado)")
+            # 4a. Auto-descubrimiento: buscar en el JavaScript de la SPA el
+            #     endpoint real de login (ej. post("/auth/doSignin") + apiUrl).
+            descubiertos = self._discover_spa_login_endpoints(login_url, soup)
+            step("endpoints_descubiertos", descubiertos or "ninguno")
+            # si hay endpoints descubiertos usamos solo esos; la pagina HTML
+            # no sirve como API (responde HTML y genera falsos positivos).
+            api_urls = descubiertos[:3] if descubiertos else [login_url]
+            step("modo", "spa_api_json (login por API)")
             # candidatos de campo de usuario: el explicito primero, luego comunes
             user_keys = [username_field] if username_field else []
             user_keys += [k for k in ("username", "email", "login") if k not in user_keys]
             json_attempts = [
                 {ukey: username, "password": password} for ukey in user_keys
             ]
-            for payload in json_attempts:
-                from urllib.parse import urlparse as _up
-                _origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
-                headers_json = {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Origin": _origin,
-                    "Referer": _origin + "/",
-                }
-                try:
-                    login_resp = self.session.post(
-                        login_url, json=payload, headers=headers_json,
-                        timeout=20, allow_redirects=True,
+            from urllib.parse import urlparse as _up
+            _origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
+            headers_json = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": _origin,
+                "Referer": login_url,
+            }
+            for api_url in api_urls:
+                for payload in json_attempts:
+                    try:
+                        login_resp = self.session.post(
+                            api_url, json=payload, headers=headers_json,
+                            timeout=20, allow_redirects=True,
+                        )
+                    except Exception as exc:
+                        step("api_json_error", f"{api_url}: {exc}")
+                        continue
+                    self.last_login_response = login_resp
+                    body = login_resp.text.lower()
+                    compact = login_resp.text.replace(" ", "")[:600].lower()
+                    _ct = (login_resp.headers.get("Content-Type") or "").lower()
+                    es_json = "json" in _ct or login_resp.text.lstrip()[:1] == "{"
+                    exito = es_json and (
+                        (login_resp.status_code < 400 and "password" not in body[:500])
+                        or '"state":"success"' in compact
+                        or '"success":true' in compact
                     )
-                except Exception as exc:
-                    step("api_json_error", str(exc))
-                    continue
-                self.last_login_response = login_resp
-                body = login_resp.text.lower()
-                exito = login_resp.status_code < 400 and "password" not in body[:500]
-                if exito:
-                    self._finish_login(True, "api_json", login_resp)
-                    return True
+                    if exito:
+                        self._finish_login(True, "api_json", login_resp)
+                        return True
             self.login_debug["resultado"] = "login_api_fallo"
+            self.login_debug["endpoints_probados"] = api_urls
             self.login_debug["razon"] = (
-                "La pagina no expone formulario HTML ni acepto login JSON. "
-                "El login se renderiza con JavaScript: usa GHOSTGATE completo "
-                "(navegador real) para obtener las cookies y pegarlas en 'Cookies'."
+                "La pagina no tiene formulario HTML. Se probaron estos endpoints "
+                f"de API: {api_urls}. Si el endpoint se descubrio bien y el "
+                "servidor rechazo credenciales, revisa usuario/contraseña. "
+                "Si no se encontro endpoint, usa GHOSTGATE completo (navegador "
+                "real) y pega las cookies en 'Cookies'."
             )
             self.authenticated = False
             return False
@@ -397,6 +415,106 @@ class AuthManager:
                 return False
 
         return success
+
+    def _discover_spa_login_endpoints(self, login_url: str, soup) -> list:
+        """Auto-descubre el endpoint de login de una SPA en su JavaScript.
+
+        Busca patrones tipo .post("/auth/doSignin") y el prefijo de API
+        (apiUrl:"/api") en los scripts de la pagina (2 niveles: scripts
+        directos + chunks lazy referenciados). Devuelve URLs absolutas.
+        """
+        import re as _re
+        from urllib.parse import urljoin as _uj, urlparse as _up
+        origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
+        api_prefix = ""
+        candidatos = []
+        vistos = set()
+
+        def escanear_js(js: str) -> None:
+            nonlocal api_prefix
+            m = _re.search(r'apiUrl["\']?\s*[:=]\s*["\']([^"\']+)["\']', js)
+            if m and not api_prefix:
+                api_prefix = m.group(1)
+            for mm in _re.finditer(r'\.post\(\s*["\'`]([^"\'`]+)["\'`]', js):
+                ep = mm.group(1)
+                low = ep.lower()
+                if any(k in low for k in ("signin", "sign-in", "login", "doauth")) \
+                        and not ep.startswith("http") and ep not in vistos:
+                    vistos.add(ep)
+                    candidatos.append(ep)
+
+        # scripts con src (nivel 1) + inline.
+        # OJO: las SPA resuelven los src relativos contra la RAIZ del sitio
+        # (base href="/"), no contra la URL de la pagina. Si se resuelven
+        # contra /auth/ muchos servidores devuelven el HTML shell con 200.
+        cola = []
+        base = soup.find("base")
+        base_href = base.get("href") if base else "/"
+        for tag in soup.find_all("script"):
+            s = tag.get("src")
+            if s:
+                if s.startswith("http"):
+                    cola.append(s)
+                elif base_href.startswith("http"):
+                    cola.append(_uj(base_href, s))
+                else:
+                    cola.append(origin + "/" + s.lstrip("/"))
+            elif tag.string and len(tag.string) < 500000:
+                escanear_js(tag.string)
+
+        # niveles 2..N: chunks lazy referenciados dentro de los JS.
+        # El endpoint de login suele estar en un chunk de nivel 3: se recorre
+        # el grafo completo (hasta `tope` archivos, en lotes paralelos).
+        from collections import deque as _dq
+        from concurrent.futures import ThreadPoolExecutor as _tpe
+        import requests as _rq
+
+        tope = 150
+        _headers = dict(self.session.headers)
+        vistos_urls = set(cola)
+        pendientes = _dq(cola)
+        archivos = 0
+
+        def _traer(url_js):
+            try:
+                r = _rq.get(url_js, timeout=12, headers=_headers)
+                if len(r.content) > 2_500_000 or "<html" in r.text[:500].lower():
+                    return None
+                return (url_js, r.text)
+            except Exception:
+                return None
+
+        while pendientes and archivos < tope:
+            lote = []
+            while pendientes and len(lote) < 12:
+                lote.append(pendientes.popleft())
+            with _tpe(max_workers=8) as ex:
+                resultados = [x for x in ex.map(_traer, lote) if x]
+            for url_js, texto in resultados:
+                archivos += 1
+                escanear_js(texto)
+                for c in _re.findall(r'["\']\./?((?:chunk|main|scripts)-[\w\-]+\.js)["\']', texto):
+                    full = _uj(url_js, "./" + c)
+                    if full not in vistos_urls:
+                        vistos_urls.add(full)
+                        pendientes.append(full)
+
+        if not candidatos:
+            return []
+        if api_prefix and not api_prefix.startswith("/"):
+            api_prefix = "/" + api_prefix
+        # solo endpoints de ACCION (doSignin); los get* (getSignin) son de
+        # configuracion y NO sirven para loguearse (dan falsos positivos).
+        accion = [e for e in candidatos if not e.lower().rstrip("/").split("/")[-1].startswith("get")]
+        orden = accion
+        finales = []
+        for ep in orden:
+            if not ep.startswith("/"):
+                ep = "/" + ep
+            full = origin + (api_prefix or "") + ep
+            if full not in finales:
+                finales.append(full)
+        return finales
 
     def _finish_login(self, success: bool, method_name: str, resp) -> None:
         self.authenticated = success
