@@ -127,53 +127,8 @@ class StealthBait:
                           f"al backend en {urlparse(url).path}")
         return out
 
-    # ---------------------------------------------------- 2 traversal
+    # --------------------------------------------------------- crlf
 
-    def traversal(self, target: Dict[str, Any]) -> List[Dict[str, Any]]:
-        param, url = target["param"], target["url"]
-        if not TRAVERSAL_NAMES.search(param):
-            return []
-        out: List[Dict[str, Any]] = []
-        for payload in TRAV_PAYLOADS:
-            r = self._get(_set_qs(url, {param: payload}))
-            if r is None:
-                continue
-            body = r.text or ""
-            for sig, what in TRAV_SIGNATURES:
-                if re.search(sig, body):
-                    out.append({
-                        "type": "LFI (path traversal)", "severity": "critica",
-                        "target": _set_qs(url, {param: payload}), "param": param,
-                        "evidence": f"lectura de {what} confirmada por firma "
-                                    f"con payload inerte",
-                        "verdict": "confirmado por firma de archivo",
-                    })
-                    self.emit(f"[stealth] 💥 LFI: {param} en "
-                              f"{urlparse(url).path} lee {what}!")
-                    return out
-        return out
-
-    # --------------------------------------------------------- 3 ssti
-
-    def ssti(self, target: Dict[str, Any]) -> List[Dict[str, Any]]:
-        param, url = target["param"], target["url"]
-        out: List[Dict[str, Any]] = []
-        for canary in SSTI_CANARIES:
-            r = self._get(_set_qs(url, {param: canary}))
-            if r is not None and "49" in (r.text or ""):
-                out.append({
-                    "type": "SSTI (inyeccion de plantillas)", "severity": "critica",
-                    "target": _set_qs(url, {param: canary}), "param": param,
-                    "evidence": f"el servidor COMPUTO {canary} -> 49 (RCE en "
-                                f"potencia, no explotado)",
-                    "verdict": "confirmado por canario aritmetico inerte",
-                })
-                self.emit(f"[stealth] 💥 SSTI: {param} en "
-                          f"{urlparse(url).path} computa la plantilla!")
-                return out
-        return out
-
-    # --------------------------------------------------------- 4 crlf
 
     def crlf(self, target: Dict[str, Any]) -> List[Dict[str, Any]]:
         param, url = target["param"], target["url"]
@@ -194,7 +149,7 @@ class StealthBait:
             }]
         return []
 
-    # ----------------------------------------------- 5 method tamper
+    # ------------------------------------------------ method tamper
 
     def method_tamper(self, url: str) -> List[Dict[str, Any]]:
         base = self._baseline(url)
@@ -222,74 +177,16 @@ class StealthBait:
                           f"{urlparse(url).path}")
         return out
 
-    # -------------------------------------------------- 6 cache bait
-
-    def cache_bait(self, url: str) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
-        canary = "cw-unkeyed-probe"
-        for h in UNKEYED_HEADERS:
-            r = self._get(url, headers={h: canary})
-            if r is None:
-                continue
-            reflected = canary in (r.text or "") or any(
-                canary in v for v in r.headers.values())
-            if reflected:
-                out.append({
-                    "type": "Entrada unkeyed (cache poisoning candidato)",
-                    "severity": "alta", "target": url, "param": h,
-                    "evidence": f"{h} se refleja SIN validar en la respuesta "
-                                "(candidata a envenenar cache/CDN)",
-                    "verdict": "candidata: no se enveneno nada",
-                })
-                self.emit(f"[stealth] 💥 {h} reflejado sin validar en "
-                          f"{urlparse(url).path}: cache poisoning en puerta")
-        return out
-
-    # ----------------------------------------------------- 7 graphql
-
-    def graphql(self, base_url: str) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
-        root = f"{urlparse(base_url).scheme}://{urlparse(base_url).netloc}"
-        q = {"query": "{__schema{queryType{name}}}"}
-        for path in GRAPHQL_PATHS:
-            try:
-                r = self.session.post(root + path, json=q, timeout=10)
-            except Exception:
-                continue
-            body = r.text or ""
-            if r.status_code == 200 and "__schema" in body:
-                out.append({
-                    "type": "GraphQL abierto", "severity": "media",
-                    "target": root + path, "param": "introspection",
-                    "evidence": "introspection HABILITADA: todo el esquema "
-                                "de datos es legible (mapa de IDORs)",
-                    "verdict": "confirmado por introspeccion",
-                })
-                self.emit(f"[stealth] 💥 GraphQL con introspeccion abierta: "
-                          f"{path}")
-                break
-        return out
-
-    # -------------------------------------------------------------- run
-
     def run(self, url: str, spider_out: Dict[str, Any]) -> List[Dict[str, Any]]:
-        self.emit("[stealth] === STEALTH-BAIT: caza de superficie oculta ===")
+        self.emit("[stealth] === STEALTH-BAIT: params ocultos + CRLF + method ===")
         findings: List[Dict[str, Any]] = []
         targets = [t for t in spider_out.get("param_targets", [])
-                   if t.get("score", 0) >= 4][:8]
-        if targets:
-            self.emit(f"[stealth] sondando {len(targets)} objetivos valiosos")
+                   if t.get("score", 0) >= 4][:10]
         for t in targets:
             findings += self.hidden_params(t["url"])
-            findings += self.traversal(t)
-            findings += self.ssti(t)
             findings += self.crlf(t)
-        base_page = self._get(url)
-        if base_page is not None:
+        if self._get(url) is not None:
             findings += self.method_tamper(url)
-            findings += self.cache_bait(url)
-        findings += self.graphql(url)
         n = len(findings)
-        self.emit(f"[stealth] === STEALTH-BAIT: {n} hallazgo(s) de superficie "
-                  f"oculta ===")
+        self.emit(f"[stealth] === STEALTH-BAIT: {n} hallazgo(s) ===")
         return findings

@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.29.0"
+VERSION = "0.30.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -588,7 +588,8 @@ def start_scan():
 
 
 HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
-                "xss_dom", "sqli", "stealth", "veritas", "chain", "self_tune", "report"]
+                "xss_dom", "sqli", "path", "ssti", "cache", "graphql", "stealth",
+                "veritas", "chain", "self_tune", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -677,6 +678,10 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
         "veritas": bool(data.get("opt_veritas", True)),  # navegador real contra FP
         "sqli": bool(data.get("opt_sqli", True)),  # SQLI-BAIT: inyeccion SQL activa
         "stealth": bool(data.get("opt_stealth", True)),  # STEALTH-BAIT: superficie oculta (lectura)
+        "path": bool(data.get("opt_path", True)),  # PATH-BAIT: LFI/traversal (lectura)
+        "ssti": bool(data.get("opt_ssti", True)),  # SSTI-BAIT: plantillas con fingerprint (lectura)
+        "cache": bool(data.get("opt_cache", True)),  # CACHE-BAIT: poisoning/deception (pasivo)
+        "graphql": bool(data.get("opt_graphql", True)),  # GraphQL: esquema y batching (lectura)
     }
     max_pages = min(int(data.get("max_pages") or 25), 100)
     # OVERDRIVE: sondas en vuelo simultaneas (1 = clasico secuencial)
@@ -870,6 +875,30 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                         return []
                     v.verify_all(job["findings"])
                     return []   # muta hallazgos in place: confirmados y descartes
+
+                def run_path():
+                    from core.path_bait import PathBait
+                    return PathBait(session, emit).run(url, spider_out)
+
+                battery("path", "path", run_path)
+
+                def run_ssti():
+                    from core.ssti_bait import SstiBait
+                    return SstiBait(session, emit).run(url, spider_out)
+
+                battery("ssti", "ssti", run_ssti)
+
+                def run_cache():
+                    from core.cache_bait import CacheBait
+                    return CacheBait(session, emit).run(url, spider_out)
+
+                battery("cache", "cache", run_cache)
+
+                def run_graphql():
+                    from core.graphql_bait import GraphqlBait
+                    return GraphqlBait(session, emit).run(url)
+
+                battery("graphql", "graphql", run_graphql)
 
                 def run_stealth():
                     from core.stealth_bait import StealthBait
