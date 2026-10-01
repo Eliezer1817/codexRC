@@ -533,15 +533,16 @@ class DeepHunter:
                 if ra.status_code in (401, 403):
                     self.log(f"[api] /{urlparse(u).path} exige sesion (correcto)")
                 continue
-            pii_a = self._pii_keys(ra.text)
-            # contraste anonimo: mismos datos sin sesion?
+            pii_a = self._pii(ra.text)
+            # contraste anonimo: sesion sin cookies de aplicacion (con clearance WAF)
             self._pause()
             try:
-                rn = requests.get(u, timeout=self.timeout, allow_redirects=False)
+                rn = self._anon_copy().get(u, timeout=self.timeout, allow_redirects=False)
                 anon_ok = rn.status_code == 200
-                pii_n = self._pii_keys(rn.text) if anon_ok else []
+                pii_n = self._pii(rn.text) if anon_ok else []
+                anon_waf = (not anon_ok) and self._waf_block(rn.status_code, rn.text)
             except Exception:
-                anon_ok, pii_n = False, []
+                anon_ok, pii_n, anon_waf = False, [], False
             if anon_ok and pii_n:
                 findings.append({
                     "severity": "alta", "type": "BAC en API",
@@ -557,6 +558,9 @@ class DeepHunter:
                                  "evidence": "200 anonimo sin campos privados",
                                  "verdict": "mapeada"})
                 self.log(f"[api] API publica: {urlparse(u).path}")
+            elif anon_waf:
+                self.log(f"[api] /{urlparse(u).path} contraste NO concluyente: "
+                         f"el WAF bloqueo al anonimo (refinar con GHOSTGATE)")
             elif pii_a:
                 self.log(f"[api] API privada correcta: {urlparse(u).path} "
                          f"(datos solo con sesion: {', '.join(pii_a)})")
