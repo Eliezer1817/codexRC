@@ -1454,6 +1454,7 @@ class XSSPro:
                 "cargar mas scripts ignorando nonce/hash (proteccion perforable)",
                 ev, "header"))
         all_srcs = dirs.get("default-src") or []
+        self.csp_base_missing = "base-uri" not in dirs
         if ("object-src" not in dirs and "object-src" not in
                 " ".join(all_srcs) and not self.csp_inline_ok):
             findings.append(self._finding(
@@ -1473,6 +1474,288 @@ class XSSPro:
                 "de scripts en la practica", ev, "header"))
         return findings
 
+    # ---------- 7) DOM clobbering ----------
+    CB_PATTERNS = (
+        (re.compile(r"eval\s*\(\s*window\.", re.I), "alta",
+         "eval de una propiedad de window: clobberable con id/name de elemento"),
+        (re.compile(r"document\.querySelector\s*\(\s*['\"]#['\"]\s*\+", re.I), "media",
+         "selector de id armado por concatenacion: un elemento con ese id cloberea la referencia"),
+        (re.compile(r"window\s*\[", re.I), "media",
+         "acceso dinamico a window[...]: clobberable con id/name de elemento"),
+        (re.compile(r"\.(?:innerHTML|src|href)\s*=[^;]{0,60}window\.(?!location)", re.I), "media",
+         "sink alimentado por una propiedad global de window clobberable con <div id=...>"),
+    )
+    WN_PAT = re.compile(r"window\.name", re.I)
+
+    def scan_clobbering(self, texts: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for t in texts:
+            for pat, sev, razon in self.CB_PATTERNS:
+                for m in pat.finditer(t["text"]):
+                    line = t["text"].count("\n", 0, m.start()) + 1
+                    findings.append(self._finding(
+                        "dom-clobbering", t["origin"], "-", sev, razon,
+                        f"{t['origin']} (linea {line}) {m.group(0)[:50]} · "
+                        "verificacion manual: <div id=propiedad> para secuestrar la referencia",
+                        "js"))
+                    self.log(f"[xsspro] 💥 clobbering: {razon[:40]} @ "
+                             f"{urlparse(t['origin']).path}")
+            for m in self.WN_PAT.finditer(t["text"]):
+                win = t["text"][m.start(): m.start() + 300]
+                if any(s in win for s in ("innerHTML", "src", "href", "eval", "Function")):
+                    line = t["text"].count("\n", 0, m.start()) + 1
+                    findings.append(self._finding(
+                        "dom-clobbering", t["origin"], "-", "alta",
+                        "window.name alimentando un sink: cualquier pagina que "
+                        "abra esta en iframe puede fijar window.name del blanco",
+                        f"{t['origin']} (linea {line}) window.name -> sink", "js"))
+        return findings
+
+    # ---------- 8) prototype pollution ----------
+    PP_SINKS = re.compile(r"Object\.assign\s*\(|\$\.extend\(\s*true|\bmerge\s*\(|deepMerge", re.I)
+    TAINTS = ("JSON.parse", "location.search", "location.hash", "URLSearchParams",
+              "document.cookie", "getParameter")
+
+    def scan_proto(self, texts: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for t in texts:
+            for m in self.PP_SINKS.finditer(t["text"]):
+                win = t["text"][max(0, m.start() - 600): m.start() + 800]
+                line = t["text"].count("\n", 0, m.start()) + 1
+                if any(x in win for x in self.TAINTS):
+                    findings.append(self._finding(
+                        "proto-pollution", t["origin"], "-", "alta",
+                        "merge/assign de datos de la URL sin saneo: candidate a "
+                        "prototype pollution (__proto__/constructor) que luego "
+                        "alimenta sinks (XSS, bypass de validaciones)",
+                        f"{t['origin']} (linea {line}) {m.group(0)[:40]} + taint de URL",
+                        "js"))
+                    self.log(f"[xsspro] 💥 prototype pollution candidate en "
+                             f"{urlparse(t['origin']).path}")
+        return findings
+
+    # ---------- 9) iframe srcdoc ----------
+    IF_PAT = re.compile(r"(?:srcdoc|iframe\s*\.\s*src)\s*=", re.I)
+
+    def scan_iframe(self, texts: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for t in texts:
+            for m in self.IF_PAT.finditer(t["text"]):
+                win = t["text"][max(0, m.start() - 600): m.start() + 600]
+                line = t["text"].count("\n", 0, m.start()) + 1
+                if any(x in win for x in self.TAINTS):
+                    findings.append(self._finding(
+                        "iframe-srcdoc", t["origin"], "-", "alta",
+                        "iframe con srcdoc/src construido con datos de la URL: "
+                        "HTML inyectado ejecuta dentro del iframe con el origen "
+                        "del propio sitio",
+                        f"{t['origin']} (linea {line}) {m.group(0)[:40]} + taint", "js"))
+                    self.log(f"[xsspro] 💥 iframe srcdoc/src influible en "
+                             f"{urlparse(t['origin']).path}")
+        return findings
+
+    # ---------- 10) base tag injection ----------
+    def probe_base(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for tgt in param_targets[:self.MAX_PARAMS]:
+            url, param = tgt["url"], tgt["param"]
+            mark = self._mark()
+            r = self._probe_param(url, param, mark)
+            if r is None or mark not in r.text:
+                continue
+            raw = self._probe_param(url, param, mark + "<'")
+            if raw is None or mark not in raw.text:
+                continue
+            after = raw.text[raw.text.find(mark): raw.text.find(mark) + len(mark) + 3]
+            if "<" not in after:
+                continue
+            idx = raw.text.find(mark)
+            head_end = raw.text.lower().find("</head>")
+            if 0 <= idx < head_end if head_end > 0 else (idx < 600):
+                gravedad, donde = "alta", "dentro de <head>"
+            elif getattr(self, "csp_base_missing", True):
+                gravedad, donde = "media", "sin base-uri en CSP"
+            else:
+                continue
+            findings.append(self._finding(
+                "base-tag", url, param, gravedad,
+                f"reflexion con < crudo {donde}: un <base href=//atacante> "
+                "secuestra todas las URLs relativas del sitio (forms y links "
+                "apuntan al dominio del atacante)",
+                f"{urlparse(url).path}?{param}= · < crudo en HTML", "body"))
+            self.log(f"[xsspro] 💥 base tag injection @ {urlparse(url).path}?{param}")
+        return findings
+
+    # ---------- 11) open redirect -> XSS ----------
+    REDIR_PARAMS = ("url", "redirect", "redirect_uri", "next", "return", "returnto",
+                    "r", "continue", "dest", "destination", "target", "goto", "out", "link")
+
+    def probe_open_redirect(self, param_targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for tgt in param_targets[:self.MAX_PARAMS]:
+            url, param = tgt["url"], tgt["param"]
+            if param.lower() not in self.REDIR_PARAMS:
+                continue
+            mark = self._mark()
+
+            def _probe_redir(url: str, param: str, value: str):
+                self._pause()
+                try:
+                    parts = urlparse(url)
+                    q = [(k, v) for k, v in parse_qsl(parts.query) if k != param]
+                    q.append((param, value))
+                    # NO seguir el redirect: el dato esta en la cabecera Location
+                    return self.session.get(
+                        urlunparse(parts._replace(query=urlencode(q))),
+                        timeout=self.timeout, allow_redirects=False)
+                except Exception:
+                    return None
+
+            r = _probe_redir(url, param, "https://example.org/" + mark)
+            loc = (r.headers.get("Location", "") if r is not None else "")
+            if r is None or mark not in loc:
+                continue
+            findings.append(self._finding(
+                "open-redirect", url, param, "media",
+                "el parametro controla la cabecera Location: open redirect "
+                "(phishing, bypass de allowlists, token leak por referrer)",
+                f"Location -> {loc[:100]}", "header"))
+            self.log(f"[xsspro] 💥 open redirect en '{param}' @ {urlparse(url).path}")
+            r2 = _probe_redir(url, param, "javascript:" + mark)
+            loc2 = (r2.headers.get("Location", "") if r2 is not None else "")
+            if r2 is not None and mark in loc2:
+                findings.append(self._finding(
+                    "open-redirect-xss", url, param, "alta",
+                    "el redirect acepta javascript: en Location: si un usuario "
+                    "clickea el link resultante ejecuta JS en el origen del sitio",
+                    f"Location -> {loc2[:100]}", "header"))
+        return findings
+
+    # ---------- 12) reflexion en la ruta ----------
+    def probe_path_reflection(self, base_url: str) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        mark = self._mark()
+        self._pause()
+        try:
+            r = self.session.get(urljoin(base_url, "/" + mark), timeout=self.timeout)
+        except Exception:
+            return findings
+        if mark not in r.text:
+            return findings
+        raw_mark = mark + "<'"
+        self._pause()
+        try:
+            r2 = self.session.get(urljoin(base_url, "/" + raw_mark), timeout=self.timeout)
+        except Exception:
+            r2 = None
+        escapa = r2 is not None and mark in r2.text and "<" in \
+            r2.text[r2.text.find(mark): r2.text.find(mark) + len(mark) + 3]
+        findings.append(self._finding(
+            "path-reflection", base_url, "(ruta)", "alta" if escapa else "media",
+            "la RUTA se refleja en la respuesta (404/rewrite): contexto de "
+            "inyeccion que el corpus de parametros no cubre"
+            + ("; < crudo sobrevive: XSS en la ruta factible" if escapa else ""),
+            f"GET /{mark[:12]}... -> reflejado · HTTP {r.status_code}", "path"))
+        self.log(f"[xsspro] 💥 reflexion en la ruta @ {urlparse(base_url).netloc}")
+        return findings
+
+    # ---------- 13) fingerprint de sanitizador ----------
+    SAN_LIBS = (
+        (re.compile(r"DOMPurify", re.I), "DOMPurify", (2, 4),
+         "versiones < 2.4 tienen bypasses mXSS publicos (CVE-2024-45816, etc.)"),
+        (re.compile(r"sanitize-html|sanitizeHtml", re.I), "sanitize-html", (2, 12), ""),
+        (re.compile(r"js-xss|\bnew\s+FilterXSS|\bxss\s*\(", re.I), "js-xss", (1, 0), ""),
+    )
+    SAN_VER = re.compile(r"version\s*[:=]\s*['\"]?(\d+(?:\.\d+)+)", re.I)
+
+    @staticmethod
+    def _vtuple(v: str) -> tuple:
+        return tuple(int(x) for x in v.split(".")[:3])
+
+    def scan_sanitizers(self, texts: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for t in texts:
+            for pat, name, minv, extra in self.SAN_LIBS:
+                if not pat.search(t["text"]):
+                    continue
+                ver = None
+                for vm in self.SAN_VER.finditer(t["text"]):
+                    ver = vm.group(1)
+                    break
+                if ver and self._vtuple(ver) < minv:
+                    findings.append(self._finding(
+                        "sanitizer", t["origin"], ver, "alta",
+                        f"sanitizer {name} VIEJO (v{ver}): {extra or 'bypasses conocidos en versiones antiguas'}; "
+                        "validar contra el payload mXSS correspondiente",
+                        f"{t['origin']} {name} v{ver}", "js"))
+                    self.log(f"[xsspro] 💥 {name} v{ver} viejo en "
+                             f"{urlparse(t['origin']).path}")
+                elif ver:
+                    findings.append(self._finding(
+                        "sanitizer", t["origin"], ver, "info",
+                        f"sanitizer {name} v{ver} presente: filtro activo, "
+                        "probar vectores mXSS de re-serializacion antes de descartar",
+                        f"{t['origin']} {name} v{ver}", "js"))
+        return findings
+
+    # ---------- 14) self-XSS escalable ----------
+    SELF_WORDS = ("profile", "user", "account", "settings", "comment",
+                  "name", "bio", "note", "post", "message")
+
+    def probe_self_xss(self, spider_out: Dict[str, Any]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for form in spider_out.get("forms", [])[:self.MAX_FORMS]:
+            action = form.get("url", "")
+            if not any(w in action.lower() for w in self.SELF_WORDS):
+                continue
+            fields = [f for f in form.get("fields", [])[:8]]
+            if not fields:
+                continue
+            mark = self._mark()
+            field = max(fields, key=len)
+            data = {x: "x" for x in fields}
+            data[field] = mark
+            self._pause()
+            try:
+                if form["method"].upper() == "POST":
+                    r = self.session.post(action, data=data, timeout=self.timeout)
+                else:
+                    r = self.session.get(action, params=data, timeout=self.timeout)
+            except Exception:
+                continue
+            if r.status_code == 200 and mark in r.text:
+                findings.append(self._finding(
+                    "self-xss", action, field, "media",
+                    "el input persiste y se re-renderiza al propio usuario: "
+                    "self-XSS; ESCALABLE si otra vista (admin, lista publica, "
+                    "email) renderiza el mismo dato, ahi es XSS almacenado",
+                    f"'{field}' -> re-renderizado en {urlparse(action).path}", "stored"))
+                self.log(f"[xsspro] 💥 self-XSS persistente en '{field}' @ "
+                         f"{urlparse(action).path}")
+        return findings
+
+    # ---------- 15) cookie/JSON a sink ----------
+    CK_PAT = re.compile(r"document\.cookie", re.I)
+    CK_SINKS = ("innerHTML", "insertAdjacentHTML", "outerHTML", ".src =", ".href =",
+                "eval(", "Function(", "document.write")
+
+    def scan_cookie_sink(self, texts: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+        findings: List[Dict[str, Any]] = []
+        for t in texts:
+            for m in self.CK_PAT.finditer(t["text"]):
+                win = t["text"][m.start(): m.start() + 500]
+                if any(s.lower() in win.lower() for s in self.CK_SINKS):
+                    line = t["text"].count("\n", 0, m.start()) + 1
+                    findings.append(self._finding(
+                        "cookie-sink", t["origin"], "-", "alta",
+                        "document.cookie alimentando un sink de HTML: una cookie "
+                        "inyectable (via response de otro subdominio o cabecera "
+                        "CRLF) ejecuta en esta pagina",
+                        f"{t['origin']} (linea {line}) document.cookie -> sink", "js"))
+                    self.log(f"[xsspro] 💥 document.cookie -> sink en "
+                             f"{urlparse(t['origin']).path}")
+        return findings
+
     # ---------- orquestador ----------
     def run(self, base_url: str, spider_out: Dict[str, Any]) -> List[Dict[str, Any]]:
         findings: List[Dict[str, Any]] = []
@@ -1486,7 +1769,18 @@ class XSSPro:
         findings += self.scan_csp_bypass(base_url)
         findings += self.probe_dangling(spider_out.get("param_targets", []))
         findings += self.probe_stored(spider_out)
+        # XSS-PRO 2: clobbering, proto-pollution, iframe, base tag, redirect,
+        # path, sanitizers, self-XSS, cookie sink
+        findings += self.scan_clobbering(texts)
+        findings += self.scan_proto(texts)
+        findings += self.scan_iframe(texts)
+        findings += self.probe_base(spider_out.get("param_targets", []))
+        findings += self.probe_open_redirect(spider_out.get("param_targets", []))
+        findings += self.probe_path_reflection(base_url)
+        findings += self.scan_sanitizers(texts)
+        findings += self.probe_self_xss(spider_out)
+        findings += self.scan_cookie_sink(texts)
         altas = len([f for f in findings if f["severity"] == "alta"])
         self.log(f"[xsspro] ══ XSS-PRO terminado: {len(findings)} hallazgos "
-                 f"({altas} altos)")
+                 f"({altas} altos) · 15 modulos / arsenal total: 20 vectores XSS")
         return findings
