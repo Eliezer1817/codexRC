@@ -32,6 +32,8 @@ class AuthManager:
         self.auth_method: Optional[str] = None
         self.last_login_response: Optional[requests.Response] = None
         self.login_debug: Dict[str, Any] = {}
+        self._spa_cache_origin: Optional[str] = None
+        self._spa_cache_data: Optional[Dict[str, Any]] = None
 
     def load_cookies_from_file(self, filepath: str) -> bool:
         path = Path(filepath)
@@ -165,6 +167,7 @@ class AuthManager:
             "content_type": None,
             "signals": [],
             "cookie_names": sorted(self.session.cookies.get_dict().keys()),
+            "profile": None,
             "error": None,
         }
         started = time.perf_counter()
@@ -208,17 +211,17 @@ class AuthManager:
                 result["verified"] = True
                 result["authenticated"] = api_ok
                 result["signals"].append("api_json_response")
-                # nombre de usuario si viene en el JSON
+                # datos del usuario logueado (perfil de la cuenta)
                 try:
                     _j = response.json()
-                    _u = _j.get("user", _j) if isinstance(_j, dict) else {}
-                    for k in ("username", "login", "email", "name"):
-                        if isinstance(_u, dict) and _u.get(k):
-                            result["username"] = str(_u[k])
-                            result["signals"].append("username_detected")
-                            break
+                    _s = json.dumps(_j, default=str)
+                    result["profile"] = _j if len(_s) <= 4000 else {"_perfil_grande": _s[:4000]}
                 except Exception:
-                    pass
+                    result["profile"] = None
+                _uname = self._find_username(result["profile"])
+                if _uname:
+                    result["username"] = _uname
+                    result["signals"].append("username_detected")
                 if api_ok:
                     result["reason"] = "api_authenticated"
                 else:
@@ -465,19 +468,28 @@ class AuthManager:
 
         return success
 
-    def _discover_spa_login_endpoints(self, login_url: str, soup) -> list:
-        """Auto-descubre el endpoint de login de una SPA en su JavaScript.
+    # ------------------------------------------------------------------
+    # Auto-descubrimiento SPA (cacheado por origen: un sitio, un escaneo)
+    # ------------------------------------------------------------------
+    def _scan_spa_js(self, page_url: str, soup=None, tope: int = 150) -> Dict[str, Any]:
+        """Escanea todo el JavaScript de una SPA (scripts + chunks multinivel).
 
-        Busca patrones tipo .post("/auth/doSignin") y el prefijo de API
-        (apiUrl:"/api") en los scripts de la pagina (2 niveles: scripts
-        directos + chunks lazy referenciados). Devuelve URLs absolutas.
+        Devuelve {"api_prefix": str, "posts": [endpoints POST], "js_files": N}.
+        Cacheado por origen de la pagina.
         """
         import re as _re
-        from urllib.parse import urljoin as _uj, urlparse as _up
-        origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
+        from collections import deque as _dq
+        from concurrent.futures import ThreadPoolExecutor as _tpe
+        import requests as _rq
+        origin = "{0.scheme}://{0.netloc}".format(urlparse(page_url))
+        if self._spa_cache_origin == origin and self._spa_cache_data:
+            return self._spa_cache_data
+        if soup is None:
+            r = self.session.get(page_url, timeout=20)
+            soup = BeautifulSoup(r.text, "html.parser")
         api_prefix = ""
-        candidatos = []
-        vistos = set()
+        posts = []
+        vistos_post = set()
 
         def escanear_js(js: str) -> None:
             nonlocal api_prefix
@@ -486,16 +498,12 @@ class AuthManager:
                 api_prefix = m.group(1)
             for mm in _re.finditer(r'\.post\(\s*["\'`]([^"\'`]+)["\'`]', js):
                 ep = mm.group(1)
-                low = ep.lower()
-                if any(k in low for k in ("signin", "sign-in", "login", "doauth")) \
-                        and not ep.startswith("http") and ep not in vistos:
-                    vistos.add(ep)
-                    candidatos.append(ep)
+                if not ep.startswith("http") and ep not in vistos_post:
+                    vistos_post.add(ep)
+                    posts.append(ep)
 
-        # scripts con src (nivel 1) + inline.
-        # OJO: las SPA resuelven los src relativos contra la RAIZ del sitio
-        # (base href="/"), no contra la URL de la pagina. Si se resuelven
-        # contra /auth/ muchos servidores devuelven el HTML shell con 200.
+        # scripts nivel 1: los src relativos se resuelven contra la RAIZ
+        # del sitio (base href="/"), no contra la URL de la pagina.
         cola = []
         base = soup.find("base")
         base_href = base.get("href") if base else "/"
@@ -505,20 +513,12 @@ class AuthManager:
                 if s.startswith("http"):
                     cola.append(s)
                 elif base_href.startswith("http"):
-                    cola.append(_uj(base_href, s))
+                    cola.append(urljoin(base_href, s))
                 else:
                     cola.append(origin + "/" + s.lstrip("/"))
             elif tag.string and len(tag.string) < 500000:
                 escanear_js(tag.string)
 
-        # niveles 2..N: chunks lazy referenciados dentro de los JS.
-        # El endpoint de login suele estar en un chunk de nivel 3: se recorre
-        # el grafo completo (hasta `tope` archivos, en lotes paralelos).
-        from collections import deque as _dq
-        from concurrent.futures import ThreadPoolExecutor as _tpe
-        import requests as _rq
-
-        tope = 150
         _headers = dict(self.session.headers)
         vistos_urls = set(cola)
         pendientes = _dq(cola)
@@ -543,27 +543,167 @@ class AuthManager:
                 archivos += 1
                 escanear_js(texto)
                 for c in _re.findall(r'["\']\./?((?:chunk|main|scripts)-[\w\-]+\.js)["\']', texto):
-                    full = _uj(url_js, "./" + c)
+                    full = urljoin(url_js, "./" + c)
                     if full not in vistos_urls:
                         vistos_urls.add(full)
                         pendientes.append(full)
 
-        if not candidatos:
-            return []
+        data = {"api_prefix": api_prefix, "posts": posts, "js_files": archivos}
+        self._spa_cache_origin = origin
+        self._spa_cache_data = data
+        return data
+
+    def _armar_url_api(self, page_url: str, ep: str) -> str:
+        origin = "{0.scheme}://{0.netloc}".format(urlparse(page_url))
+        data = self._spa_cache_data or {}
+        api_prefix = data.get("api_prefix") or ""
         if api_prefix and not api_prefix.startswith("/"):
             api_prefix = "/" + api_prefix
-        # solo endpoints de ACCION (doSignin); los get* (getSignin) son de
-        # configuracion y NO sirven para loguearse (dan falsos positivos).
+        if not ep.startswith("/"):
+            ep = "/" + ep
+        return origin + api_prefix + ep
+
+    def _discover_spa_login_endpoints(self, login_url: str, soup) -> list:
+        """Endpoints de ACCION de login (doSignin) descubiertos en el JS.
+        Los get* (getSignin) son de config y no sirven para loguearse."""
+        data = self._scan_spa_js(login_url, soup)
+        candidatos = []
+        for ep in data["posts"]:
+            low = ep.lower()
+            if any(k in low for k in ("signin", "sign-in", "login", "doauth")):
+                candidatos.append(ep)
         accion = [e for e in candidatos if not e.lower().rstrip("/").split("/")[-1].startswith("get")]
-        orden = accion
         finales = []
-        for ep in orden:
-            if not ep.startswith("/"):
-                ep = "/" + ep
-            full = origin + (api_prefix or "") + ep
+        for ep in accion:
+            full = self._armar_url_api(login_url, ep)
             if full not in finales:
                 finales.append(full)
         return finales
+
+    def discover_account_urls(self, page_url: str) -> list:
+        """Endpoints de API que devuelven datos de la cuenta (verificar sesion)."""
+        data = self._scan_spa_js(page_url)
+        claves = ("account", "profile", "balance", "init", "me", "user", "wallet")
+        candidatos = []
+        for ep in data["posts"]:
+            segs = [s for s in ep.lower().split("/") if s]
+            if segs and any(any(k == s or k in s for k in claves) for s in segs):
+                candidatos.append(ep)
+
+        def prioridad(ep):
+            low = ep.lower()
+            segs = low.rstrip("/").split("/")
+            ultimo = segs[-1] if segs else ""
+            if "account" in low and ("init" in ultimo or "getaccount" in low or ultimo == "me"):
+                return 0
+            if "account" in low:
+                return 1
+            if "profile" in low or ultimo == "me":
+                return 2
+            if "init" in ultimo:
+                return 3
+            return 4
+
+        candidatos.sort(key=prioridad)
+        finales = []
+        for ep in candidatos:
+            full = self._armar_url_api(page_url, ep)
+            if full not in finales:
+                finales.append(full)
+        return finales[:4]
+
+    def probe_account_candidates(self, urls: list) -> list:
+        """Sin sesion, descarta endpoints publicos (200 anonimo = no sirven
+        para verificar sesion). Devuelve solo los que exigen sesion (401/403)."""
+        import requests as _rq
+        protegidos = []
+        _headers = dict(self.session.headers)
+        for u in urls:
+            try:
+                _origin = "{0.scheme}://{0.netloc}".format(urlparse(u))
+                h = dict(_headers)
+                h.update({"Content-Type": "application/json",
+                          "Accept": "application/json",
+                          "Origin": _origin, "Referer": _origin + "/"})
+                r = _rq.get(u, timeout=15, headers=h)
+                if r.status_code in (404, 405):
+                    r = _rq.post(u, json={}, timeout=15, headers=h)
+                if r.status_code in (401, 403):
+                    protegidos.append(u)
+            except Exception:
+                continue
+        return protegidos
+
+    def discover_login_url(self, site_url: str) -> Optional[str]:
+        """Con SOLO la URL del sitio encuentra la pagina de login.
+        Devuelve la URL o None si no la encuentra."""
+        try:
+            origin = "{0.scheme}://{0.netloc}".format(urlparse(site_url))
+            r = self.session.get(origin, timeout=20)
+        except Exception:
+            return None
+        soup = BeautifulSoup(r.text, "html.parser")
+        # 1. la raiz ya tiene formulario clasico
+        if soup.find("input", {"type": "password"}):
+            return origin
+        # 2. candidatos de ruta (desde el JS + rutas estandar)
+        # rutas estandar primero (mas predecibles), luego las del JS
+        candidatos = []
+        for p in ("login", "signin", "auth/signin", "auth/login", "auth/sign-in",
+                  "account/login", "log-in", "iniciar-sesion", "entrar", "wp-login.php"):
+            if p not in candidatos:
+                candidatos.append(p)
+        try:
+            data = self._scan_spa_js(origin, soup)
+        except Exception:
+            data = {"posts": []}
+        for ep in data.get("posts", []):
+            low = ep.lower()
+            if any(k in low for k in ("login", "signin", "sign-in")) and ep not in candidatos:
+                candidatos.append(ep)
+        for p in candidatos:
+            full = p if p.startswith("http") else origin + "/" + p.strip("/")
+            try:
+                rr = self.session.get(full, timeout=15, allow_redirects=True)
+            except Exception:
+                continue
+            if rr.status_code >= 400:
+                continue
+            _ct = (rr.headers.get("Content-Type") or "").lower()
+            if "json" in _ct or rr.text.lstrip()[:1] == "{":
+                continue  # respuesta de API: no es una pagina de login
+            ssoup = BeautifulSoup(rr.text, "html.parser")
+            if ssoup.find("input", {"type": "password"}):
+                return str(rr.url)
+            # shell de SPA: si el JS expone endpoint de login, esta ruta sirve
+            if len(ssoup.find_all("script")) >= 2:
+                try:
+                    if self._discover_spa_login_endpoints(full, ssoup):
+                        return full
+                except Exception:
+                    continue
+        return None
+
+    def _find_username(self, obj: Any, depth: int = 0) -> Optional[str]:
+        """Busca recursivamente el nombre/usuario dentro de un JSON de perfil."""
+        if depth > 6 or obj is None:
+            return None
+        if isinstance(obj, dict):
+            for k in ("username", "login", "email", "full_name", "first_name",
+                      "firstname", "name", "nickname"):
+                v = obj.get(k)
+                if isinstance(v, str) and 2 <= len(v) <= 100:
+                    return v
+            for v in obj.values():
+                r = self._find_username(v, depth + 1)
+                if r:
+                    return r
+        elif isinstance(obj, list):
+            for v in obj[:20]:
+                r = self._find_username(v, depth + 1)
+                if r:
+                    return r
+        return None
 
     def _finish_login(self, success: bool, method_name: str, resp) -> None:
         self.authenticated = success

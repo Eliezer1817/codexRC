@@ -151,19 +151,19 @@
           <textarea id="cookiesRaw" rows="3" placeholder="sessionid=abc; token=xyz"></textarea>
         </div>
 
-        <label>URL protegida para verificar sesión (opcional)</label>
-        <input type="url" id="verificationUrl" placeholder="https://example.com/account" />
+        <label>URL protegida para verificar sesión (opcional, se descubre sola)</label>
+        <input type="url" id="verificationUrl" placeholder="https://example.com/api/account (opcional)" />
         <p class="hint">Página o API que solo responde con sesión iniciada. <b>Apps modernas:</b> usá una URL de API que devuelva tus datos, ej: <code>https://vellius.com/api/account/init</code> (el motor la prueba con GET y POST, y con sesión da 200, sin sesión da 401). OJO: no pongas la página de login aquí, en apps JavaScript siempre parece "no logueado".</p>
 
         <div id="authCreds" style="display:none">
-          <label>URL de login (la página donde vos te logueás)</label>
-          <input type="url" id="loginUrl" placeholder="https://sitio.com/login" />
-          <p class="hint">Poné la página de login como la ves en tu navegador. Si el sitio es una app moderna sin formulario visible, el motor descubre <b>solo</b> el endpoint real en su JavaScript. Si ya lo conocés, también podés pegarlo directo (ej: <code>https://sitio.com/api/auth/doSignin</code>).</p>
           <label>Usuario (usuario o email, el que usás para entrar)</label>
           <input type="text" id="username" placeholder="tucorreo@example.com" />
           <label>Contraseña</label>
           <input type="password" id="password" />
-          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó: endpoint descubierto, credenciales rechazadas, o si hace falta GHOSTGATE (navegador real).</p>
+          <p class="hint"><b>Simple: solo pon tu usuario y contraseña.</b> Dejá los otros campos en blanco y el motor encuentra <b>solo</b> la página de login y el endpoint real desde la URL objetivo. Si ya conocés la URL de login, podés ponerla para ahorrar tiempo.</p>
+          <label>URL de login (opcional, se descubre sola)</label>
+          <input type="url" id="loginUrl" placeholder="https://sitio.com/login (opcional)" />
+          <p class="hint">Si algo falla, el nodo <b>Auth Status</b> te dice exactamente qué pasó: login encontrado, endpoint descubierto, credenciales rechazadas, o si hace falta GHOSTGATE (navegador real). Cuando entrás, ahí también aparecen <b>tu nombre y los datos de tu cuenta</b>.</p>
         </div>
 
         <div id="authBearer" style="display:none">

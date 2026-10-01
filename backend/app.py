@@ -35,7 +35,7 @@ from core.tech_detect import TechDetector
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.9.1"
+VERSION = "0.10.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -143,7 +143,7 @@ def save_scan_log(job: Dict[str, Any]) -> str:
     return str(path)
 
 
-def build_auth(data: Dict[str, Any]) -> AuthManager:
+def build_auth(data: Dict[str, Any], target_url: str = None) -> AuthManager:
     auth = AuthManager()
     if data.get("cookies"):
         if not isinstance(data["cookies"], dict):
@@ -155,9 +155,30 @@ def build_auth(data: Dict[str, Any]) -> AuthManager:
         auth.set_custom_header(
             str(data["custom_header_name"]), str(data["custom_header_value"])
         )
-    elif data.get("username") and data.get("password") and data.get("login_url"):
+    elif data.get("username") and data.get("password"):
+        login_url = str(data.get("login_url") or "").strip()
+        if not login_url and target_url:
+            # con SOLO la URL del sitio: encontrar la pagina de login solo
+            login_url = auth.discover_login_url(str(target_url))
+            log_event("auth_discovery", request_id=g.get("request_id"),
+                      login_url_discovered=login_url)
+        if not login_url:
+            raise ValueError(
+                "Falta la URL de login y no se pudo descubrir desde la URL objetivo"
+            )
+        # auto-verificacion: endpoints de cuenta que exijan sesion (401 anonimo)
+        auth.auto_verify_urls = []
+        if not data.get("verification_url"):
+            try:
+                cands = auth.discover_account_urls(str(target_url or login_url))
+                auth.auto_verify_urls = auth.probe_account_candidates(cands)
+                log_event("auth_discovery", request_id=g.get("request_id"),
+                          account_urls=auth.auto_verify_urls)
+            except Exception as exc:
+                log_event("auth_discovery_error", request_id=g.get("request_id"),
+                          error=str(exc))
         auth.login_with_credentials(
-            login_url=str(data["login_url"]),
+            login_url=login_url,
             username=str(data["username"]),
             password=str(data["password"]),
             username_field=data.get("username_field"),
@@ -175,7 +196,7 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
     log_event("scan_started", request_id=g.get("request_id"), url=safe_url(url), auth_requested=bool(
         data.get("cookies") or data.get("bearer_token") or data.get("username")
     ))
-    auth = build_auth(data)
+    auth = build_auth(data, target_url=url)
     session = auth.get_session()
     pipeline = Pipeline()
 
@@ -194,8 +215,28 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
 
     def node_auth_info(ctx: Dict[str, Any]) -> Dict[str, Any]:
         if auth.auth_method:
-            verification_url = str(data.get("verification_url") or url)
-            session_check = auth.verify_session(verification_url)
+            session_check = None
+            vurl = str(data.get("verification_url") or "").strip()
+            if vurl:
+                session_check = auth.verify_session(vurl)
+            else:
+                # auto: endpoints de cuenta protegidos (credentials) o
+                # descubiertos al vuelo (cookies/bearer)
+                candidatos = list(getattr(auth, "auto_verify_urls", []) or [])
+                if not candidatos:
+                    try:
+                        candidatos = auth.discover_account_urls(url)
+                    except Exception:
+                        candidatos = []
+                for cand in candidatos:
+                    chk = auth.verify_session(cand)
+                    if chk.get("authenticated"):
+                        session_check = chk
+                        break
+                    if session_check is None:
+                        session_check = chk
+                if session_check is None:
+                    session_check = auth.verify_session(url)
         else:
             session_check = {
                 "verified": False,
@@ -241,6 +282,7 @@ def execute_scan(url: str, data: Dict[str, Any]) -> Dict[str, Any]:
         "session_verified": bool(session_check.get("verified")),
         "authenticated": bool(session_check.get("authenticated", False)),
         "username": session_check.get("username"),
+        "user_profile": session_check.get("profile"),
         "verification_reason": session_check.get("reason"),
         "verification_url": session_check.get("url"),
     }
