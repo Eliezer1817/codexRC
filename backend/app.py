@@ -20,7 +20,7 @@ from typing import Any, Dict
 import requests
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from flask import Flask, g, jsonify, request, send_file, send_from_directory
+from flask import Flask, g, jsonify, request, send_file, send_from_directory, Response
 
 # Permite ejecutar tanto `python backend/app.py` como `python -m backend.app`.
 ROOT = Path(__file__).resolve().parent.parent
@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.25.1"
+VERSION = "0.25.2"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -654,13 +654,12 @@ def _descubrir_zona_privada(session, base_url: str, emit) -> list:
     return seeds[:5]
 
 
-@app.post("/api/hunter")
-def start_hunter():
-    """HUNTER MODE: arana + corpus XSS automatico, con log de terminal detallado."""
-    data = request.get_json(silent=True) or {}
-    url = str(data.get("url", "")).strip()
+def _create_hunt_job(data: Dict[str, Any], url: str = None):
+    """Crea un job de caza y lanza su hilo. Devuelve (job_id, error).
+    Reutilizable por /api/hunter y por el LOTE (/api/hunt_batch)."""
+    url = url or str(data.get("url", "")).strip()
     if not valid_target(url):
-        return jsonify({"error": "url debe ser una URL http(s) valida"}), 400
+        return None, ("url debe ser una URL http(s) valida", 400)
 
     opts = {
         "get": bool(data.get("opt_get", True)),
@@ -882,6 +881,138 @@ def start_hunter():
                           error_type=type(exc).__name__, error=str(exc))
 
     threading.Thread(target=run_hunter, daemon=True).start()
+    return job_id, None
+
+
+# ------------------------- CAZA EN LOTE (v0.25.2) -------------------------
+BATCHES: Dict[str, Dict[str, Any]] = {}
+BATCHES_LOCK = threading.Lock()
+BATCH_PER_TARGET_TIMEOUT = 50 * 60  # 50 min por blanco (watchdog mata a los 45)
+
+
+def _prune_batches() -> None:
+    if len(BATCHES) <= 20:
+        return
+    for bid in sorted(BATCHES, key=lambda b: BATCHES[b]["created_at"])[:-20]:
+        BATCHES.pop(bid, None)
+
+
+@app.post("/api/hunt_batch")
+def start_hunt_batch():
+    """LOTE: cola de blancos que se cazan en serie, uno por uno, con la misma
+    configuracion. Un blanco que falla no tumba el lote. Devuelve un id de
+    lote para seguir el progreso."""
+    data = request.get_json(silent=True) or {}
+    raw = data.get("targets") or []
+    targets, invalid = [], []
+    for t in raw:
+        t = str(t).strip()
+        (targets if valid_target(t) else invalid).append(t)
+    if not targets:
+        return jsonify({"error": "targets: al menos una URL http(s) valida "
+                                 f"(invalidas: {invalid[:5]})"}), 400
+    bid = uuid.uuid4().hex[:8]
+    batch = {
+        "id": bid, "type": "batch", "created_at": utc_now(),
+        "status": "running", "version": VERSION,
+        "total": len(targets), "done": 0,
+        "targets": targets, "invalid_targets": invalid,
+        "results": [], "summary": {}, "live_log": [],
+    }
+    with BATCHES_LOCK:
+        BATCHES[bid] = batch
+        _prune_batches()
+
+    def bemit(msg: str) -> None:
+        with BATCHES_LOCK:
+            batch["live_log"].append({"ts": utc_now(), "msg": msg})
+
+    def run_batch() -> None:
+        with app.app_context():
+            g.request_id = None
+            tot_h = alt_h = leak_h = ver_h = 0
+            ok = failed = 0
+            bemit(f"[lote] === LOTE INICIADO: {len(targets)} blancos ===")
+            for i, t in enumerate(targets, 1):
+                bemit(f"[lote] ({i}/{len(targets)}) cazando: {t}")
+                job_id, err = _create_hunt_job(dict(data, url=t), url=t)
+                if err:
+                    failed += 1
+                    with BATCHES_LOCK:
+                        batch["results"].append({"url": t, "status": "invalid",
+                                                 "error": err[0]})
+                    bemit(f"[lote] XX {t} invalido: {err[0]}")
+                    continue
+                deadline = time.time() + BATCH_PER_TARGET_TIMEOUT
+                while True:
+                    j = JOBS.get(job_id) or {}
+                    st = j.get("status")
+                    if st in ("finished", "failed") or time.time() > deadline:
+                        break
+                    time.sleep(2.0)
+                j = JOBS.get(job_id) or {}
+                fs = j.get("findings") or []
+                s = j.get("summary") or {}
+                nl = len([f for f in fs if f.get("leak")])
+                nv = len([f for f in fs if f.get("verificado")])
+                row = {"url": t, "job_id": job_id, "status": j.get("status"),
+                       "hallazgos": s.get("total", len(fs)), "alta": s.get("alta", 0),
+                       "filtraciones": nl, "verificados": nv}
+                with BATCHES_LOCK:
+                    batch["results"].append(row)
+                    batch["done"] += 1
+                if j.get("status") == "failed":
+                    failed += 1
+                    bemit(f"[lote] XX {t} FALLO: {str(j.get('error'))[:100]}")
+                else:
+                    ok += 1
+                    tot_h += row["hallazgos"]; alt_h += row["alta"]
+                    leak_h += nl; ver_h += nv
+                    bemit(f"[lote] OK {t}: {row['hallazgos']} hallazgos "
+                          f"({row['alta']} altos · {nl} filtraciones · {nv} verificados)")
+                log_event("batch_target_done", batch_id=bid, url=safe_url(t),
+                          status=j.get("status"), summary=s)
+            with BATCHES_LOCK:
+                batch["status"] = "finished"
+                batch["summary"] = {
+                    "blancos": len(targets), "ok": ok, "failed": failed,
+                    "hallazgos": tot_h, "alta": alt_h,
+                    "filtraciones": leak_h, "verificados": ver_h,
+                }
+            bemit(f"[lote] === LOTE TERMINADO: {ok}/{len(targets)} cazados · "
+                  f"{tot_h} hallazgos ({alt_h} altos · {leak_h} filtraciones · "
+                  f"{ver_h} verificados) ===")
+            log_event("batch_finished", batch_id=bid,
+                      summary=batch["summary"])
+
+    threading.Thread(target=run_batch, daemon=True).start()
+    return jsonify({"batch_id": bid, "status": "running", "total": len(targets),
+                    "invalid_targets": invalid,
+                    "poll_url": f"/api/batch/{bid}"}), 202
+
+
+@app.get("/api/batch/<bid>")
+def get_batch(bid: str):
+    with BATCHES_LOCK:
+        b = BATCHES.get(bid)
+        if not b:
+            return jsonify({"error": "Lote no encontrado"}), 404
+        return jsonify(dict(b))
+
+
+@app.get("/api/batches")
+def list_batches():
+    with BATCHES_LOCK:
+        return jsonify(list(BATCHES.values()))
+
+
+@app.post("/api/hunter")
+def start_hunter():
+    """HUNTER MODE: arana + corpus XSS automatico, con log de terminal detallado."""
+    data = request.get_json(silent=True) or {}
+    job_id, err = _create_hunt_job(data)
+    if err:
+        return jsonify({"error": err[0]}), err[1]
     return jsonify({"job_id": job_id, "status": "running", "poll_url": f"/api/jobs/{job_id}"}), 202
 
 
@@ -901,6 +1032,42 @@ def get_job(job_id: str):
     # seccion aparte: filtraciones de datos de usuarios (lo que importa)
     resp["leaks"] = [f for f in job.get("findings", []) if f.get("leak")]
     return jsonify(resp)
+
+
+@app.get("/api/jobs/<job_id>/export")
+def export_job(job_id: str):
+    """Exporta el informe de la caza: TXT plano, JSON completo o PDF
+    estilizado (Chrome headless, fallback fpdf2)."""
+    job = JOBS.get(job_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    fmt = (request.args.get("format") or "txt").strip().lower()
+    base = f"codexrc_{job_id}_caza"
+    try:
+        from core import report_export
+        if fmt == "json":
+            return Response(report_export.build_json(job), mimetype="application/json",
+                            headers={"Content-Disposition":
+                                     f'attachment; filename="{base}.json"'})
+        if fmt == "pdf":
+            data, method = report_export.build_pdf(job)
+            if not data:
+                return jsonify({"error": "PDF no disponible: no hay navegador "
+                                         "Chromium ni fpdf2 instalado "
+                                         "(pip install fpdf2)"}), 503
+            resp = Response(data, mimetype="application/pdf",
+                            headers={"Content-Disposition":
+                                     f'attachment; filename="{base}.pdf"'})
+            resp.headers["X-Pdf-Method"] = method
+            return resp
+        if fmt != "txt":
+            return jsonify({"error": "formato debe ser txt, json o pdf"}), 400
+        return Response(report_export.build_txt(job), mimetype="text/plain; charset=utf-8",
+                        headers={"Content-Disposition":
+                                 f'attachment; filename="{base}.txt"'})
+    except Exception as exc:
+        return jsonify({"error": f"exportando: {type(exc).__name__}: "
+                                 f"{str(exc)[:150]}"}), 500
 
 
 @app.get("/api/jobs/<job_id>/log")

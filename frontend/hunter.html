@@ -169,6 +169,10 @@
             <label><input type="checkbox" id="optVeritas" checked /> Verificar XSS en navegador real (VERITAS)</label>
           </div>
           <button id="btnHunt" onclick="startHunt()">&gt;&gt; Iniciar Caza</button>
+          <label style="margin-top:0.8rem">LOTE · cola de blancos (una URL por línea)</label>
+          <textarea id="batchTargets" rows="4" placeholder="https://sitio1.com&#10;https://sitio2.com&#10;https://sitio3.com" style="width:100%;font-family:var(--mono);font-size:0.8rem;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.5rem"></textarea>
+          <button id="btnBatch" onclick="startBatch()" style="margin-top:0.4rem">&gt;&gt; Iniciar LOTE (caza en serie)</button>
+          <div id="batchPanel" style="margin-top:0.6rem;font-size:0.78rem;white-space:pre-wrap"></div>
           <p class="hint">
             Modo 100% pasivo: marcadores benignos, sin payloads ni ejecución.
             Con "heredar sesión" reutiliza el login del último escaneo y caza
@@ -200,6 +204,7 @@ esperando objetivo...</pre>
         </div>
       </div>
       <p id="logLink"></p>
+      <p id="exportLinks"></p>
     </section>
   </main>
 
@@ -316,7 +321,76 @@ esperando objetivo...</pre>
         document.getElementById("logLink").innerHTML =
           `<a href="${job.log_url}" download>&gt;&gt; descargar informe completo (${esc(job.log_file || "")})</a>`;
       }
+      document.getElementById("exportLinks").innerHTML =
+        `Descargar informe: ` +
+        `<a href="/api/jobs/${job.id}/export?format=pdf">&gt;&gt; PDF estilizado</a> · ` +
+        `<a href="/api/jobs/${job.id}/export?format=txt">&gt;&gt; TXT</a> · ` +
+        `<a href="/api/jobs/${job.id}/export?format=json">&gt;&gt; JSON</a>`;
       if (job.status === "failed") logLine("✗ CAZA FALLÓ: " + (job.error || "?"));
+    }
+
+    async function startBatch() {
+      const raw = document.getElementById("batchTargets").value;
+      const targets = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      if (!targets.length) return alert("Pon al menos una URL en la cola");
+      const body = {
+        targets,
+        max_pages: parseInt(document.getElementById("maxPages").value) || 25,
+        workers: parseInt(document.getElementById("workers").value) || 4,
+        opt_get: document.getElementById("optGet").checked,
+        opt_forms: document.getElementById("optForms").checked,
+        opt_headers: document.getElementById("optHeaders").checked,
+        opt_dom: document.getElementById("optDom").checked,
+        opt_paths: document.getElementById("optPaths").checked,
+        opt_api: document.getElementById("optApi").checked,
+        opt_api_js: document.getElementById("optApiJs").checked,
+        opt_idor: document.getElementById("optIdor").checked,
+        opt_params_plus: document.getElementById("optParamsPlus").checked,
+        opt_xss_pro: document.getElementById("optXssPro").checked,
+        opt_waf: document.getElementById("optWaf").checked,
+        opt_veritas: document.getElementById("optVeritas").checked,
+        inherit_session: document.getElementById("optInherit").checked,
+      };
+      const btn = document.getElementById("btnBatch");
+      btn.disabled = true; btn.textContent = ">> LOTE EN CURSO…";
+      document.getElementById("liveDot").style.display = "inline-block";
+      const r = await fetch("/api/hunt_batch", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!r.ok) { btn.disabled = false; btn.textContent = ">> Iniciar LOTE (caza en serie)";
+        return alert(j.error || "error"); }
+      logLine("═══ LOTE " + j.batch_id + " · " + j.total + " blancos ═══");
+      pollBatch(j.batch_id, btn);
+    }
+
+    async function pollBatch(bid, btn) {
+      const panel = document.getElementById("batchPanel");
+      while (true) {
+        await new Promise(r => setTimeout(r, 3000));
+        const r = await fetch("/api/batch/" + bid);
+        if (!r.ok) break;
+        const b = await r.json();
+        panel.textContent = b.results.map(x => {
+          if (x.status === "invalid") return "XX " + x.url + " (" + x.error + ")";
+          const mark = x.status === "failed" ? "XX" : "OK";
+          return "[" + mark + "] " + x.url + " · " + (x.hallazgos || 0) +
+                 " hallazgos · " + (x.alta || 0) + " altos" +
+                 (x.filtraciones ? " · " + x.filtraciones + " FILTRACIONES" : "") +
+                 (x.verificados ? " · " + x.verificados + " verificados" : "");
+        }).join("\n") || "cazando el primer blanco…";
+        logLine(`[lote] ${b.done}/${b.total} blancos listos`);
+        if (b.status === "finished") {
+          const s = b.summary || {};
+          logLine(`═══ LOTE TERMINADO: ${s.ok}/${s.blancos} OK · ${s.hallazgos || 0} hallazgos · ${s.alta || 0} altos · ${s.filtraciones || 0} FILTRACIONES ═══`);
+          panel.textContent += "\n═══ LOTE TERMINADO: " + (s.ok || 0) + "/" + (s.blancos || 0) +
+            " OK · " + (s.hallazgos || 0) + " hallazgos · " + (s.alta || 0) + " altos" +
+            " · " + (s.filtraciones || 0) + " filtraciones ═══";
+          btn.disabled = false; btn.textContent = ">> Iniciar LOTE (caza en serie)";
+          document.getElementById("liveDot").style.display = "none";
+          break;
+        }
+      }
     }
 
     async function startHunt() {
