@@ -375,6 +375,19 @@ class AuthManager:
                     if exito:
                         self._finish_login(True, "api_json", login_resp)
                         return True
+                    # visibilidad: que respondio el servidor al rechazar
+                    try:
+                        _cuerpo = login_resp.text.replace(" ", "")[:200]
+                        if "password" not in _cuerpo.lower() and "token" not in _cuerpo.lower():
+                            _rsp = self.login_debug.setdefault("respuestas_servidor", [])
+                            if len(_rsp) < 3:
+                                _rsp.append({
+                                    "url": api_url.replace(origin, "") if False else api_url,
+                                    "status": login_resp.status_code,
+                                    "mensaje": _cuerpo,
+                                })
+                    except Exception:
+                        pass
             self.login_debug["resultado"] = "login_api_fallo"
             self.login_debug["endpoints_probados"] = api_urls
             self.login_debug["razon"] = (
