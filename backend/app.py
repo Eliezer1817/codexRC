@@ -42,7 +42,7 @@ NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_m
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
 JOBS: Dict[str, Dict[str, Any]] = {}
-VERSION = "0.17.2"
+VERSION = "0.17.3"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -611,7 +611,7 @@ def start_hunter():
             def emit(msg):
                 job["live_log"].append({"ts": utc_now(), "msg": msg})
             try:
-                emit(f"[hunter] objetivo fijado: {url}")
+                emit(f"[hunter] codexRC v{VERSION} · objetivo fijado: {url}")
                 emit("[hunter] modo activo seguro: rutas + BAC API + params ocultos + reflexion. "
                     "Solo lectura A->B, sin payloads de exploit, sin endpoints que escriban")
 
