@@ -358,7 +358,7 @@ class AuthManager:
             step("modo", "spa_api_json (login por API)")
             # candidatos de campo de usuario: el explicito primero, luego comunes
             user_keys = [username_field] if username_field else []
-            user_keys += [k for k in ("username", "email", "login") if k not in user_keys]
+            user_keys += [k for k in ("username", "email", "login", "userid", "user_id") if k not in user_keys]
             json_attempts = [
                 {ukey: username, "password": password} for ukey in user_keys
             ]
@@ -502,6 +502,17 @@ class AuthManager:
 
         self._finish_login(success, "credentials", login_resp)
 
+        # ---------- 5b. FALLBACK API JSON (form decorativo de SPA) ----------
+        # Apps Next.js/React renderizan un <form> en el HTML pero el login real
+        # es un POST JSON a /api/auth/login. Si el form no entro y no habia
+        # indicador de exito explicito, probamos la escalera API con tope de
+        # intentos (no quemar la cuenta con reintentos).
+        if not success and not (success_indicator or failure_indicator):
+            step("form_fallo", "probando escalera API JSON")
+            if self._fallback_api_json_login(login_url, username, password,
+                                             username_field, step):
+                return True
+
         # ---------- 6. Verificacion opcional de sesion ----------
         if success and verify_url:
             check = self.verify_session(verify_url)
@@ -516,6 +527,72 @@ class AuthManager:
                 return False
 
         return success
+
+    def _fallback_api_json_login(self, login_url: str, username: str,
+                                 password: str, username_field=None,
+                                 step=None) -> bool:
+        """Escalera API JSON cuando el form HTML es decorativo (SPA real).
+        Tope duro: 8 intentos, y frena ante senales de rate-limit (429)."""
+        from urllib.parse import urlparse as _up
+        if step is None:
+            step = lambda n, d: self.login_debug["steps"].append(
+                {"paso": n, "detalle": d})
+        try:
+            descubiertos = self._discover_spa_login_endpoints(
+                login_url, BeautifulSoup("", "html.parser"))
+        except Exception:
+            descubiertos = []
+        _o = "{0.scheme}://{0.netloc}".format(_up(login_url))
+        _paths = ("/api/auth/login/", "/api/auth/login", "/api/auth/signin/",
+                  "/api/login/", "/api/login", "/api/signin/",
+                  "/api/v1/auth/login/", "/api/auth/session",
+                  "/api/session", "/api/users/login",
+                  "/api/auth/doSignin", "/api/jwt/create")
+        api_urls = (descubiertos[:2]
+                    + [p for p in (_o + x for x in _paths)
+                       if p != login_url and p not in descubiertos[:2]])
+        user_keys = [username_field] if username_field else []
+        user_keys += [k for k in ("username", "email", "login", "userid", "user_id")
+                      if k not in user_keys]
+        headers_json = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "Origin": _o,
+            "Referer": login_url,
+        }
+        intentos = 0
+        for api_url in api_urls:
+            if intentos >= 8:
+                break
+            for ukey in user_keys:
+                if intentos >= 8:
+                    break
+                intentos += 1
+                try:
+                    r = self.session.post(api_url, json={ukey: username,
+                                                         "password": password},
+                                          headers=headers_json, timeout=20,
+                                          allow_redirects=True)
+                except Exception:
+                    continue
+                if r.status_code == 429 or "too many" in r.text.lower():
+                    step("fallback_api_ratelimit", api_url)
+                    self.login_debug["resultado"] = "ratelimit_login"
+                    self.login_debug["razon"] = ("El blanco limita intentos de "
+                                                 "login. Esperar antes de reintentar.")
+                    return False
+                _ct = (r.headers.get("Content-Type") or "").lower()
+                es_json = "json" in _ct or r.text.lstrip()[:1] == "{"
+                body = r.text[:500].lower()
+                if (es_json and r.status_code < 400
+                        and "password" not in body and "error" not in body):
+                    self.last_login_response = r
+                    step("fallback_api_json_ok", api_url)
+                    self._finish_login(True, "api_json", r)
+                    return True
+        step("fallback_api_json", "sin exito en escalera")
+        return False
 
     # ------------------------------------------------------------------
     # Auto-descubrimiento SPA (cacheado por origen: un sitio, un escaneo)
