@@ -325,7 +325,7 @@
 
     async function fire() {
       const raw = document.getElementById("targetsBox").value.trim();
-      const lines = raw ? raw.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 300) : [];
+      const lines = raw ? raw.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 1000) : [];
       if (!SELECTED || !lines.length) return alert("Elegí un payload y poné al menos una URL");
       const btn = document.getElementById("fireBtn");
       const stop = document.getElementById("stopImpact").checked;
