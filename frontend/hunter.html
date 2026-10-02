@@ -222,6 +222,10 @@ esperando objetivo...</pre>
         <div class="card-body">
           <div id="summary"></div>
           <div id="leaks"></div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
+            <button id="btnZombies" onclick="zombiesKill()" style="width:auto;margin:0;background:#1a0508;border:1px solid var(--red-dim);color:#ff6b81;font-size:0.75rem;min-height:38px">🧟 MATAR ZOMBIS</button>
+            <span id="zMsg" style="color:var(--muted);font-size:0.7rem;align-self:center"></span>
+          </div>
           <div id="findings"><div class="empty">sin hallazgos todavía…</div></div>
         </div>
       </div>
@@ -343,6 +347,21 @@ esperando objetivo...</pre>
           </div>
         </div>`;
       }).join("");
+    }
+
+    async function zombiesKill() {
+      const msg = document.getElementById("zMsg");
+      const btn = document.getElementById("btnZombies");
+      btn.disabled = true; msg.textContent = "revisando /proc...";
+      try {
+        const r = await fetch("/api/zombies/kill", { method: "POST" });
+        const d = await r.json();
+        const m = d.matados && d.matados.length
+          ? `🧟 ${d.matados.length} duplicados muertos por PID: ${d.matados.join(", ")}`
+          : "todo limpio: 1 backend vivo, 0 duplicados";
+        msg.textContent = m + (d.zombis && d.zombis.length ? ` · ${d.zombis.length} zombis Z (los limpia su padre)` : "");
+      } catch (e) { msg.textContent = "error: " + e.message; }
+      btn.disabled = false;
     }
 
     function enviarArsenal() {

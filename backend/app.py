@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.55.2"
+VERSION = "0.55.3"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -1525,6 +1525,23 @@ def api_arsenal_fire():
         "url_usada": full[:300],
         "body_head": text[:600],
     })
+
+
+@app.get("/api/zombies")
+def api_zombies_list():
+    """Inventario de procesos del backend: 1 legitimo, duplicados, zombis Z."""
+    from core.zombies import listar
+    return jsonify({"procesos": listar(), "yo": os.getpid()})
+
+
+@app.post("/api/zombies/kill")
+def api_zombies_kill():
+    """Mata DUPLICADOS del backend por PID (nunca pkill -f, nunca a si mismo).
+    El backend mas antiguo sobrevive; los clones mueren con kill -9."""
+    from core.zombies import matar
+    r = matar()
+    app.logger.warning("[ZOMBIES] kill ejecutado: matados=%s zombis=%s", r["matados"], r["zombis"])
+    return jsonify(r)
 
 
 @app.route("/hunter.html")

@@ -422,12 +422,162 @@ def _pdf_fpdf2(job: Dict[str, Any]) -> Optional[bytes]:
     return bytes(pdf.output())
 
 
+# ---------- NIVEL 3: PDF nativo en Python puro (cero dependencias) ----------
+
+def _pdf_pstr(txt: str) -> str:
+    t = str(txt if txt is not None else "").encode("cp1252", "replace").decode("cp1252")
+    return t.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _pdf_lines(job: Dict[str, Any]) -> List[Tuple[str, str]]:
+    """Estructura del informe, critico primero: filtraciones arriba."""
+    s = summarize(job)
+    leaks, tech = _leaks(job), _tech(job)
+    out: List[Tuple[str, str]] = []
+    out.append(("h1", ">_ CODEXRC HUNTER — INFORME DE CAZA"))
+    out.append(("sub", "generacion automatica · solo lectura · veredictos del sistema"))
+    out.append(("b", f"OBJETIVO: {job.get('url', '?')}"))
+    out.append(("b", f"ESTADO: {job.get('status', '?')}  ·  {_ver(job)}"))
+    out.append(("b", f"FECHA: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"))
+    out.append(("b", f"RESUMEN: {s.get('total', 0)} hallazgos · {s.get('alta', 0)} altos · "
+                     f"{s.get('verificados', 0)} verificados · {s.get('leaks', 0)} FILTRACIONES"))
+    out.append(("sp", ""))
+
+    # 1) LO PRIMERO: filtraciones de usuarios
+    out.append(("h2", "1. FILTRACION DE DATOS DE USUARIOS (CRITICO)"))
+    if not leaks:
+        out.append(("plain", "   Ninguna filtracion de datos de usuarios detectada."))
+    for f in leaks:
+        out.append(("leak", f"   [{ (f.get('severity') or '?').upper() }] {f.get('type', '?')}"))
+        out.append(("plain", f"   blanco: {f.get('target', '?')}"))
+        if f.get("param"):
+            out.append(("plain", f"   param: {f.get('param')} · {f.get('method', 'GET')}"))
+        out.append(("b", f"   DATOS FILTRADOS: {', '.join(f.get('leak_fields') or []) or '?'}"))
+        if f.get("leak_identity"):
+            out.append(("b", f"   IDENTIDAD VISTA: {f.get('leak_identity')}"))
+        ev = (f.get("evidence") or "")[:600]
+        for ln in ev.splitlines():
+            out.append(("mono", f"   {ln}"))
+        out.append(("sp", ""))
+
+    # 2) hallazgos por severidad, encadenados: hallazgo -> veredicto -> verificacion
+    out.append(("h2", "2. HALLAZGOS ENCADENADOS (gravedad -> veredicto -> verificacion)"))
+    order = {"alta": 0, "media": 1, "baja": 2, "info": 3}
+    todo = sorted(tech, key=lambda f: order.get((f.get("severity") or "info").lower(), 9))
+    if not todo:
+        out.append(("plain", "   Sin hallazgos tecnicos."))
+    for f in todo:
+        v = f.get("veredicto") or {}
+        marks = []
+        if f.get("verificado"):
+            marks.append("VERIFICADO EN NAVEGADOR")
+        if f.get("descartado_fp"):
+            marks.append("FALSO POSITIVO")
+        out.append(("sev", f"   [{(f.get('severity') or 'info').upper()}] {f.get('type', '?')}"
+                    + (f"  [{' · '.join(marks)}]" if marks else "")))
+        out.append(("plain", f"   blanco: {f.get('target', '?')}"
+                    + (f" · param: {f.get('param')}" if f.get("param") else "")))
+        out.append(("plain", f"   razon: {(f.get('reason') or '')[:200]}"))
+        if v:
+            out.append(("plain", f"   VEREDICTO: gravedad={v.get('gravedad', '?')} · "
+                                 f"primeros={v.get('primeros', '?')} · reglas={v.get('reglas', '?')}"))
+        ev = (f.get("evidence") or "")[:400]
+        if ev:
+            for ln in ev.splitlines()[:6]:
+                out.append(("mono", f"     {ln}"))
+        out.append(("sp", ""))
+
+    # 3) verificacion automatica del sistema
+    out.append(("h2", "3. VERIFICACION DEL SISTEMA (AUTOMATICA)"))
+    av = auto_verification(job)
+    if not av:
+        out.append(("plain", "   Sin hallazgos que verificar."))
+    for item in av:
+        out.append(("b", f"   {item['estado']} · {item['hallazgo']} "
+                         f"({(item.get('severity') or 'info').upper()})"))
+        out.append(("plain", f"   blanco: {item.get('target') or '?'}"))
+        if item.get("como_verifico"):
+            out.append(("plain", f"   sistema: {item['como_verifico']}"))
+        if item.get("detalle"):
+            out.append(("plain", f"   detalle: {item['detalle']}"))
+        out.append(("sp", ""))
+
+    out.append(("foot", f"CODEXRC HUNTER {_ver(job)} · sondas de lectura A->B · "
+                        f"veredictos automaticos, sin verificacion manual del operador"))
+    return out
+
+
+_STYLES = {
+    "h1":     (16, "F2", (0.05, 0.06, 0.03), 6),
+    "sub":    (9,  "F2", (0.45, 0.55, 0.45), 4),
+    "b":      (9,  "F2", (0.1, 0.15, 0.1), 4),
+    "h2":     (12, "F2", (0.6, 0.07, 0.25), 8),
+    "leak":   (10, "F2", (0.6, 0.07, 0.25), 4),
+    "sev":    (9,  "F2", (0.55, 0.36, 0.02), 4),
+    "plain":  (8,  "F1", (0.15, 0.15, 0.15), 3),
+    "mono":   (8,  "F1", (0.25, 0.25, 0.25), 3),
+    "sp":     (1,  "F1", (0, 0, 0), 8),
+    "foot":   (7,  "F1", (0.45, 0.45, 0.45), 4),
+}
+
+
+def _pdf_native(job: Dict[str, Any]) -> Optional[bytes]:
+    """PDF minimo generado a mano: cero dependencias (Termux OK).
+    Fuente Helvetica embebida por el visor, paginacion automatica."""
+    lines = _pdf_lines(job)
+    W, H, M = 595.0, 842.0, 42.0
+    pages, cur, y = [], [], H - M
+    for style, txt in lines:
+        size, font, color, gap = _STYLES.get(style, _STYLES["plain"])
+        need = size + gap
+        if y - need < M:
+            pages.append(cur)
+            cur, y = [], H - M
+        y -= size + 2
+        cur.append(f"BT /{font} {size} Tf {color[0]} {color[1]} {color[2]} rg "
+                   f"1 0 0 1 {M} {y:.1f} Tm ({_pdf_pstr(txt)}) Tj ET")
+        y -= gap
+    pages.append(cur)
+    objs = {}
+    n_pages = len(pages)
+    # 1 catalogo, 2 pages, 3 F1 (helvetica), 4 F2 (helvetica-bold)
+    for i, content in enumerate(pages):
+        cobj = 5 + i * 2
+        pobj = cobj + 1
+        objs[pobj] = (f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W:.0f} {H:.0f}] "
+                      f"/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents {cobj} 0 R >>")
+        objs[cobj] = ("<< /Length " + str(len("\n".join(content).encode("latin-1", "replace"))) +
+                      " >>\nstream\n" + "\n".join(content) + "\nendstream")
+    kids = " ".join(f"{5 + i * 2 + 1} 0 R" for i in range(n_pages))
+    objs[1] = "<< /Type /Catalog /Pages 2 0 R >>"
+    objs[2] = f"<< /Type /Pages /Kids [{kids}] /Count {n_pages} >>"
+    objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
+    objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
+    buf = bytearray(b"%PDF-1.4\n")
+    offsets = {}
+    for num in sorted(objs):
+        offsets[num] = len(buf)
+        body = objs[num].encode("latin-1", "replace")
+        buf += f"{num} 0 obj\n".encode() + body + b"\nendobj\n"
+    xref = len(buf)
+    mx = max(objs)
+    buf += f"xref\n0 {mx + 1}\n".encode()
+    buf += b"0000000000 65535 f \n"
+    for num in range(1, mx + 1):
+        buf += f"{offsets.get(num, 0):010d} 00000 n \n".encode()
+    buf += (f"trailer\n<< /Size {mx + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF").encode()
+    return bytes(buf)
+
+
 def build_pdf(job: Dict[str, Any]) -> Tuple[Optional[bytes], str]:
-    """Devuelve (bytes, metodo). metodo: chrome | fpdf2 | none."""
+    """Devuelve (bytes, metodo). metodo: chrome | fpdf2 | nativo (siempre disponible)."""
     data = _pdf_chrome(job)
     if data:
         return data, "chrome"
     data = _pdf_fpdf2(job)
     if data:
         return data, "fpdf2"
+    data = _pdf_native(job)
+    if data:
+        return data, "nativo"
     return None, "none"
