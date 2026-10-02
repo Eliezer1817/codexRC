@@ -35,6 +35,7 @@ MIME_RE = re.compile(
 STRICT_INARRAY_RE = re.compile(r"in_array\s*\([^;]*,\s*true\s*\)")
 LOGGEDIN_RE = re.compile(r"is_user_logged_in|is_private_access|"
                          r"must_be_logged|require_login", re.I)
+NONCE_BODY_RE = re.compile(r"wp_verify_nonce|check_ajax_referer|wp_nonce_field")
 
 # handlers publicos por diseno (notices, reviews, formularios de
 # visitantes): superficie anonima intencional, no un bug.
@@ -98,6 +99,11 @@ def annotate(h: Dict[str, Any], code_root: str) -> Optional[str]:
     if "juggling" in typ or "floja" in typ:
         if STRICT_INARRAY_RE.search(ctx):
             return "FP-STRICT-IN_ARRAY"
+
+    # nonce dentro del flujo (handlers no-ajax, ej. profile_update):
+    # wp_verify_nonce / check_ajax_referer antes del sink = protegido
+    if NONCE_BODY_RE.search(ctx):
+        return "FP-GATE-PROTEGIDO"
 
     # handlers nopriv por diseno: el propio callback exige sesion
     if LOGGEDIN_RE.search(ctx) and "nopriv" in str(h.get("_hook", "")):
