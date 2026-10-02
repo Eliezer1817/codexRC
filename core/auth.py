@@ -385,6 +385,18 @@ class AuthManager:
                         or '"success":true' in compact
                     )
                     if exito:
+                        # TOKEN-INHERIT: SPAs sin cookies devuelven el token
+                        # en el JSON y lo esperan en el header Authorization.
+                        # Sin esto el login entra pero la sesion no se hereda.
+                        try:
+                            _j = login_resp.json()
+                        except Exception:
+                            _j = {}
+                        _tok = self._extraer_token(_j)
+                        if _tok:
+                            _esq = (self._spa_cache_data or {}).get("auth_scheme") or "Bearer"
+                            self.session.headers["Authorization"] = f"{_esq} {_tok}"
+                            self.login_debug["session_scheme"] = _esq
                         self._finish_login(True, "api_json", login_resp)
                         return True
                     # visibilidad: que respondio el servidor al rechazar
@@ -519,11 +531,21 @@ class AuthManager:
         api_prefix = ""
         posts = []
         api_strings = []
+        auth_scheme = ""
         vistos_post = set()
         vistos_str = set()
 
         def escanear_js(js: str) -> None:
             nonlocal api_prefix
+            nonlocal auth_scheme
+            # scheme del header de autorizacion: "Authorization":"Bearer "+t,
+            # `Authorization: Session ${a}` (bitevolut), "Token ", "JWT "...
+            if not auth_scheme:
+                _m = _re.search(
+                    r'Authorization["\']?\s*[:=]\s*[`"\']\s*(Bearer|Session|Token|JWT|Basic)\b',
+                    js)
+                if _m:
+                    auth_scheme = _m.group(1)
             m = _re.search(r'apiUrl["\']?\s*[:=]\s*["\']([^"\']+)["\']', js)
             if m and not api_prefix:
                 api_prefix = m.group(1)
@@ -613,7 +635,8 @@ class AuthManager:
                         pendientes.append(full)
 
         data = {"api_prefix": api_prefix, "posts": posts,
-                "api_strings": api_strings, "js_files": archivos}
+                "api_strings": api_strings, "auth_scheme": auth_scheme,
+                "js_files": archivos}
         self._spa_cache_origin = origin
         self._spa_cache_data = data
         return data
@@ -819,6 +842,30 @@ class AuthManager:
         elif isinstance(obj, list):
             for v in obj[:20]:
                 r = self._find_username(v, depth + 1)
+                if r:
+                    return r
+        return None
+
+    def _extraer_token(self, obj, depth: int = 0):
+        """Busca un token de sesion en el JSON de respuesta del login
+        (SPAs sin cookies: el token via en el cuerpo, no en Set-Cookie)."""
+        if depth > 4 or not isinstance(obj, (dict, list)):
+            return None
+        if isinstance(obj, dict):
+            # claves de ACCESS primero (no refresh)
+            for k in ("session_key", "access_token", "sessionid",
+                      "session_id", "auth_token", "auth_key", "token",
+                      "access", "session", "key", "jwt"):
+                v = obj.get(k)
+                if isinstance(v, str) and 16 <= len(v) <= 2000:
+                    return v
+            for v in obj.values():
+                r = self._extraer_token(v, depth + 1)
+                if r:
+                    return r
+        else:
+            for v in obj[:20]:
+                r = self._extraer_token(v, depth + 1)
                 if r:
                     return r
         return None
