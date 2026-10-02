@@ -309,14 +309,18 @@ esperando objetivo...</pre>
       const box = document.getElementById("findings");
       document.getElementById("fCount").textContent = findings.length ? "· " + findings.length : "";
       if (!findings.length) return;
-      const urls = findings.map(f => {
+      window._arsenalQueue = [];
+      const seen = new Set();
+      findings.forEach(f => {
         let u = (f.target || "").trim();
         const p = (f.param || "").split("=")[0].trim();
-        if (!u) return "";
+        if (!u) return;
         if (p) u += (u.includes("?") ? "&" : "?") + p + "={INJECT}";
-        return u;
-      }).filter(Boolean);
-      window._arsenalUrls = [...new Set(urls)];
+        if (seen.has(u)) return;
+        seen.add(u);
+        window._arsenalQueue.push({ url: u, tipo: (f.type || "").trim() });
+      });
+      const urls = window._arsenalQueue.map(x => x.url);
       const barra = `<div style="margin-bottom:0.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">
         <button style="width:auto;margin:0;background:var(--red-dark);border:1px solid var(--red);color:var(--red);font-size:0.8rem;min-height:40px"
           onclick="enviarArsenal()">⚡ ENVIAR ${window._arsenalUrls.length} CANDIDATOS AL ARSENAL</button>
@@ -344,7 +348,7 @@ esperando objetivo...</pre>
     function enviarArsenal() {
       const urls = window._arsenalUrls || [];
       if (!urls.length) return alert("no hay candidatos con URL");
-      sessionStorage.setItem("arsenal_targets", JSON.stringify(urls));
+      sessionStorage.setItem("arsenal_queue", JSON.stringify(window._arsenalQueue || []));
       location.href = "/arsenal.html";
     }
 
