@@ -86,7 +86,21 @@ class CacheBait:
                     and (orig.text or "")[:300] == (wcd.text or "")[:300]
                     and orig.status_code == 200)
             ct = wcd.headers.get("Content-Type", "")
-            if same and CACHEABLE_CT.search(ct):
+            # ANTI-FP: cabeceras que PROHIBEN el cache matan el hallazgo.
+            # Caso real (bitevolut /dashboard.css): el catch-all de la SPA
+            # sirve la misma carcasa HTML con content-type "cacheable", pero
+            # con no-store + cf-cache-status BYPASS nada se guarda ni se
+            # sirve a otros: falso positivo.
+            cc = (wcd.headers.get("Cache-Control") or "").lower()
+            cfs = (wcd.headers.get("CF-Cache-Status") or "").upper()
+            prohibido = ("no-store" in cc or "private" in cc
+                         or cfs in ("BYPASS", "DYNAMIC"))
+            blando = "no-cache" in cc or "max-age=0" in cc
+            if same and prohibido:
+                self.emit(f"[cache] candidato {p.path}{ASSET_SUFFIX} "
+                          f"DESCARTADO (anti-FP): {cc or cfs} prohibe cache")
+                continue
+            if same and CACHEABLE_CT.search(ct) and not blando:
                 out.append({
                     "type": "Web cache deception (candidato)",
                     "severity": "alta", "target": base + ASSET_SUFFIX,
