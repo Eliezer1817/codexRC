@@ -205,9 +205,16 @@ iframe de abajo, la cadena aterriza. Nada sale de tu maquina.</p>
             pasos.append(f"TECHO ALCANZABLE: {techo['hijack_path']}. "
                          "Con eso la cadena es hijack de sesion = critico "
                          "probable.")
+        elif techo.get("checked") and techo.get("cookies"):
+            pasos.append("Cookies presentes con HttpOnly: el techo baja a "
+                         "lectura de datos en sesion (API privada como la "
+                         "victima).")
         elif techo.get("checked"):
-            pasos.append("Cookies con HttpOnly: el techo baja a lectura de "
-                         "datos en sesion (API privada como la victima).")
+            pasos.append("La peticion no devolvio Set-Cookie (sesion ya "
+                         "activa): revisar la cookie a mano en DevTools -> "
+                         "Application -> Cookies (columna HttpOnly). Sin "
+                         "HttpOnly = camino a hijack; con HttpOnly = techo "
+                         "en lectura de datos en sesion.")
         if poc_path:
             pasos.append(f"Abrir en TU maquina el kit PoC local: {poc_path} "
                          "- login en una pestana y ver si el canario "
