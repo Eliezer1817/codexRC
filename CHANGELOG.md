@@ -3,7 +3,24 @@
 Historial completo de versiones, de la más reciente a la más antigua.
 Los parches menores (x.y.z) también viven aquí; el README solo lista los hitos.
 
-## v0.43.0 — GATES-AUDIT
+## v0.44.0 — FP-AUTO-CLOSE
+
+Nuevo modulo `core/fp_autoclose.py`: segunda capa de verificacion tras GATES-AUDIT.
+Reconoce los patrones de falso positivo que se repiten lote tras lote y los dictamina
+solo, para que la consola muestre solo hallazgos vivos:
+- FP-GATE-PROTEGIDO: el hallazgo cae en un handler con caps y/o nonce.
+- FP-SQLI-PREPARE / FP-SQLI-CAST: prepare con placeholders o absint/intval en el flujo.
+- FP-XSS-ESCAPED: la linea del sink aplica esc_*/wp_kses/sanitize_*.
+- FP-UPLOAD-WHITELIST: la subida valida mime y/o extension (magic bytes incluidos).
+- FP-STRICT-IN_ARRAY: in_array con strict=true (sin type juggling).
+- FP-GATE-NOPRIV-LOGIN: handler nopriv cuyo callback exige sesion (dispatcher global).
+PLUGIN-BATCH: contador `fp-auto=N` por plugin, `criticos` cuenta solo hallazgos vivos,
+los autocerrados se muestran solo con `--verbose`, y las acciones publicas por diseno
+(notices, reviews, dismiss, formularios de visitantes) ya no cuentan como 💥.
+Validado contra los lotes reales del dia: 34 hallazgos autocerrados en 3 plugins que
+antes se descartaban a mano, cero vivos perdidos.
+
+## v0.43.0 — GATES-AUDIT — GATES-AUDIT
 
 Nuevo modulo `core/gates_audit.py`: dictamina automaticamente si los handlers de un
 plugin estan protegidos. Mapea hooks `wp_ajax` / `wp_ajax_nopriv` / `wc_ajax` y rutas

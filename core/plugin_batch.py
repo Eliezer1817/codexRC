@@ -36,6 +36,8 @@ from core.taint_trace import trace_path  # noqa: E402
 from core.pattern_match import scan_path  # noqa: E402
 from core import vendor_farm  # noqa: E402
 from core.gates_audit import audit as gates_audit  # noqa: E402
+from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
+from core.fp_autoclose import es_ruido_publico  # noqa: E402
 
 DL_URL = "https://downloads.wordpress.org/plugin/{}.latest-stable.zip"
 
@@ -138,7 +140,11 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
     rec["gates_resumen"] = gates.get("resumen", {})
     rec["gates_candidatos"] = [h for h in gates.get("handlers", [])
                                if h.get("veredicto") in ("CANDIDATO-BAC",
-                                                         "REVISAR-AUTH")]
+                                                         "REVISAR-AUTH")
+                               and not es_ruido_publico(h.get("accion", ""))]
+    rec["gates_ruido_publico"] = [h.get("accion") for h in
+                                 gates.get("handlers", [])
+                                 if es_ruido_publico(h.get("accion", ""))]
     for h in clean:
         gv = "SIN-HANDLER"   # archivo propio, fuera de handlers ajax
         for g in gates.get("handlers", []):
@@ -148,15 +154,20 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
                 gv = g.get("veredicto", "?")
                 break
         h["_gate"] = gv
-    clean.sort(key=lambda h: 0 if h.get("_gate") == "CANDIDATO-BAC" else
-               (1 if h.get("_gate") == "REVISAR-AUTH" else 2))
+    # 5) FP-AUTO-CLOSE: dictamen de falsos positivos conocidos
+    clean = fp_annotate(clean, code)
+    clean.sort(key=lambda h: (0 if h.get("_fp") is None else 1,
+               0 if h.get("_gate") == "CANDIDATO-BAC" else
+               (1 if h.get("_gate") == "REVISAR-AUTH" else 2)))
     rec["hallazgos"] = clean
     rec["resumen"] = {
         "total_crudo": len(taint) + len(pats),
         "propios": len(clean),
         "criticos": sum(1 for h in clean
-                        if str(h.get("severity", "")).lower() in
+                        if h.get("_fp") is None and
+                        str(h.get("severity", "")).lower() in
                         ("critical", "alta", "high", "error")),
+        "fp_autocerrados": sum(1 for h in clean if h.get("_fp")),
         "segundos": round(time.time() - t0, 1),
     }
     return rec
@@ -168,6 +179,8 @@ def main() -> None:
     ap.add_argument("--vdp", default="", help="JSON slugs con VDP activo (opcional)")
     ap.add_argument("--out", default="", help="guardar JSON de resultados")
     ap.add_argument("--top", type=int, default=25, help="top por escaneo")
+    ap.add_argument("--verbose", action="store_true",
+                    help="mostrar tambien hallazgos autocerrados (FP)")
     ap.add_argument("--workdir", default="/tmp/plugin_batch",
                     help="dir de descargas (cache)")
     args = ap.parse_args()
@@ -199,8 +212,10 @@ def main() -> None:
         results.append(rec)
         r = rec.get("resumen", {})
         ncand = len(rec.get("gates_candidatos", []))
+        nfp = rec.get("resumen", {}).get("fp_autocerrados", 0)
         mark = "💥💥" if ncand else ("💥" if r.get("propios") else "✅")
         print(f"   {mark} propios={r.get('propios', 0)} "
+              f"fp-auto={nfp} "
               f"candidatos-bac={ncand} "
               f"({r.get('segundos', '?')}s)"
               + (" [VDP ACTIVO]" if rec.get("vdp") else ""), flush=True)
@@ -208,9 +223,12 @@ def main() -> None:
             print(f"      💥 [{g['veredicto']}] {g['accion']} -> "
                   f"{g.get('callback','?')} ({g.get('archivo_callback', g['archivo'])}:"
                   f"{g.get('linea_callback', g['linea_hook'])})", flush=True)
-        for h in rec.get("hallazgos", [])[:10]:
+        vivos = [h for h in rec.get("hallazgos", [])
+                 if h.get("_fp") is None or args.verbose]
+        for h in vivos[:10]:
+            fp = f"  [FP:{h.get('_fp')}]" if h.get("_fp") else ""
             print(f"      [{h.get('severity', '?')}] {h.get('type', h.get('family', '?'))}"
-                  f" {h.get('file', '')}:{h.get('line', '')}")
+                  f" {h.get('file', '')}:{h.get('line', '')}{fp}")
 
     if args.out:
         with open(args.out, "w") as f:
