@@ -103,6 +103,20 @@ def build_txt(job: Dict[str, Any]) -> str:
             L.append(f"          piezas: {', '.join(c.get('parts', []))}")
             L.append(f"          porque: {c.get('reason', '')[:150]}")
 
+    esc = (job.get("results", {}).get("escalada", {})
+           .get("data", {}).get("escalations", []))
+    if esc:
+        L.append("")
+        L.append(" ================================================================")
+        L.append("  ESCALADA - QUE HACER DESPUES DEL AVISO (paso a paso)")
+        L.append(" ================================================================")
+        for e in esc:
+            L.append(f" [ESCALADA] {e.get('chain', '?')} · veredicto: {e.get('verdict', '?')}")
+            if e.get("poc"):
+                L.append(f"            kit PoC local: {e.get('poc')}")
+            for i, paso in enumerate(e.get("playbook", []), 1):
+                L.append(f"            {i}. {paso[:160]}")
+
     L.append("")
     L.append(" HALLAZGOS TECNICOS")
     L.append(sub)

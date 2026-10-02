@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.37.1"
+VERSION = "0.38.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -685,7 +685,7 @@ def start_scan():
 
 HUNTER_NODES = ["spider", "param_map", "brain", "xss_get", "xss_forms", "xss_headers",
                 "xss_dom", "sqli", "path", "ssti", "cache", "graphql", "stealth",
-                "cov", "veritas", "chain", "self_tune", "report"]
+                "cov", "veritas", "chain", "escalada", "self_tune", "report"]
 
 
 AUTH_FIELDS = ("cookies", "bearer_token", "custom_header_name", "custom_header_value",
@@ -1026,6 +1026,17 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                 node_state("chain", "success", round(time.perf_counter() - t0, 2))
                 job["results"]["chain"] = {"status": "success", "data": {"chains": chains}}
 
+                # ---- ESCALADA: continuar solo despues del aviso critico
+                t0 = time.perf_counter()
+                try:
+                    from core.escalada import Escalador
+                    esc_out = Escalador(emit, session).run(url, chains, job["findings"])
+                    job["results"]["escalada"] = {"status": "success", "data": esc_out}
+                except Exception as exc:
+                    emit(f"[escalada] error aislado: {str(exc)[:200]}")
+                    job["results"]["escalada"] = {"status": "error", "error": str(exc)[:200]}
+                node_state("escalada", "success", round(time.perf_counter() - t0, 2))
+
                 # ---- AUTOCORRECCION (memoria de rendimiento)
                 node_state("self_tune", "running")
                 t0 = time.perf_counter()
@@ -1039,6 +1050,7 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                 job["summary"] = {
                     "total": len(job["findings"]),
                     "chains": len(chains),
+                    "escalaciones": len((job["results"].get("escalada", {}).get("data", {}) or {}).get("escalations", [])),
                     "alta": len([f for f in job["findings"] if f["severity"] == "alta"]),
                     "media": len([f for f in job["findings"] if f["severity"] == "media"]),
                     "baja": len([f for f in job["findings"] if f["severity"] == "baja"]),

