@@ -738,7 +738,15 @@ def api_hunt_status():
     w["hechos"] = _n(ROOT / "hechos" / "hunt_wide_done.txt")
     w["ultimos"] = _tail(ROOT / "hechos" / "wide_hunt.log" if (ROOT / "hechos" / "wide_hunt.log").exists() else ROOT / "hechos" / "wide_hunt_results.json.jsonl")
     r = out["retro"]
-    r["total_cola"] = 1007  # cola pre-cooldown calculada al lanzar
+    try:
+        corpus_r = json.load(open(ROOT / "wide_corpus.json"))
+        cooldown = "2026-06-01"
+        r["total_cola"] = sum(
+            1 for p in corpus_r.get("plugins", [])
+            if (p.get("last_updated") or "")[:10] < cooldown or not p.get("last_updated")
+        )  # universo real pre-cooldown, calculado del corpus vivo (no un numero fijo del lanzamiento)
+    except Exception:
+        r["total_cola"] = 1007
     r["hechos"] = _n(ROOT / "hechos" / "retro_done.txt")
     r["ultimos"] = _tail(ROOT / "hechos" / "retro_hunt.log")
     return jsonify(out)
