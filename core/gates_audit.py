@@ -146,14 +146,48 @@ def audit(root: str) -> Dict[str, Any]:
                     rest_abiertas.append({"archivo": rel, "linea": i + 1,
                                           "nota": "permission_callback __return_true"})
 
+
+    # 5) ABILITY-SCAN (v0.51.0): Abilities API (WP 6.9+) — wp_register_ability
+    #     cada ability lleva permission_callback; __return_true o ausente =
+    #     ability invocable por cualquiera (superficie 2026, sin escanear)
+    ABILITY_RE = re.compile(r"wp_register_ability\s*\(")
+    abilities: List[Dict[str, Any]] = []
+    for rel, lines in srcs.items():
+        for i, line in enumerate(lines):
+            if not ABILITY_RE.search(line):
+                continue
+            ventana = "\n".join(lines[i:i + 18])
+            nombre = None
+            nm = re.search(r"wp_register_ability\s*\(\s*['\"]([^'\"]+)", line)
+            if nm:
+                nombre = nm.group(1)
+            perm_m = re.search(r"permission_callback['\"]?\s*=>\s*"
+                               r"[^,)]+", ventana)
+            perm = perm_m.group(0) if perm_m else ""
+            if PERM_TRUE_RE.search(perm):
+                ver_ab = "ABILITY-ABIERTA"
+            elif not perm_m:
+                ver_ab = "ABILITY-SIN-PERMISO"
+            else:
+                ver_ab = "ABILITY-PROTEGIDA"
+            abilities.append({"ability": nombre, "archivo": rel,
+                              "linea": i + 1, "permiso": perm.strip()[:80],
+                              "veredicto": ver_ab})
+    ver_abiertas = [a for a in abilities
+                    if a["veredicto"] != "ABILITY-PROTEGIDA"]
+
     # 4) resumen
     ver = {}
     for h in handlers:
         ver[h["veredicto"]] = ver.get(h["veredicto"], 0) + 1
 
+    ver["abilities_abiertas"] = len(ver_abiertas)
     return {"handlers": handlers, "rest_abiertas": rest_abiertas,
+            "abilities": abilities, "abilities_abiertas": ver_abiertas,
             "resumen": {"total_hooks": len(handlers), "veredictos": ver,
-                        "rest_abiertas": len(rest_abiertas)}}
+                        "rest_abiertas": len(rest_abiertas),
+                        "abilities": len(abilities),
+                        "abilities_abiertas": len(ver_abiertas)}}
 
 
 def scan_path(root: str) -> Dict[str, Any]:

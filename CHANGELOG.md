@@ -187,3 +187,16 @@ Lo nuevo de cada entrega, de la más reciente a la más antigua:
 
 - **Estabilidad:** el índice de jobs está protegido con lock (dos cazas simultáneas nunca pisan el estado de la otra), con tope de 40 jobs en memoria y log vivo limitado. Un job que supera 45 minutos es marcado como colgado por el watchdog (la UI nunca queda en "running" eterno). Al reiniciar el servidor, los jobs se recuperan del disco y una caza interrumpida aparece como "interrupted" con su explicación. La sesión heredada se guarda por origen: cazas contra sitios distintos nunca se cruzan credenciales. Cualquier error no manejado responde JSON sin tumbar el proceso, y `auto_update.sh` verifica `/health` tras cada reinicio y resucita al servidor si cayó.
 - **Diagnóstico:** cada respuesta incluye `connection` y `diagnostics` (backend respondió, objetivo alcanzable, sesión verificada, usuario detectado).
+
+## v0.51.0 — RETRO-HUNT + ABILITY-SCAN (2026-10-02)
+- **RETRO-HUNT (core/retro_hunt.py)**: caza PRE-COOLDOWN. Cola = plugins >=5k installs cuya ultima actualizacion es anterior al gate de revision IA de WP.org (jun 2026); ese codigo distribuido nunca paso el escaneo automatico. Auditoria FULL-CODE (todo el plugin, no solo diff), orden: pagables por monto -> installs. Incremental crash-safe (hechos/retro_done.txt + retro_results.json.jsonl).
+- **ABILITY-SCAN** integrado en GATES-AUDIT: detecta wp_register_ability() (Abilities API, WP 6.9+); permission_callback __return_true o ausente = ABILITY-ABIERTA. Superficie 2026 sin escanear.
+- Fix: import de la cadena de evidencia en retro_hunt (gates_audit -> audit), los veredictos FISCAL/DEFENSA/JUEZ ahora anotan.
+- Fix: filtro _fp en retro_hunt para que "vivo" = realmente vivo.
+
+## v0.52.0 — UNIVERSAL-ENGINE (2026-10-02)
+- **UNIVERSAL-ENGINE (core/universal_engine.py)**: orquestador. Descubre que es el blanco (fingerprint fuente o URL viva), modela superficie, elige analizadores segun perfil (no corre 500 pruebas siempre) y ejecuta kernel: TAINT-TRACE + CVE-MATCH + GATES-AUDIT + ABILITY-SCAN + FP-AUTO-CLOSE + EVIDENCE-CHAIN como componentes.
+- **Ledger de cobertura** (clase Ledger): todo item de superficie con estado ANALIZADO / DESCUBIERTO / NO ACCESIBLE / VERIFICADO. Nada se reporta sin estado; los estados solo escalan hacia evidencia mas fuerte.
+- **UNIVERSAL-RECON**: perfil de fuente (PHP/JS/Python/Java/Go/Ruby, WP plugin/tema, Laravel, Django, Flask, Express, React, Android) y de URL viva (framework, Cloudflare, rutas tipicas).
+- **WP-LAB**: laboratorio WordPress local (PHP 8.2 + SQLite, sin MySQL) para AUTH-DIFF dinamico en sitio propio. Declarado como fase en el ledger; ejecucion a pedido (costo alto).
+- BROWSER-INTEL / UNIVERSAL-API / STATE-MACHINE / POLYGLOT-TRACE(js,python): fases declaradas en el perfil; el kernel las activa por tipo de blanco.

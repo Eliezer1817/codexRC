@@ -1,0 +1,426 @@
+RETRO-HUNT: 1007 en cola (38 pagables), 3 ya auditados, umbral pre-2026-06-01
+[1/1007] image-widget: 1 vivos 💥
+[2/1007] heartbeat-control: limpio
+[3/1007] a2-optimized-wp: 1 vivos 💥
+[4/1007] addon-elements-for-elementor-page-builder: limpio
+[5/1007] temporary-login: limpio
+[6/1007] upload-max-file-size: limpio
+[7/1007] elementor-beta: limpio
+[8/1007] hello-plus: limpio
+[9/1007] scripts-n-styles: 7 vivos 💥
+[10/1007] vod-infomaniak: 11 vivos 💥
+[11/1007] ag-custom-admin: 8 vivos 💥
+[12/1007] wp-native-php-sessions: limpio
+[13/1007] pantheon-advanced-page-cache: limpio
+[14/1007] content-aware-sidebars: 18 vivos 💥
+[15/1007] equal-height-columns: limpio
+[16/1007] facebook-page-feed-graph-api: limpio
+[17/1007] asgaros-forum: 10 vivos 💥
+[18/1007] block-builder: limpio
+[19/1007] lazy-load-for-videos: 1 vivos 💥
+[20/1007] aaa-option-optimizer: limpio
+[21/1007] wp-redis: limpio
+[22/1007] gravity-forms-pdf-extended: 2 vivos 💥
+[23/1007] beehive-analytics: limpio
+[24/1007] print-my-blog: 5 vivos 💥
+[25/1007] htaccess-file-editor: limpio
+[26/1007] tinymce-custom-styles: 3 vivos 💥
+[27/1007] mailster: limpio
+[28/1007] gutenbee: limpio
+[29/1007] powerpack-addon-for-beaver-builder: 12 vivos 💥
+[30/1007] yith-custom-login: 1 vivos 💥
+[31/1007] eroom-zoom-meetings-webinar: 2 vivos 💥
+[32/1007] surbma-magyar-woocommerce: 5 vivos 💥
+[33/1007] yith-maintenance-mode: limpio
+[34/1007] hash-elements: limpio
+[35/1007] youtube-channel: limpio
+[36/1007] classic-editor: limpio
+[37/1007] duplicate-page: 1 vivos 💥
+[38/1007] classic-widgets: limpio
+[39/1007] seriously-simple-stats: limpio
+[40/1007] regenerate-thumbnails: 1 vivos 💥
+[41/1007] hello-dolly: limpio
+[42/1007] one-click-demo-import: 1 vivos 💥
+[43/1007] intuitive-custom-post-order: 1 vivos 💥
+[44/1007] woocommerce-legacy-rest-api: limpio
+[45/1007] wp-dummy-content-generator: 6 vivos 💥
+[46/1007] child-theme-configurator: 22 vivos 💥
+[47/1007] add-to-any: 3 vivos 💥
+[48/1007] limit-login-attempts: 1 vivos 💥
+[49/1007] coblocks: limpio
+[50/1007] wp-rollback: limpio
+[51/1007] header-footer: 1 vivos 💥
+[52/1007] health-check: 1 vivos 💥
+[53/1007] layout-grid: limpio
+[54/1007] page-optimize: 5 vivos 💥
+[55/1007] header-and-footer-scripts: 1 vivos 💥
+[56/1007] pepro-ultimate-invoice: 22 vivos 💥
+[57/1007] widget-importer-exporter: limpio
+[58/1007] disable-xml-rpc: limpio
+[59/1007] post-type-switcher: limpio
+[60/1007] custom-post-type-permalinks: limpio
+[61/1007] gravatar-enhanced: limpio
+[62/1007] autodescription: limpio
+[63/1007] page-links-to: limpio
+[64/1007] seo-simple-pack: limpio
+[65/1007] so-css: 5 vivos 💥
+[66/1007] tawkto-live-chat: limpio
+[67/1007] simple-301-redirects: limpio
+[68/1007] simple-custom-css: limpio
+[69/1007] amp: 11 vivos 💥
+[70/1007] edit-author-slug: limpio
+[71/1007] google-captcha: 9 vivos 💥
+[72/1007] search-and-replace: 5 vivos 💥
+[73/1007] 404page: limpio
+[74/1007] fast-indexing-api: limpio
+[75/1007] make-column-clickable-elementor: limpio
+[76/1007] local-google-fonts: limpio
+[77/1007] cloudflare-flexible-ssl: limpio
+[78/1007] woosidebars: 4 vivos 💥
+[79/1007] wp-downgrade: limpio
+[80/1007] disable-xml-rpc-api: limpio
+[81/1007] email-address-encoder: 1 vivos 💥
+[82/1007] sassy-social-share: limpio
+[83/1007] xserver-typesquare-webfonts: 5 vivos 💥
+[84/1007] duplicate-menu: limpio
+[85/1007] yet-another-related-posts-plugin: limpio
+[86/1007] mousewheel-smooth-scroll: 1 vivos 💥
+[87/1007] menu-image: 1 vivos 💥
+[88/1007] luckywp-table-of-contents: 1 vivos 💥
+[89/1007] redirect-redirection: 5 vivos 💥
+[90/1007] userway-accessibility-widget: limpio
+[91/1007] disable-json-api: 1 vivos 💥
+[92/1007] uk-cookie-consent: limpio
+[93/1007] wp-meta-and-date-remover: 2 vivos 💥
+[94/1007] widget-css-classes: 1 vivos 💥
+[95/1007] backupwordpress: 1 vivos 💥
+[96/1007] yikes-inc-easy-custom-woocommerce-product-tabs: 1 vivos 💥
+[97/1007] login-customizer: 4 vivos 💥
+[98/1007] simple-css: limpio
+[99/1007] display-posts-shortcode: limpio
+[100/1007] q2w3-fixed-widget: 1 vivos 💥
+[101/1007] wp-post-page-clone: 1 vivos 💥
+[102/1007] php-code-widget: limpio
+[103/1007] integromat-connector: limpio
+[104/1007] facebook-messenger-customer-chat: limpio
+[105/1007] nav-menu-roles: 2 vivos 💥
+[106/1007] title-remover: limpio
+[107/1007] loftloader: 1 vivos 💥
+[108/1007] hotjar: limpio
+[109/1007] woocommerce-extra-checkout-fields-for-brazil: limpio
+[110/1007] wp-show-posts: limpio
+[111/1007] async-javascript: 1 vivos 💥
+[112/1007] iframe: limpio
+[113/1007] wp-db-backup: 7 vivos 💥
+[114/1007] easy-theme-and-plugin-upgrades: limpio
+[115/1007] dynamicconditions: limpio
+[116/1007] enhanced-media-library: limpio
+[117/1007] column-shortcodes: limpio
+[118/1007] all-in-one-favicon: 10 vivos 💥
+[119/1007] disable-xml-rpc-pingback: limpio
+[120/1007] to-top: limpio
+[121/1007] wp-add-custom-css: limpio
+[122/1007] wp-smtp: limpio
+[123/1007] add-from-server: 1 vivos 💥
+[124/1007] navz-photo-gallery: limpio
+[125/1007] jwt-authentication-for-wp-rest-api: limpio
+[126/1007] postmark-approved-wordpress-plugin: limpio
+[127/1007] rvg-optimize-database: limpio
+[128/1007] html-editor-syntax-highlighter: limpio
+[129/1007] login-recaptcha: 1 vivos 💥
+[130/1007] master-slider: 7 vivos 💥
+[131/1007] page-or-post-clone: 2 vivos 💥
+[132/1007] blogger-importer: 1 vivos 💥
+[133/1007] sakura-rs-wp-ssl: limpio
+[134/1007] contact-form-7-add-confirm: 2 vivos 💥
+[135/1007] wp-add-mime-types: 4 vivos 💥
+[136/1007] re-add-underline-justify: limpio
+[137/1007] index-wp-mysql-for-speed: limpio
+[138/1007] if-menu: 4 vivos 💥
+[139/1007] wpcat2tag-importer: 12 vivos 💥
+[140/1007] categories-images: 4 vivos 💥
+[141/1007] theme-editor: 35 vivos 💥
+[142/1007] printful-shipping-for-woocommerce: limpio
+[143/1007] zapier: limpio
+[144/1007] shortcode-in-menus: limpio
+[145/1007] kliken-marketing-for-google: limpio
+[146/1007] change-admin-email-setting-without-outbound-email: limpio
+[147/1007] web-stories: limpio
+[148/1007] customizer-search: limpio
+[149/1007] http-headers: 1 vivos 💥
+[150/1007] crop-thumbnails: limpio
+[151/1007] portfolio-post-type: limpio
+[152/1007] companion-auto-update: 2 vivos 💥
+[153/1007] wp-revisions-control: 1 vivos 💥
+[154/1007] wp-extra-file-types: 1 vivos 💥
+[155/1007] wptouch: 5 vivos 💥
+[156/1007] uicore-animate: 1 vivos 💥
+[157/1007] themesflat-addons-for-elementor: 7 vivos 💥
+[158/1007] wp-clone-by-wp-academy: 18 vivos 💥
+[159/1007] adapta-rgpd: 1 vivos 💥
+[160/1007] wp-call-button: limpio
+[161/1007] easy-svg: limpio
+[162/1007] revision-control: 4 vivos 💥
+[163/1007] wp-scss: limpio
+[164/1007] woocommerce-advanced-free-shipping: 1 vivos 💥
+[165/1007] one-time-login: limpio
+[166/1007] activecampaign-subscription-forms: 13 vivos 💥
+[167/1007] icon-element: limpio
+[168/1007] what-the-file: limpio
+[169/1007] country-phone-field-contact-form-7: limpio
+[170/1007] bing-webmaster-tools: limpio
+[171/1007] wp-edit: 34 vivos 💥
+[172/1007] login-logo: limpio
+[173/1007] cryout-theme-settings: limpio
+[174/1007] underconstruction: limpio
+[175/1007] disable-google-fonts: limpio
+[176/1007] wp-last-modified-info: 2 vivos 💥
+[177/1007] autoconvert-greeklish-permalinks: 1 vivos 💥
+[178/1007] wp-jquery-lightbox: limpio
+[179/1007] disable-search: limpio
+[180/1007] oneclick-whatsapp-order: 1 vivos 💥
+[181/1007] trustpilot-reviews: 5 vivos 💥
+[182/1007] auxin-portfolio: limpio
+[183/1007] widget-context: limpio
+[184/1007] page-list: limpio
+[185/1007] schema: 17 vivos 💥
+[186/1007] my-plugins: limpio
+[187/1007] export-media-library: limpio
+[188/1007] shariff: 2 vivos 💥
+[189/1007] recaptcha-for-mw-wp-form: limpio
+[190/1007] contact-form-plugin: 10 vivos 💥
+[191/1007] flying-scripts: 3 vivos 💥
+[192/1007] responsive-accordion-and-collapse: 1 vivos 💥
+[193/1007] wp-404-auto-redirect-to-similar-post: limpio
+[194/1007] clean-image-filenames: limpio
+[195/1007] debloat: limpio
+[196/1007] hide-title: limpio
+[197/1007] easy-watermark: limpio
+[198/1007] remove-dashboard-access-for-non-admins: limpio
+[199/1007] structured-content: limpio
+[200/1007] display-php-version: limpio
+[201/1007] kliken-ads-pixel-for-meta: limpio
+[202/1007] conditionally-display-featured-image-on-singular-pages: limpio
+[203/1007] acf-gravityforms-add-on: limpio
+[204/1007] ts-webfonts-for-sakura: 3 vivos 💥
+[205/1007] enhanced-text-widget: 1 vivos 💥
+[206/1007] wptelegram: limpio
+[207/1007] disable-auto-update-email-notifications: limpio
+[208/1007] acf-quickedit-fields: limpio
+[209/1007] advanced-cron-manager: limpio
+[210/1007] wp-phpmyadmin-extension: 28 vivos 💥
+[211/1007] wp-updates-notifier: limpio
+[212/1007] optimus: limpio
+[213/1007] snazzy-maps: 4 vivos 💥
+[214/1007] blossomthemes-toolkit: 1 vivos 💥
+[215/1007] missed-scheduled-posts-publisher: limpio
+[216/1007] wp-custom-admin-interface: 1 vivos 💥
+[217/1007] dethemekit-for-elementor: 3 vivos 💥
+[218/1007] wp-video-lightbox: 1 vivos 💥
+[219/1007] lightweight-social-icons: limpio
+[220/1007] wp-admin-ui-customize: 2 vivos 💥
+[221/1007] selfhost-google-fonts: 2 vivos 💥
+[222/1007] social-media-widget: limpio
+[223/1007] exclude-pages: limpio
+[224/1007] rss-importer: limpio
+[225/1007] og: limpio
+[226/1007] xo-featured-image-tools: limpio
+[227/1007] server-ip-memory-usage: limpio
+[228/1007] link-manager: limpio
+[229/1007] wp-lightbox-2: limpio
+[230/1007] devvn-image-hotspot: 2 vivos 💥
+[231/1007] site-offline: 1 vivos 💥
+[232/1007] jetsticky-for-elementor: limpio
+[233/1007] wp-dashboard-notes: limpio
+[234/1007] woocommerce-correios: 1 vivos 💥
+[235/1007] block-options: 1 vivos 💥
+[236/1007] mammoth-docx-converter: limpio
+[237/1007] team-members: limpio
+[238/1007] date-time-picker-for-contact-form-7: limpio
+[239/1007] mantenimiento-web: limpio
+[240/1007] wp-editor: 16 vivos 💥
+[241/1007] woocommerce-customizer: limpio
+[242/1007] stratum: 1 vivos 💥
+[243/1007] radio-buttons-for-taxonomies: 5 vivos 💥
+[244/1007] styler-for-wpforms: 1 vivos 💥
+[245/1007] change-login-logo: 1 vivos 💥
+[246/1007] mega-addons-for-visual-composer: limpio
+[247/1007] login-logout-menu: limpio
+[248/1007] disable-feeds: limpio
+[249/1007] automatic-updater: 4 vivos 💥
+[250/1007] rss-for-yandex-turbo: 22 vivos 💥
+[251/1007] any-mobile-theme-switcher: 1 vivos 💥
+[252/1007] hide-admin-bar: limpio
+[253/1007] basic-user-avatars: limpio
+[254/1007] forget-about-shortcode-buttons: limpio
+[255/1007] transients-manager: 5 vivos 💥
+[256/1007] hide-admin-notices: limpio
+[257/1007] um-recaptcha: limpio
+[258/1007] genesis-simple-hooks: limpio
+[259/1007] timber-library: limpio
+[260/1007] pdfjs-viewer-shortcode: limpio
+[261/1007] cf7-phone-mask-field: limpio
+[262/1007] wp-maximum-execution-time-exceeded: limpio
+[263/1007] wp-hide-backed-notices: 5 vivos 💥
+[264/1007] smartsupp-live-chat: limpio
+[265/1007] easy-social-icons: 5 vivos 💥
+[266/1007] flexible-elementor-panel: limpio
+[267/1007] woocustomizer: 6 vivos 💥
+[268/1007] hide-metadata: limpio
+[269/1007] movabletype-importer: 1 vivos 💥
+[270/1007] pwa: limpio
+[271/1007] apollo13-framework-extensions: 4 vivos 💥
+[272/1007] metronet-tag-manager: 1 vivos 💥
+[273/1007] wp-paginate: 3 vivos 💥
+[274/1007] table-addons-for-elementor: limpio
+[275/1007] material-design-icons-for-elementor: limpio
+[276/1007] login-or-logout-menu-item: 3 vivos 💥
+[277/1007] seed-fonts: limpio
+[278/1007] pexlechris-adminer: 24 vivos 💥
+[279/1007] google-sitemap-plugin: 9 vivos 💥
+[280/1007] cb-change-mail-sender: limpio
+[281/1007] spiderblocker: limpio
+[282/1007] catch-ids: limpio
+[283/1007] wp-extended-search: limpio
+[284/1007] pushpress: 4 vivos 💥
+[285/1007] rich-table-of-content: 1 vivos 💥
+[286/1007] rife-elementor-extensions: limpio
+[287/1007] gallery-block-lightbox: limpio
+[288/1007] fv-top-level-cats: limpio
+[289/1007] website-monetization-by-magenet: limpio
+[290/1007] login-rebuilder: 4 vivos 💥
+[291/1007] addfunc-head-footer-code: limpio
+[292/1007] debug-bar: limpio
+[293/1007] error-log-monitor: 1 vivos 💥
+[294/1007] search-meter: 6 vivos 💥
+[295/1007] post-tags-and-categories-for-pages: limpio
+[296/1007] comet-cache: 4 vivos 💥
+[297/1007] wp-test-email: 4 vivos 💥
+[298/1007] external-thumbnail: 1 vivos 💥
+[299/1007] anwp-post-grid-for-elementor: limpio
+[300/1007] widgets-on-pages: limpio
+[301/1007] acf-options-for-polylang: limpio
+[302/1007] woocommerce-conversion-tracking: 1 vivos 💥
+[303/1007] syntaxhighlighter: 1 vivos 💥
+[304/1007] flying-pages: 4 vivos 💥
+[305/1007] editorial-calendar: 11 vivos 💥
+[306/1007] nd-shortcodes: limpio
+[307/1007] visual-form-builder: 8 vivos 💥
+[308/1007] accessible-poetry: limpio
+[309/1007] crisp: 1 vivos 💥
+[310/1007] zoho-mail: 1 vivos 💥
+[311/1007] disable-blog: 2 vivos 💥
+[312/1007] simple-page-sidebars: 4 vivos 💥
+[313/1007] add-category-to-pages: limpio
+[314/1007] audit-trail: 1 vivos 💥
+[315/1007] multiple-post-thumbnails: 1 vivos 💥
+[316/1007] meks-simple-flickr-widget: limpio
+[317/1007] hide-admin-menu: 1 vivos 💥
+[318/1007] jivochat: limpio
+[319/1007] gravity-forms-google-analytics-event-tracking: limpio
+[320/1007] cookies-for-comments: 2 vivos 💥
+[321/1007] seo-image: limpio
+[322/1007] simple-taxonomy-ordering: limpio
+[323/1007] zoho-salesiq: limpio
+[324/1007] soumettre-fr: limpio
+[325/1007] blossomthemes-email-newsletter: 20 vivos 💥
+[326/1007] dashboard-welcome-for-elementor: limpio
+[327/1007] date-time-picker-field: limpio
+[328/1007] dash-notifier: limpio
+[329/1007] wp-typography: limpio
+[330/1007] attachment-pages-redirect: limpio
+[331/1007] dsgvo-all-in-one-for-wp: 11 vivos 💥
+[332/1007] top-bar: limpio
+[333/1007] social-warfare: limpio
+[334/1007] auto-login-for-sakura-rental-server: limpio
+[335/1007] unique-headers: limpio
+[336/1007] granular-controls-for-elementor: limpio
+[337/1007] callrail-phone-call-tracking: limpio
+[338/1007] subscribe-to-comments: 6 vivos 💥
+[339/1007] bulk-page-creator: 1 vivos 💥
+[340/1007] disable-right-click-for-wp: 1 vivos 💥
+[341/1007] seo-ultimate: 34 vivos 💥
+[342/1007] google-pagespeed-insights: 11 vivos 💥
+[343/1007] shareaholic: 8 vivos 💥
+[344/1007] login-with-ajax: 23 vivos 💥
+[345/1007] visual-term-description-editor: limpio
+[346/1007] meks-easy-instagram-widget: 1 vivos 💥
+[347/1007] kt-tinymce-color-grid: 1 vivos 💥
+[348/1007] clone-posts: limpio
+[349/1007] sumome: limpio
+[350/1007] lenix-elementor-leads-addon: 10 vivos 💥
+[351/1007] audioigniter: limpio
+[352/1007] printify-for-woocommerce: limpio
+[353/1007] raw-html: limpio
+[354/1007] slider-wd: 19 vivos 💥
+[355/1007] trustpulse-api: 1 vivos 💥
+[356/1007] contact-form-7-extras: 1 vivos 💥
+[357/1007] lazy-load: limpio
+[358/1007] woocommerce-sequential-order-numbers: limpio
+[359/1007] meks-smart-social-widget: limpio
+[360/1007] dynamic-widgets: 15 vivos 💥
+[361/1007] blank-slate: limpio
+[362/1007] accordion-blocks: limpio
+[363/1007] hide-featured-image: limpio
+[364/1007] options-framework: 1 vivos 💥
+[365/1007] jonradio-multiple-themes: limpio
+[366/1007] term-management-tools: limpio
+[367/1007] pressidium-cookie-consent: limpio
+[368/1007] woocommerce-auto-added-coupons: 1 vivos 💥
+[369/1007] meks-flexible-shortcodes: limpio
+[370/1007] username-updater: 1 vivos 💥
+[371/1007] duplicate-post-page-menu-custom-post-type: 3 vivos 💥
+[372/1007] grow-for-wp: limpio
+[373/1007] simple-image-widget: limpio
+[374/1007] website-article-monetization-by-magenet: limpio
+[375/1007] user-login-history: 3 vivos 💥
+[376/1007] elastic-email-sender: 1 vivos 💥
+[377/1007] shortcode-widget: limpio
+[378/1007] simple-map: limpio
+[379/1007] jquery-pin-it-button-for-images: 3 vivos 💥
+[380/1007] search-everything: 3 vivos 💥
+[381/1007] admin-css-mu: limpio
+[382/1007] raratheme-companion: limpio
+[383/1007] tabby-responsive-tabs: limpio
+[384/1007] woostify-sites-library: 7 vivos 💥
+[385/1007] shortcode-for-current-date: limpio
+[386/1007] wpsite-show-ids: limpio
+[387/1007] catch-infinite-scroll: limpio
+[388/1007] soro-seo: limpio
+[389/1007] theme-translation-for-polylang: limpio
+[390/1007] remove-yoast-seo-comments: limpio
+[391/1007] disable-feeds-wp: limpio
+[392/1007] mega-elements-addons-for-elementor: 2 vivos 💥
+[393/1007] wp-jalali: limpio
+[394/1007] meks-smart-author-widget: limpio
+[395/1007] animated-typing-effect: limpio
+[396/1007] wd-instagram-feed: 6 vivos 💥
+[397/1007] wps-visitor-counter: limpio
+[398/1007] minify-html-markup: 1 vivos 💥
+[399/1007] honeypot-antispam: limpio
+[400/1007] catch-gallery: limpio
+[401/1007] orbisius-child-theme-creator: 3 vivos 💥
+[402/1007] wp-live-chat-software-for-wordpress: limpio
+[403/1007] media-library-helper: limpio
+[404/1007] contact-form-7-shortcode-enabler: limpio
+[405/1007] tinymce-clear-buttons: limpio
+[406/1007] transbank-webpay-plus-rest: 1 vivos 💥
+[407/1007] breadcrumb: 1 vivos 💥
+[408/1007] custom-icons-for-elementor: limpio
+[409/1007] woo-save-abandoned-carts: 25 vivos 💥
+[410/1007] accessibe: 3 vivos 💥
+[411/1007] wp-no-base-permalink: limpio
+[412/1007] protect-wp-admin: limpio
+[413/1007] pdf-embed: limpio
+[414/1007] sticky-side-buttons: limpio
+[415/1007] post-types-unlimited: 1 vivos 💥
+[416/1007] rewrite-rules-inspector: limpio
+[417/1007] woo-thank-you-page-nextmove-lite: 22 vivos 💥
+[418/1007] scriptless-social-sharing: limpio
+[419/1007] smk-sidebar-generator: limpio
+[420/1007] breadcrumb-trail: limpio
+[421/1007] klarna-order-management-for-woocommerce: limpio
+[422/1007] easy-twitter-feed-widget: limpio
+[423/1007] remove-cpt-base: limpio
+[424/1007] daggerhart-openid-connect-generic: 1 vivos 💥
+[425/1007] omnibus: 5 vivos 💥
