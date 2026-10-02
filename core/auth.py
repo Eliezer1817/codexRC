@@ -333,9 +333,21 @@ class AuthManager:
             #     endpoint real de login (ej. post("/auth/doSignin") + apiUrl).
             descubiertos = self._discover_spa_login_endpoints(login_url, soup)
             step("endpoints_descubiertos", descubiertos or "ninguno")
-            # si hay endpoints descubiertos usamos solo esos; la pagina HTML
-            # no sirve como API (responde HTML y genera falsos positivos).
-            api_urls = descubiertos[:3] if descubiertos else [login_url]
+            if descubiertos:
+                api_urls = descubiertos[:3]
+            else:
+                # escalera v2: rutas de API de login estandar en apps
+                # modernas (fetch, DRF, Laravel, Express) ANTES de rendirse
+                # con la pagina HTML como ultima opcion.
+                _o = "{0.scheme}://{0.netloc}".format(urlparse(login_url))
+                _paths = ("/api/auth/login/", "/api/auth/login", "/api/auth/signin/",
+                          "/api/login/", "/api/login", "/api/signin/",
+                          "/api/v1/auth/login/", "/api/auth/session",
+                          "/api/session", "/api/users/login",
+                          "/api/auth/doSignin", "/api/jwt/create")
+                api_urls = [_o + p for p in _paths if _o + p != login_url]
+                api_urls.append(login_url)
+                step("escalera_api", f"{len(api_urls)-1} rutas estandar + pagina")
             step("modo", "spa_api_json (login por API)")
             # candidatos de campo de usuario: el explicito primero, luego comunes
             user_keys = [username_field] if username_field else []
@@ -388,6 +400,10 @@ class AuthManager:
                                 })
                     except Exception:
                         pass
+                    if login_resp.status_code in (404, 405):
+                        # endpoint inexistente o metodo incorrecto: pasar al
+                        # siguiente candidato sin quemar los otros payloads
+                        break
             self.login_debug["resultado"] = "login_api_fallo"
             self.login_debug["endpoints_probados"] = api_urls
             self.login_debug["razon"] = (
@@ -502,7 +518,9 @@ class AuthManager:
             soup = BeautifulSoup(r.text, "html.parser")
         api_prefix = ""
         posts = []
+        api_strings = []
         vistos_post = set()
+        vistos_str = set()
 
         def escanear_js(js: str) -> None:
             nonlocal api_prefix
@@ -514,6 +532,14 @@ class AuthManager:
                 if not ep.startswith("http") and ep not in vistos_post:
                     vistos_post.add(ep)
                     posts.append(ep)
+            # apps con fetch (no axios): las rutas van como strings sueltos
+            # ej. "/api/auth/login/" dentro de un wrapper fetch. Sin esto las
+            # SPAs fetch-basadas quedan invisibles para el descubrimiento.
+            for mm in _re.finditer(r'["\'`](/(?:api|auth|v\d+|graphql)[A-Za-z0-9_\-/.]{2,120})["\'`]', js):
+                ep = mm.group(1)
+                if ep not in vistos_str:
+                    vistos_str.add(ep)
+                    api_strings.append(ep)
 
         # scripts nivel 1: los src relativos se resuelven contra la RAIZ
         # del sitio (base href="/"), no contra la URL de la pagina.
@@ -540,6 +566,16 @@ class AuthManager:
         def _traer(url_js):
             try:
                 r = _rq.get(url_js, timeout=12, headers=_headers)
+                if r.status_code in (403, 429, 503) or "cloudflare" in (r.headers.get("server") or "").lower():
+                    # posible bloqueo WAF: reintento con la sesion del escaneo
+                    # (cloudscraper / GHOSTGATE-LITE hereda el paso por CF)
+                    try:
+                        r2 = self.session.get(url_js, timeout=15)
+                        if len(r2.content) > 2_500_000 or "<html" in r2.text[:500].lower():
+                            return None
+                        return (url_js, r2.text)
+                    except Exception:
+                        return None
                 if len(r.content) > 2_500_000 or "<html" in r.text[:500].lower():
                     return None
                 return (url_js, r.text)
@@ -560,8 +596,24 @@ class AuthManager:
                     if full not in vistos_urls:
                         vistos_urls.add(full)
                         pendientes.append(full)
+                # chunks estilo Vite/esbuild: "assets/Login-Ab12Cd34.js" o
+                # "./vendor-react-BenwEZ-b.js". El hash en el nombre no matchea
+                # el patron webpack de arriba y media SPA quedaba ciega.
+                _nuevos = set(_re.findall(r'["\']((?:\./|\.\./|/)?(?:assets/)?[\w\-]+-[\w\-]{6,}\.js)["\']', texto))
+                _nuevos |= set(_re.findall(r'["\']((?:\./|\.\./|/)?assets/[\w\-./]+\.js)["\']', texto))
+                for c in _nuevos:
+                    if c.startswith(("./", "../")):
+                        full = urljoin(url_js, c)
+                    elif c.startswith("/"):
+                        full = origin + c
+                    else:
+                        full = origin + "/" + c.lstrip("/")
+                    if full not in vistos_urls:
+                        vistos_urls.add(full)
+                        pendientes.append(full)
 
-        data = {"api_prefix": api_prefix, "posts": posts, "js_files": archivos}
+        data = {"api_prefix": api_prefix, "posts": posts,
+                "api_strings": api_strings, "js_files": archivos}
         self._spa_cache_origin = origin
         self._spa_cache_data = data
         return data
@@ -581,9 +633,14 @@ class AuthManager:
         Los get* (getSignin) son de config y no sirven para loguearse."""
         data = self._scan_spa_js(login_url, soup)
         candidatos = []
-        for ep in data["posts"]:
+        fuentes = list(data.get("posts", [])) + list(data.get("api_strings", []))
+        _malos = ("logout", "register", "forgot", "reset", "refresh", "captcha",
+                  "impersonate", "verify", "unlock", "otp", "2fa", "mfa")
+        for ep in fuentes:
             low = ep.lower()
             if any(k in low for k in ("signin", "sign-in", "login", "doauth")):
+                if any(b in low for b in _malos):
+                    continue  # accion relacionada pero NO es login de credenciales
                 candidatos.append(ep)
         accion = [e for e in candidatos if not e.lower().rstrip("/").split("/")[-1].startswith("get")]
         finales = []
@@ -598,7 +655,13 @@ class AuthManager:
         data = self._scan_spa_js(page_url)
         claves = ("account", "profile", "balance", "init", "me", "user", "wallet")
         candidatos = []
-        for ep in data["posts"]:
+        fuentes = list(data.get("posts", [])) + list(data.get("api_strings", []))
+        for ep in fuentes:
+            low = ep.lower()
+            if any(b in low for b in ("login", "signin", "register", "logout",
+                                      "forgot", "reset", "captcha", "delete",
+                                      "create", "update", "transfer", "withdraw")):
+                continue  # acciones: nunca sirven para verificar sesion
             segs = [s for s in ep.lower().split("/") if s]
             if segs and any(any(k == s or k in s for k in claves) for s in segs):
                 candidatos.append(ep)
