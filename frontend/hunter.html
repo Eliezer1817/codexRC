@@ -368,7 +368,7 @@ esperando objetivo...</pre>
       const urls = window._arsenalUrls || [];
       if (!urls.length) return alert("no hay candidatos con URL");
       sessionStorage.setItem("arsenal_queue", JSON.stringify(window._arsenalQueue || []));
-      location.href = "/arsenal.html";
+      window.open("/arsenal.html", "_blank");  // otra pestana: el hunter y su caza siguen aca
     }
 
     function finishHunt(job) {

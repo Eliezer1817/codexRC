@@ -269,6 +269,13 @@
       document.getElementById("fireBtn").disabled = false;
     }
 
+    function sinArsenal() {
+      TARGETS = [];
+      document.getElementById("targetsBox").value = "";
+      sessionStorage.removeItem("arsenal_queue");
+      location.href = "/hunter.html";
+    }
+
     async function unlock() {
       const pw = document.getElementById("pwInput").value;
       const msg = document.getElementById("msg");
@@ -426,7 +433,8 @@
         b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> llegaron del hunter. AUTO ya activo: directo a <b>🔥 LANZAR</b>.";
         document.getElementById("firepanel").scrollIntoView();
       } else {
-        b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> llegaron del hunter y ya están en cola.<br>PASO 1: poné la contraseña para armar el lote. Sin desbloquear no se lanza nada.";
+        b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> llegaron del hunter y ya están en cola.<br>PASO 1: poné la contraseña para armar el lote. Sin desbloquear no se lanza nada.<br>" +
+          '<button onclick="sinArsenal()" style="margin-top:0.5rem;background:#101a0e;border:1px solid #3f5c33;color:#9dc183;font-size:0.75rem;padding:0.4rem 0.6rem;min-height:36px">🚪 no quiero usar el arsenal — limpiar cola y volver al hunter</button>';
         document.getElementById("pwInput").focus();
       }
     }
