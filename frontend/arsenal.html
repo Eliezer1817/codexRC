@@ -88,6 +88,8 @@
     }
     .pl:hover { border-color: var(--red-dim); }
     .pl.sel { border-color: var(--red); border-left-color: var(--red); box-shadow: var(--red-glow); }
+    .pl.extremo { border-left-color: var(--red); border-color: var(--red-dim); }
+    .pl.extremo .pname { color: var(--red); }
     .pl .pname { color: var(--amber); font-size: 0.78rem; margin-bottom: 0.2rem; word-break: break-all; }
     .pl.sel .pname { color: var(--red); font-weight: bold; }
     .pl code {
@@ -201,6 +203,7 @@
 
   <script>
     let TOKEN = null;
+    let EXTREME = false;
     let PAYLOADS = [];   // {nombre, payload, nota, cat, titulo, extremo}
     let SELECTED = null;
 
@@ -222,16 +225,25 @@
           const items = (g.items || []).map(it => {
             PAYLOADS.push({ ...it, cat: c.id, titulo: c.titulo });
             const idx = PAYLOADS.length - 1;
-            return `<div class="pl" id="pl-${idx}" onclick="sel(${idx})">
-              <div class="pname">⚡ ${escapeHtml(it.nombre)}</div>
-              <code>${escapeHtml(it.payload)}</code>
-              <div class="nota">${escapeHtml(it.nota)}</div>
-              <div class="usar">SELECCIONAR</div>
+            const locked = it.extremo && !EXTREME;
+            const cls = it.extremo ? "pl extremo" : "pl";
+            const mark = it.extremo ? "💥" : "🟢";
+            const body = locked
+              ? `<div class="locknote">🔒 EXTREMO: desbloqueá con la contraseña para verlo y usarlo</div>`
+              : `<code>${escapeHtml(it.payload)}</code>
+                 <div class="nota">${escapeHtml(it.nota)}</div>
+                 <div class="usar">SELECCIONAR</div>`;
+            return `<div class="${cls}" id="pl-${idx}" ${locked ? "" : `onclick="sel(${idx})"`}>
+              <div class="pname">${mark} ${escapeHtml(it.nombre)}${it.extremo ? " · EXTREMO" : ""}</div>
+              ${body}
             </div>`;
           });
-          groups.push(`<div class="pname" style="color:var(--green-dim);font-size:0.72rem;margin:0.4rem 0 0.3rem">— ${escapeHtml(g.nombre)} —</div><div class="grid">${items.join("")}</div>`);
+          groups.push(`<div class="grid">${items.join("")}</div>`);
         });
-        box.innerHTML = `<div class="card-head"><h3>💥 ${escapeHtml(c.titulo)}</h3></div>
+        const nB = (c.grupos||[]).flatMap(g=>g.items||[]).filter(i=>!i.extremo).length;
+        const nE = (c.grupos||[]).flatMap(g=>g.items||[]).filter(i=>i.extremo).length;
+        box.innerHTML = `<div class="card-head"><h3>${escapeHtml(c.titulo)}</h3>
+            <span class="count">🟢 ${nB} basicos · 💥 ${nE} extremos</span></div>
           <div class="card-body">${groups.join("")}</div>`;
         m.appendChild(box);
       });
@@ -265,6 +277,7 @@
         }
         const data = await r.json();
         TOKEN = data.token;
+        EXTREME = true;
         render(data);
         document.getElementById("firepanel").style.display = "block";
         const gb = document.getElementById("gateBox");

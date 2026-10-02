@@ -1544,36 +1544,30 @@ def arsenal_page():
 ARS_PASSWORD = os.environ.get("ARSENAL_PASSWORD", "extremo")
 
 
-def _arsenal_data(include_extreme: bool) -> Dict[str, Any]:
+def _arsenal_data(unlocked: bool) -> Dict[str, Any]:
+    """Inventario del arsenal. Sin desbloquear: los EXTREMO viajan con el
+    payload oculto (🔒). Desbloqueado: payload completo."""
     from core.arsenal import CATEGORIES
     categorias = []
-    for _cid, (titulo, grupos) in CATEGORIES.items():
-        gs = []
-        for gname, entries in grupos.items():
-            items = []
-            for name, payload, note in entries:
-                items.append({"nombre": name, "payload": payload,
-                              "nota": note, "extremo": True})
-            gs.append({"nombre": gname, "items": items})
-        categorias.append({"id": _cid, "titulo": titulo, "grupos": gs})
-    return {"version": VERSION, "categorias": categorias}
+    for cid, (titulo, entries) in CATEGORIES.items():
+        items = []
+        for name, payload, note, nivel in entries:
+            extremo = (nivel == "extremo")
+            items.append({
+                "nombre": name,
+                "payload": payload if (unlocked or not extremo) else "🔒 bloqueado",
+                "nota": note,
+                "extremo": extremo,
+            })
+        categorias.append({"id": cid, "titulo": titulo, "grupos": [
+            {"nombre": "basico + extremo", "items": items}]})
+    return {"version": VERSION, "categorias": categorias, "extreme": unlocked}
 
 
 @app.get("/api/arsenal")
 def api_arsenal():
-    """Inventario LAB: nombres y categorias; los payloads llegan
-    en cajas rojas, los EXTREMO se entregan solo con contrasena."""
-    from core.arsenal import CATEGORIES
-    categorias = []
-    for cid, (titulo, grupos) in CATEGORIES.items():
-        gs = []
-        for gname, entries in grupos.items():
-            items = [{"nombre": n, "payload": p, "nota": note, "extremo": False}
-                     for (n, p, note) in entries]
-            gs.append({"nombre": gname, "items": items})
-        categorias.append({"id": cid, "titulo": titulo, "grupos": gs})
-    return jsonify({"version": VERSION, "categorias": categorias,
-                    "extreme": False})
+    """Inventario BASICO (verde) visible; EXTREMO oculto hasta contrasena."""
+    return jsonify(_arsenal_data(unlocked=False))
 
 
 @app.post("/api/arsenal/extreme")
@@ -1589,7 +1583,9 @@ def api_arsenal_extreme():
     app.logger.warning("[ARSENAL] MODO EXTREMO desbloqueado desde %s", remote)
     token = uuid.uuid4().hex
     _ARS_TOKENS[token] = time.time() + 1800  # 30 min de sesion de disparo
-    return jsonify(_arsenal_data(include_extreme=True) | {"extreme": True, "token": token})
+    data = _arsenal_data(unlocked=True)
+    data["token"] = token
+    return jsonify(data)
 
 
 if __name__ == "__main__":
