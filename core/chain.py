@@ -68,16 +68,40 @@ class Chainer:
                            "parts": [p["type"] for p in parts],
                            "reason": reason})
 
+        # Una cadena XSS solo es CRITICA si alguna pieza ejecuto en navegador
+        # real (verificado por VERITAS o kit PoC). Sin confirmacion = teorica:
+        # se reporta ALTA "pendiente de confirmar" (leccion vellius 02/10: el
+        # sink location.hash->innerHTML nunca ejecuto pese al CSP ausente).
+        xss_ok = any(p.get("verificado") for p in xss)
         if xss and csp_weak:
-            add("XSS ejecutable (CSP no lo frena)", "critica", xss[:2] + csp_weak[:1],
-                "El CSP permite inline: el payload corre sin restricciones y "
-                "el XSS deja de ser teorico. Sesiones robables.")
-            self.emit("[chain] 💥 XSS + CSP debil = XSS ejecutable y sesion robable")
+            pzs = xss[:2] + csp_weak[:1]
+            if xss_ok:
+                add("XSS ejecutable (CSP no lo frena)", "critica", pzs,
+                    "El CSP permite inline y una pieza EJECUTO en navegador "
+                    "real: el payload corre sin restricciones y el XSS deja "
+                    "de ser teorico. Sesiones robables.")
+                self.emit("[chain] 💥 XSS verificado + CSP debil = XSS ejecutable, sesion robable")
+            else:
+                add("XSS ejecutable (CSP no lo frena)", "alta", pzs,
+                    "CSP ausente pero NINGUNA pieza XSS verificada en "
+                    "navegador real (leccion vellius: sink DOM teorico que "
+                    "nunca ejecuto). Confirmar con kit PoC/VERITAS antes de "
+                    "subir a critica.")
+                self.emit("[chain] XSS teorico + CSP debil = ALTA pendiente de "
+                          "confirmacion en navegador real")
         if xss and admin:
-            add("XSS alcance a panel admin", "critica", xss[:1] + admin[:1],
-                "Hay panel admin en el mismo blanco: un XSS dirigido (o ciego "
-                "via GHOSTHOOK) puede capturar la sesion del administrador.")
-            self.emit("[chain] 💥 XSS + panel admin mapeado = posible captura de sesion admin")
+            pzs = xss[:1] + admin[:1]
+            if xss_ok:
+                add("XSS alcance a panel admin", "critica", pzs,
+                    "Hay panel admin en el mismo blanco y el XSS EJECUTO: un "
+                    "XSS dirigido (o ciego via GHOSTHOOK) puede capturar la "
+                    "sesion del administrador.")
+                self.emit("[chain] 💥 XSS verificado + panel admin = captura de sesion admin")
+            else:
+                add("XSS alcance a panel admin", "alta", pzs,
+                    "Panel admin en el blanco con XSS SIN confirmar en "
+                    "navegador: teorico hasta verificar.")
+                self.emit("[chain] XSS teorico + panel admin = ALTA pendiente de confirmacion")
         if sqli and admin:
             add("SQLi hacia el panel admin", "critica", sqli[:1] + admin[:1],
                 "SQLi + panel en el mismo blanco: extraccion de credenciales "
