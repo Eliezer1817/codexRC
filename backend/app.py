@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.55.9"
+VERSION = "0.56.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -1588,6 +1588,75 @@ def _arsenal_data(unlocked: bool) -> Dict[str, Any]:
 def api_arsenal():
     """Inventario BASICO (verde) visible; EXTREMO oculto hasta contrasena."""
     return jsonify(_arsenal_data(unlocked=False))
+
+
+@app.post("/api/arsenal/resume")
+def api_arsenal_resume():
+    """Restaura una sesion de desbloqueo vigente (<=30 min) sin volver a pedir
+    contrasena. El token vive en el servidor; el front solo lo guarda."""
+    body = request.get_json(silent=True) or {}
+    token = str(body.get("token") or "")
+    if token not in _ARS_TOKENS:
+        return jsonify({"error": "sesion expirada o invalida"}), 401
+    restante = _ARS_TOKENS[token] - time.time()
+    if restante <= 0:
+        _ARS_TOKENS.pop(token, None)
+        return jsonify({"error": "sesion expirada o invalida"}), 401
+    # refresco del plazo: la actividad extiende otros 30 min (fix pedido del
+    # operador: salir de la pagina y volver ya no obliga a re-desbloquear)
+    _ARS_TOKENS[token] = time.time() + 1800
+    data = _arsenal_data(unlocked=True)
+    data["token"] = token
+    data["segundos_restantes"] = int(restante)
+    app.logger.warning("[ARSENAL] sesion RESTAURADA (quedan %ds)", int(restante))
+    return jsonify(data)
+
+
+@app.post("/api/arsenal/report")
+def api_arsenal_report():
+    """Genera el informe ordenado de una corrida del arsenal y lo guarda como
+    job: trofeos (credenciales) primero, escalas confirmadas por nivel, resto
+    de intentos como info. Reutiliza el export PDF/TXT/JSON del hunter."""
+    body = request.get_json(silent=True) or {}
+    if not _ars_token_ok(body.get("token")):
+        return jsonify({"error": "sesion de arsenal expirada o invalida: "
+                                 "desbloquea de nuevo"}), 401
+    hallazgos = body.get("hallazgos") or []
+    trofeos = body.get("trofeos") or []
+    resumen = body.get("resumen") or {}
+    # trofeo = hallazgo con leak:true -> el export lo pinta en la banda roja
+    for t in trofeos:
+        t["leak"] = True
+        t.setdefault("severity", "critica")
+    # orden: confirmados por severidad, luego info (intentos sin confirmar)
+    orden = {"critica": 0, "alta": 1, "media": 2, "baja": 3, "info": 4}
+    hallazgos.sort(key=lambda f: orden.get(f.get("severity"), 9))
+    todo = trofeos + hallazgos
+    job = {
+        "id": "ars" + uuid.uuid4().hex[:6],
+        "url": f"ARSENAL · {resumen.get('blancos', 0)} blancos · {resumen.get('disparos', 0)} disparos",
+        "status": "finished", "version": VERSION,
+        "findings": todo,
+        "leaks": [f for f in todo if f.get("leak")],
+        "summary": {
+            "total": len(hallazgos),
+            "alta": len([f for f in hallazgos if f.get("severity") == "alta"]),
+            "media": len([f for f in hallazgos if f.get("severity") == "media"]),
+            "baja": len([f for f in hallazgos if f.get("severity") == "baja"]),
+            "info": len([f for f in hallazgos if f.get("severity") == "info"]),
+            "chains": resumen.get("escalas", 0),
+        },
+        "results": {"escalada": {"status": "success", "data": {"escalations": [
+            {"chain": "corrida de arsenal", "verdict": resumen.get("veredicto", "sin impacto"),
+             "poc": "", "playbook": [resumen.get("detalle", "")]}
+        ]}}},
+    }
+    JOBS[job["id"]] = job
+    app.logger.warning("[ARSENAL] informe generado: %s (%s hallazgos, %s trofeos)",
+                       job["id"], len(hallazgos), len(trofeos))
+    return jsonify({"report_id": job["id"],
+                    "export_urls": {f: f"/api/jobs/{job['id']}/export?format={f}"
+                                    for f in ("pdf", "txt", "json")}})
 
 
 @app.post("/api/arsenal/extreme")

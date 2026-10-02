@@ -27,6 +27,21 @@
              display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; }
     .brand { display: flex; align-items: center; gap: 0.7rem; }
     .brand-logo { height: 30px; width: auto; border-radius: 3px; }
+    /* luces estilo n8n: la cajita que se esta probando late, la confirmada explota en rojo */
+    .pl.testing { border-color: var(--amber) !important; animation: pulse 0.9s ease-in-out infinite; }
+    .pl.hit { border-color: var(--red) !important; box-shadow: 0 0 8px rgba(220,53,69,0.55); }
+    .pl.done { opacity: 0.55; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 2px rgba(252,196,25,0.2);} 50% { box-shadow: 0 0 10px rgba(252,196,25,0.7);} }
+    /* flujo de blancos: fila por blanco con su luz de estado */
+    .flowrow { display:flex; gap:0.5rem; align-items:center; font-size:0.78rem;
+      padding:0.35rem 0.5rem; border-bottom:1px solid #1c2a17; }
+    .flowrow.testing { background:#241d0b; }
+    .flowrow.hit { background:#2a1212; }
+    .flowrow.trofeo { background:#3a2c0d; border:1px solid #d4a72c; }
+    .flowdot { width:9px; height:9px; border-radius:50%; background:#3f5c33; flex:none; }
+    .flowrow.testing .flowdot { background:var(--amber); animation:pulse 0.9s infinite; }
+    .flowrow.hit .flowdot, .flowrow.trofeo .flowdot { background:var(--red); }
+    #stopBtn { display:none; }
     .prompt { font-size: 1.25rem; font-weight: bold; letter-spacing: 0.08em; display: flex; align-items: baseline; gap: 0.1rem; }
     .prompt .cx { color: var(--green); text-shadow: var(--glow); }
     .prompt .rc { color: #f2f5ee; }
@@ -175,12 +190,12 @@
           Con varias líneas el payload elegido vuela a TODAS en lote (jitter entre disparos).
         </div>
         <label style="display:flex;align-items:center;gap:0.4rem;color:var(--text);font-size:0.8rem">
-          <input type="checkbox" id="stopImpact" checked style="width:1rem;height:1rem;accent-color:var(--red)" />
-          🛑 stop al primer impacto confirmado (demostración mínima)
+          <input type="checkbox" id="stopImpact" style="width:1rem;height:1rem;accent-color:var(--red)" />
+          🛑 stop al primer impacto confirmado (opcional; por defecto sigue TODO y frenás vos con 🛑 DETENER)
         </label>
         <label style="display:flex;align-items:center;gap:0.4rem;color:var(--text);font-size:0.8rem">
           <input type="checkbox" id="autoMode" checked style="width:1rem;height:1rem;accent-color:var(--green)" />
-          🤖 AUTO: elijo el payload por el tipo de hallazgo de cada blanco y escalo solo si el básico no confirma (máx 3 por blanco)
+          🤖 AUTO: payload por tipo de hallazgo de cada blanco; si confirma, escala HASTA EL TOPE de la categoría marcando cada nivel
         </label>
       </div>
     </div>
@@ -191,6 +206,9 @@
       <div class="card-body" style="border-top:1px solid var(--red-dim)">
         <div id="selInfo">nada seleccionado</div>
         <button class="bigbtn" id="fireBtn" onclick="fire()" disabled>🔥 LANZAR AL BLANCO</button>
+        <button class="bigbtn" id="stopBtn" onclick="detener()" style="background:var(--red-dark);border:1px solid var(--red);color:var(--red)">🛑 DETENER</button>
+        <div id="flowBox" style="margin-top:0.5rem"></div>
+        <p id="reportLinks" style="margin:0.6rem 0 0;font-size:0.8rem"></p>
       </div>
     </div>
 
@@ -294,6 +312,8 @@
         const data = await r.json();
         TOKEN = data.token;
         EXTREME = true;
+        // sesion persistente: 30 min que sobreviven salir/recargar la pagina
+        localStorage.setItem("arsenal_session", JSON.stringify({ token: TOKEN, exp: Date.now() + 1800000 }));
         render(data);
         document.getElementById("firepanel").style.display = "block";
         const gb = document.getElementById("gateBox");
@@ -328,6 +348,62 @@
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+    // ── luces n8n: encender la cajita del payload mientras vuela ──
+    function luz(idx, estado) {
+      const el = document.getElementById("pl-" + idx);
+      if (!el) return;
+      el.classList.remove("testing", "hit", "done");
+      if (estado) el.classList.add(estado);
+      if (estado === "testing") el.scrollIntoView({ block: "nearest" });
+    }
+    function apagarLuces() {
+      document.querySelectorAll(".pl").forEach(el => el.classList.remove("testing", "hit", "done"));
+    }
+    function luzPayload(sel, estado) {
+      const i = PAYLOADS.indexOf(sel);
+      if (i >= 0) luz(i, estado);
+    }
+
+    // ── flujo de blancos (panel n8n) ──
+    let FLOW = [];  // {estado: pendiente|testing|hit|trofeo|done, url, ultimo}
+    function pintarFlow() {
+      const box = document.getElementById("flowBox");
+      if (!FLOW.length) { box.innerHTML = ""; return; }
+      box.innerHTML = FLOW.map(f => {
+        const icon = f.estado === "trofeo" ? "🏆 TROFEO (credenciales)"
+          : f.estado === "hit" ? "💥 CONFIRMADO"
+          : f.estado === "testing" ? "🔄 probando: " + (f.ultimo || "")
+          : f.estado === "done" ? "✓ probado sin impacto"
+          : "⏳ en cola";
+        return `<div class="flowrow ${f.estado === "testing" ? "testing" : f.estado === "hit" ? "hit" : f.estado === "trofeo" ? "trofeo" : ""}">
+          <span class="flowdot"></span>
+          <span style="flex:1;word-break:break-all">${escapeHtml(f.url)}</span>
+          <span style="color:${f.estado === "hit" || f.estado === "trofeo" ? "var(--red)" : f.estado === "testing" ? "var(--amber)" : "var(--muted)"}">${icon}</span>
+        </div>`;
+      }).join("");
+    }
+
+    // ── DETENER: solo el operador frena ──
+    function detener() {
+      window._fireStop = true;
+      logFlow("🛑 detención pedida: frenando tras este disparo...");
+    }
+    function logFlow(txt) {
+      const box = document.getElementById("flowBox");
+      box.innerHTML += `<div class="flowrow" style="color:var(--amber)">${escapeHtml(txt)}</div>`;
+    }
+
+    // ── TROFEO: filtracion de credenciales en la respuesta = maximo premio ──
+    function detectaTrofeo(d) {
+      const b = d.body_head || "";
+      // el valor debe tener sustancia: nada de vacios, null, placeholders o el nombre del campo
+      const basura = /^(\$\{|null|undefined|true|false|<%|%>|\*\*|---|\{\{)/i;
+      const m = b.match(/"?(pass(word|wd)?|contrase\w*|pwd)"?\s*[:=]\s*"?([^"'},\s]{3,})/i);
+      if (m && !basura.test(m[3]) && m[3].toLowerCase() !== m[1].toLowerCase() && m[3].toLowerCase() !== "password")
+        return { campo: m[1], valor: m[3], snippet: b.slice(Math.max(0, b.indexOf(m[0]) - 80), b.indexOf(m[0]) + 200) };
+      return null;
+    }
+
     async function fireOne(target, sel) {
       const r = await fetch("/api/arsenal/fire", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -356,9 +432,10 @@
       const lines = raw ? raw.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 1000) : [];
       if (!SELECTED || !lines.length) return alert("Elegí un payload y poné al menos una URL");
       const btn = document.getElementById("fireBtn");
-      const stop = document.getElementById("stopImpact").checked;
+      const stopAlImpacto = document.getElementById("stopImpact").checked;
       btn.disabled = true;
       document.getElementById("result").style.display = "block";
+      document.getElementById("stopBtn").style.display = "inline-block";
 
       // cola efectiva: respeta tipos de la cola del hunter; si el usuario edito el textarea, sin tipos
       let cola = TARGETS.length && TARGETS.map(x => x.url).join("\n") === raw
@@ -367,54 +444,131 @@
       if (auto && !cola.some(t => t.tipo)) cola = cola.map(t => ({ ...t, tipo: "" }));
       if (auto && !SELECTED && !cola.some(t => catDeTipo(t.tipo))) {
         btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+        document.getElementById("stopBtn").style.display = "none";
         return alert("AUTO no reconoce el tipo de los hallazgos: elegí una cajita a mano o desactivá AUTO");
       }
       if (!auto && !SELECTED) {
         btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+        document.getElementById("stopBtn").style.display = "none";
         return alert("Elegí un payload o activá AUTO");
       }
-      let conf = 0, lento = 0, refl = 0, errs = 0, escalados = 0, out = "";
+
+      window._fireStop = false;
+      apagarLuces();
+      FLOW = cola.map(t => ({ estado: "pendiente", url: t.url, ultimo: "" }));
+      pintarFlow();
+
+      // libro de la corrida: alimenta el informe PDF/TXT ordenado
+      const RUN = { hallazgos: [], trofeos: [], escalas: 0, disparos: 0 };
+      let conf = 0, lento = 0, refl = 0, errs = 0, out = "";
+
       for (let i = 0; i < cola.length; i++) {
+        if (window._fireStop) { out += "\n🛑 DETENIDO por el operador en el blanco " + (i + 1) + "\n"; break; }
         const t = cola[i];
         const cadena = auto && catDeTipo(t.tipo) ? cadenaDe(catDeTipo(t.tipo))
                        : SELECTED ? [SELECTED] : [];
+        FLOW[i].estado = "testing"; FLOW[i].ultimo = cadena.length ? cadena[0].nombre : "?";
+        pintarFlow();
+        let confirmadoBlanco = false, trofeoBlanco = null;
+
         for (let k = 0; k < cadena.length; k++) {
+          if (window._fireStop) break;
           const sel = cadena[k];
           btn.textContent = `🔥 ${i + 1}/${cola.length} · ${sel.nombre}`;
+          FLOW[i].ultimo = sel.nombre;
+          pintarFlow();
+          luzPayload(sel, "testing");
           out += k === 0 ? `── [${i + 1}/${cola.length}] ${t.url}${t.tipo ? "  (tipo: " + t.tipo + ")" : ""}\n`
-                         : `   ↗ escalando a [${sel.nombre}]\n`;
+                         : `   ↗ ESCALA ${k + 1}/${cadena.length}: [${sel.nombre}]${sel.extremo ? " (EXTREMO)" : ""}\n`;
           try {
             const { ok, d } = await fireOne(t.url, sel);
+            RUN.disparos++;
             if (!ok) { errs++; out += "   ERROR: " + (d.error || d.status) + "\n"; }
             else {
               const head = pintaRes(d, sel);
               if (d.elapsed_ms > 3000) lento++;
               if (d.reflejado) refl++;
-              out += `   [${sel.nombre}] estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
               const c = confirmo(sel, d);
+              luzPayload(sel, c ? "hit" : "done");
+              out += `   [${sel.nombre}] estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
               if (c) {
-                conf++;
-                out += (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(sel.payload))
-                  ? "   💥 CONFIRMADO (ciego temporal)\n" : "   💥 CONFIRMADO\n";
-                if (i === cola.length - 1) out += "\n" + head;
-                break;  // este blanco ya confirmo: no seguir escalando
+                confirmadoBlanco = true; conf++; RUN.escalas++;
+                out += "   💥 CONFIRMADO — ESCALA " + (k + 1) + "/" + cadena.length + " ✓"
+                  + (sel.extremo ? " · 🔥 NIVEL TOPE ALCANZADO" : " — siguiendo hacia el tope...") + "\n";
+                RUN.hallazgos.push({
+                  severity: sel.extremo ? "alta" : "media",
+                  type: (t.tipo || "arsenal") + " · nivel " + (k + 1) + "/" + cadena.length + (sel.extremo ? " · TOPE" : ""),
+                  target: t.url, param: "{INJECT} · " + sel.nombre,
+                  reason: sel.nota || "confirmado en vivo por el arsenal",
+                  evidence: `estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}`,
+                  veredicto: { gravedad: sel.extremo ? "ALTA (payload extremo confirmado)" : "MEDIA (básico confirmado)",
+                               primeros: "verificado en vivo", reglas: "demostración mínima" },
+                });
+                if (sel.extremo) break;  // tope alcanzado: no hay nada mas arriba
+              }
+              // 🏆 TROFEO: credenciales en la respuesta = maximo premio
+              const tro = detectaTrofeo(d);
+              if (tro) {
+                trofeoBlanco = tro;
+                FLOW[i].estado = "trofeo"; pintarFlow();
+                out += "   🏆 TROFEO MÁXIMO: filtración de credenciales (" + tro.campo + ") en la respuesta\n";
+                RUN.trofeos.push({
+                  severity: "critica",
+                  type: "TROFEO · CREDENCIALES FILTRADAS",
+                  target: t.url,
+                  leak_fields: [tro.campo],
+                  leak_identity: String(tro.valor).slice(0, 60),
+                  reason: "la respuesta del blanco expone " + tro.campo + " — trofeo máximo, arriba de todo en el informe",
+                  evidence: tro.snippet.slice(0, 400),
+                });
               }
             }
           } catch (e) { errs++; out += "   error: " + e.message + "\n"; }
+          document.getElementById("rBody").textContent = out;
+          document.getElementById("rBody").scrollTop = 1e9;
           if (k < cadena.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
         }
-        document.getElementById("rBody").textContent = out;
-        document.getElementById("rBody").scrollTop = 1e9;
-        if (stop && conf > 0) {
-          out += `\n🛑 STOP: impacto confirmado en el blanco ${i + 1} (demostración mínima).`;
+        FLOW[i].estado = trofeoBlanco ? "trofeo" : confirmadoBlanco ? "hit" : "done";
+        FLOW[i].ultimo = "";
+        pintarFlow();
+        if (stopAlImpacto && conf > 0) {
+          out += `\n🛑 STOP configurado: impacto confirmado en el blanco ${i + 1} (demostración mínima).`;
           break;
         }
         if (i < cola.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
       }
-      out += `\n═══ LOTE: ${cola.length} blancos · 💥 confirmados: ${conf} · lentos(>3s): ${lento} · reflejados: ${refl} · errores: ${errs} ═══`;
+      out += `\n═══ LOTE: ${cola.length} blancos · 💥 confirmados: ${conf} · escalas ✓: ${RUN.escalas} · lentos(>3s): ${lento} · reflejados: ${refl} · errores: ${errs} ═══`;
+      if (RUN.trofeos.length) out += `\n🏆 TROFEOS (${RUN.trofeos.length}): credenciales filtradas — van PRIMERO en el informe`;
       document.getElementById("rBody").textContent = out;
       document.getElementById("rBody").scrollTop = 1e9;
+
+      // informe ordenado: trofeos primero, escalas confirmadas, despues el resto
+      try {
+        const r = await fetch("/api/arsenal/report", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: TOKEN,
+            hallazgos: RUN.hallazgos,
+            trofeos: RUN.trofeos,
+            resumen: { blancos: cola.length, disparos: RUN.disparos, escalas: RUN.escalas,
+                       veredicto: RUN.trofeos.length ? "🏆 TROFEO: CREDENCIALES FILTRADAS"
+                                : conf ? "💥 impacto confirmado" : "sin impacto confirmado",
+                       detalle: `corrida: ${cola.length} blancos · ${RUN.disparos} disparos · ${conf} confirmados · ${errs} errores` },
+          }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          const box = document.getElementById("reportLinks");
+          box.innerHTML = `<b>Informe de la corrida:</b> ` +
+            `<a href="${d.export_urls.pdf}">PDF</a> · <a href="${d.export_urls.txt}">TXT</a> · <a href="${d.export_urls.json}">JSON</a>` +
+            ` <span style="color:var(--muted);font-size:0.7rem">(trofeos arriba de todo, escalas marcadas por nivel)</span>`;
+          box.style.display = "block";
+        }
+      } catch (e) { /* el lote ya termino; el informe es best-effort */ }
+
       btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+      document.getElementById("stopBtn").style.display = "none";
+      window._fireStop = false;
     }
 
     let TARGETS = [];  // {url, tipo}
@@ -439,6 +593,43 @@
       }
     }
 
+    // ── sesion persistente: 30 min que sobreviven salir/recargar (fix pedido del operador) ──
+    (async function restaurarSesion() {
+      let ses = null;
+      try { ses = JSON.parse(localStorage.getItem("arsenal_session") || "null"); } catch (e) {}
+      if (!ses || !ses.token || Date.now() > ses.exp) {
+        localStorage.removeItem("arsenal_session"); return;
+      }
+      try {
+        const r = await fetch("/api/arsenal/resume", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: ses.token }),
+        });
+        if (!r.ok) { localStorage.removeItem("arsenal_session"); return; }
+        const data = await r.json();
+        TOKEN = data.token; EXTREME = true;
+        localStorage.setItem("arsenal_session", JSON.stringify({ token: TOKEN, exp: Date.now() + 1800000 }));
+        render(data);
+        document.getElementById("firepanel").style.display = "block";
+        const gb = document.getElementById("gateBox");
+        gb.querySelector("h3").textContent = "🔓 MODO EXTREMO ACTIVO";
+        gb.querySelector(".pw-row").style.display = "none";
+        const msg = document.getElementById("msg");
+        msg.className = "ok";
+        msg.textContent = "🔓 sesión restaurada · vence en 30 min desde ahora (cada visita renueva)";
+        if (TARGETS.length) {
+          const b = document.getElementById("pendingBanner");
+          b.style.display = "block";
+          const conTipo = TARGETS.filter(t => catDeTipo(t.tipo)).length;
+          b.innerHTML = conTipo
+            ? "🎯 <b>" + TARGETS.length + " blancos</b> en cola · sesión ya activa: directo a <b>🔥 LANZAR</b>."
+            : "🎯 <b>" + TARGETS.length + " blancos</b> en cola, sin tipo reconocible: elegí una cajita a mano.";
+          if (conTipo) { document.getElementById("autoMode").checked = true; document.getElementById("fireBtn").disabled = false; }
+          document.getElementById("firepanel").scrollIntoView();
+        }
+      } catch (e) { /* sin sesion valida se pide contrasena, como siempre */ }
+    })();
+
     // mapea el tipo de hallazgo del hunter a categoria del arsenal
     function catDeTipo(tipo) {
       const t = (tipo || "").toLowerCase();
@@ -455,9 +646,10 @@
 
     // cadena minima para un tipo: basicos primero, max 3, escalar solo lo necesario
     function cadenaDe(cat) {
+      // cadena COMPLETA de la categoria: basico primero, escala hasta el TOPE
       const its = PAYLOADS.filter(p => p.cat === cat && p.payload && !p.payload.startsWith("🔒"));
       its.sort((a, b) => (a.extremo ? 1 : 0) - (b.extremo ? 1 : 0));
-      return its.slice(0, 3);
+      return its;
     }
 
     fetch("/api/status").then(r => r.json()).then(d => {
