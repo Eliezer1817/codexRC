@@ -342,8 +342,17 @@
       }
     }
 
-    function confirmo(sel, d) {
-      return (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(sel.payload)) || d.reflejado;
+    function confirmo(sel, d, baseline) {
+      if (/sleep|benchmark|waitfor|blob/i.test(sel.payload)) {
+        // ciego temporal: SOLO con respuesta 2xx/3xx (un 401/405/500 nunca llego a la DB)
+        // y SOLO si duerme bastante MAS que el baseline del mismo blanco (red lenta != inyeccion)
+        const base = baseline || 3000;
+        const ok = d.status_code < 400 && d.elapsed_ms > 3000 && d.elapsed_ms > base + 4000;
+        return ok ? "solid" : null;
+      }
+      // reflejo NO es confirmacion: Next.js/RSC devuelve eco ESCAPADO del parametro
+      // (lecciones v0.53.5 XenPaid y vellius). Se marca para verificar en navegador.
+      return d.reflejado ? "reflejado" : null;
     }
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -469,7 +478,26 @@
                        : SELECTED ? [SELECTED] : [];
         FLOW[i].estado = "testing"; FLOW[i].ultimo = cadena.length ? cadena[0].nombre : "?";
         pintarFlow();
-        let confirmadoBlanco = false, trofeoBlanco = null;
+        let confirmadoBlanco = false, trofeoBlanco = null, reflejadoBlanco = null;
+
+        // ⟲ BASELINE: peticion benévola al mismo blanco; mide su latencia real
+        // (red lenta != inyeccion) y sirve de prueba de alcance
+        let baseline = null, errConsec = 0;
+        try {
+          const bp = await fireOne(t.url, { payload: "codexrc", nombre: "baseline", nota: "" });
+          if (bp.ok) {
+            baseline = bp.d.elapsed_ms;
+            out += `   ⟲ baseline del blanco: ${baseline}ms\n`;
+          } else {
+            out += "   ⏭ BLANCO INALCANZABLE: salteado todo su arsenal\n";
+            FLOW[i].estado = "done"; FLOW[i].ultimo = ""; pintarFlow();
+            continue;
+          }
+        } catch (e) {
+          out += "   ⏭ BLANCO INALCANZABLE: salteado todo su arsenal\n";
+          FLOW[i].estado = "done"; FLOW[i].ultimo = ""; pintarFlow();
+          continue;
+        }
 
         for (let k = 0; k < cadena.length; k++) {
           if (window._fireStop) break;
@@ -483,28 +511,49 @@
           try {
             const { ok, d } = await fireOne(t.url, sel);
             RUN.disparos++;
-            if (!ok) { errs++; out += "   ERROR: " + (d.error || d.status) + "\n"; }
+            if (!ok) {
+              errs++; errConsec++;
+              out += "   ERROR: " + (d.error || d.status) + "\n";
+              if (errConsec >= 2) {
+                out += "   ⏭ 2 caidas seguidas: salto el resto de este blanco (blanco o red caidos)\n";
+                break;
+              }
+            }
             else {
+              errConsec = 0;
               const head = pintaRes(d, sel);
               if (d.elapsed_ms > 3000) lento++;
               if (d.reflejado) refl++;
-              const c = confirmo(sel, d);
-              luzPayload(sel, c ? "hit" : "done");
-              out += `   [${sel.nombre}] estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
-              if (c) {
+              const c = confirmo(sel, d, baseline);
+              luzPayload(sel, c === "solid" ? "hit" : c === "reflejado" ? "testing" : "done");
+              out += `   [${sel.nombre}] estado ${d.status_code} · ${d.elapsed_ms}ms · baseline ${baseline}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
+              if (c === "solid") {
                 confirmadoBlanco = true; conf++; RUN.escalas++;
                 out += "   💥 CONFIRMADO — ESCALA " + (k + 1) + "/" + cadena.length + " ✓"
-                  + (sel.extremo ? " · 🔥 NIVEL TOPE ALCANZADO" : " — siguiendo hacia el tope...") + "\n";
+                  + (sel.extremo ? " · 🔥 NIVEL TOPE ALCANZADO" : cadena.length > 1 ? " — siguiendo hacia el tope..." : "") + "\n";
                 RUN.hallazgos.push({
                   severity: sel.extremo ? "alta" : "media",
                   type: (t.tipo || "arsenal") + " · nivel " + (k + 1) + "/" + cadena.length + (sel.extremo ? " · TOPE" : ""),
                   target: t.url, param: "{INJECT} · " + sel.nombre,
                   reason: sel.nota || "confirmado en vivo por el arsenal",
-                  evidence: `estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}`,
+                  evidence: `estado ${d.status_code} · ${d.elapsed_ms}ms · baseline ${baseline}ms · verificado contra baseline`,
                   veredicto: { gravedad: sel.extremo ? "ALTA (payload extremo confirmado)" : "MEDIA (básico confirmado)",
                                primeros: "verificado en vivo", reglas: "demostración mínima" },
                 });
                 if (sel.extremo) break;  // tope alcanzado: no hay nada mas arriba
+              } else if (c === "reflejado") {
+                // reflejo != confirmado: Next.js/RSC devuelve eco ESCAPADO (lecciones v0.53.5 y vellius)
+                reflejadoBlanco = sel.nombre;
+                out += "   🔄 REFLEJADO — NO confirmado aún: el eco puede venir escapado (RSC/Next.js). Verificar en navegador real antes de reportar.\n";
+                RUN.hallazgos.push({
+                  severity: "media",
+                  type: "XSS REFLEJADO · PENDIENTE VERIFICAR EN NAVEGADOR",
+                  target: t.url, param: "{INJECT} · " + sel.nombre,
+                  reason: "el payload aparece en la respuesta, pero el escape de Next.js/RSC puede volverlo inofensivo (falso positivo conocido en esta plataforma)",
+                  evidence: `estado ${d.status_code} · ${d.elapsed_ms}ms · payload reflejado: SÍ (contexto sin verificar)`,
+                  veredicto: { gravedad: "MEDIA solo si ejecuta en navegador real",
+                               primeros: "por confirmar", reglas: "verificar antes de reportar" },
+                });
               }
               // 🏆 TROFEO: credenciales en la respuesta = maximo premio
               const tro = detectaTrofeo(d);
@@ -528,7 +577,7 @@
           document.getElementById("rBody").scrollTop = 1e9;
           if (k < cadena.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
         }
-        FLOW[i].estado = trofeoBlanco ? "trofeo" : confirmadoBlanco ? "hit" : "done";
+        FLOW[i].estado = trofeoBlanco ? "trofeo" : confirmadoBlanco ? "hit" : reflejadoBlanco ? "testing" : "done";
         FLOW[i].ultimo = "";
         pintarFlow();
         if (stopAlImpacto && conf > 0) {
