@@ -1,4 +1,4 @@
-## v0.49.0 — EVIDENCE-CHAIN hardening: bug de resolucion de rutas (2026-10-02)
+## v0.49.1 — EVIDENCE-CHAIN hardening: bug de resolucion de rutas (2026-10-02)
 
 El usuario compartio una especificacion tecnica de Evidence Chain (principios de evidencia, veredictos no monotonicos, reachability honesta). Al contrastarla contra la implementacion v0.47.0, surgio un bug real durante la revision manual de un hallazgo del dia (link-whisper).
 

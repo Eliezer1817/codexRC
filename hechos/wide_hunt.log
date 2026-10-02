@@ -500,3 +500,128 @@ WIDE-HUNT: 2108 en cola (417 pagables), 8 ya auditados, workers=6
 [499/2108] facebook-for-woocommerce: limpio
 [500/2108] siteorigin-panels: limpio
 [501/2108] font-awesome: limpio
+WIDE-HUNT: 1615 en cola (8 pagables), 501 ya auditados, workers=6
+[1/1615] woo-virtual-reviews: fallo: 'list' object has no attribute 'keys'
+[2/1615] eu-cookies-bar: fallo: 'list' object has no attribute 'keys'
+[3/1615] exmage-wp-image-links: fallo: 'list' object has no attribute 'keys'
+[4/1615] woo-photo-reviews: fallo: 'list' object has no attribute 'keys'
+[5/1615] bulky-bulk-edit-products-for-woo: fallo: 'list' object has no attribute 'keys'
+[6/1615] woo-alidropship: fallo: 'list' object has no attribute 'keys'
+[7/1615] sales-countdown-timer: fallo: 'list' object has no attribute 'keys'
+[8/1615] woo-cart-all-in-one: fallo: 'list' object has no attribute 'keys'
+[9/1615] pagelayer: limpio
+[10/1615] cookieadmin: limpio
+[11/1615] extendify: limpio
+[12/1615] honeypot: limpio
+[13/1615] shortcodes-ultimate: limpio
+[14/1615] template-kit-import: limpio
+[15/1615] ga-google-analytics: limpio
+[16/1615] so-widgets-bundle: limpio
+[17/1615] custom-fonts: limpio
+[18/1615] pixelyoursite: limpio
+[19/1615] admin-menu-editor: limpio
+[20/1615] chaty: limpio
+[21/1615] wp-mail-logging: 1 vivos 💥
+[22/1615] megamenu: limpio
+[23/1615] official-facebook-pixel: limpio
+[24/1615] nextgen-gallery: limpio
+[25/1615] mailpoet: limpio
+[26/1615] woocommerce-pdf-invoices-packing-slips: limpio
+[27/1615] woo-variation-swatches: limpio
+[28/1615] backwpup: limpio
+[29/1615] templately: 2 vivos 💥
+[30/1615] copy-delete-posts: limpio
+[31/1615] gdpr-cookie-compliance: limpio
+[32/1615] simple-history: limpio
+[33/1615] simple-custom-post-order: limpio
+[34/1615] members: limpio
+[35/1615] really-simple-captcha: limpio
+[36/1615] formidable: limpio
+[37/1615] jeg-elementor-kit: limpio
+[38/1615] cmb2: limpio
+[39/1615] stops-core-theme-and-plugin-updates: limpio
+[40/1615] pdf-embedder: limpio
+[41/1615] host-webfonts-local: limpio
+[42/1615] otter-blocks: limpio
+[43/1615] password-protected: limpio
+[44/1615] cyr2lat: limpio
+[45/1615] gutenberg: limpio
+[46/1615] wp-headers-and-footers: limpio
+[47/1615] wp-sitemap-page: fallo: 'list' object has no attribute 'keys'
+[48/1615] wp-consent-api: limpio
+[49/1615] broken-link-checker-seo: limpio
+[50/1615] filebird: limpio
+[51/1615] wpcf7-redirect: limpio
+[52/1615] complianz-terms-conditions: limpio
+[53/1615] pinterest-for-woocommerce: limpio
+[54/1615] admin-site-enhancements: limpio
+[55/1615] generateblocks: limpio
+[56/1615] wp-whatsapp-chat: limpio
+[57/1615] fileorganizer: limpio
+[58/1615] leadin: limpio
+[59/1615] favicon-by-realfavicongenerator: limpio
+[60/1615] cloudflare: limpio
+[61/1615] mailchimp-for-woocommerce: 1 vivos 💥
+[62/1615] white-label-cms: limpio
+[63/1615] google-analytics-dashboard-for-wp: limpio
+[64/1615] newsletter: 2 vivos 💥
+[65/1615] pretty-link: limpio
+[66/1615] black-studio-tinymce-widget: limpio
+[67/1615] cmp-coming-soon-maintenance: limpio
+[68/1615] use-any-font: limpio
+[69/1615] wp-migrate-db: limpio
+[70/1615] skyboot-custom-icons-for-elementor: 2 vivos 💥
+[71/1615] all-404-redirect-to-homepage: limpio
+[72/1615] iubenda-cookie-law-solution: limpio
+[73/1615] cleantalk-spam-protect: limpio
+[74/1615] olympus-google-fonts: limpio
+[75/1615] table-of-contents-plus: limpio
+[76/1615] tiktok-for-business: limpio
+[77/1615] burst-statistics: limpio
+[78/1615] call-now-button: limpio
+[79/1615] easy-fancybox: limpio
+[80/1615] optimole-wp: limpio
+[81/1615] microsoft-clarity: 1 vivos 💥
+[82/1615] wpconsent-cookies-banner-privacy-suite: limpio
+[83/1615] crowdsignal-forms: limpio
+[84/1615] jetpack-boost: limpio
+[85/1615] nginx-helper: limpio
+[86/1615] migrate-guru: limpio
+[87/1615] nextend-facebook-connect: limpio
+[88/1615] php-compatibility-checker: limpio
+[89/1615] popup-builder: limpio
+[90/1615] mw-wp-form: limpio
+[91/1615] wpfront-scroll-top: limpio
+[92/1615] polldaddy: limpio
+[93/1615] userfeedback-lite: limpio
+[94/1615] supreme-modules-for-divi: limpio
+[95/1615] backup: limpio
+[96/1615] iwp-client: limpio
+[97/1615] post-views-counter: limpio
+[98/1615] wp-sweep: limpio
+[99/1615] malcare-security: limpio
+[100/1615] search-regex: limpio
+[101/1615] ultimate-member: 2 vivos 💥
+[102/1615] acf-content-analysis-for-yoast-seo: limpio
+[103/1615] woocommerce-google-analytics-integration: limpio
+[104/1615] cloudsecure-wp-security: limpio
+[105/1615] performance-lab: limpio
+[106/1615] custom-facebook-feed: limpio
+[107/1615] ajax-search-for-woocommerce: limpio
+[108/1615] vk-all-in-one-expansion-unit: limpio
+[109/1615] menu-icons: limpio
+[110/1615] wps-limit-login: 1 vivos 💥
+[111/1615] wp-content-copy-protector: 2 vivos 💥
+[112/1615] photo-gallery: 7 vivos 💥
+[113/1615] widget-google-reviews: limpio
+[114/1615] ssl-insecure-content-fixer: limpio
+[115/1615] essential-blocks: limpio
+[116/1615] tiny-compress-images: limpio
+[117/1615] custom-twitter-feeds: limpio
+[118/1615] responsive-lightbox: 1 vivos 💥
+[119/1615] aruba-hispeed-cache: limpio
+[120/1615] simple-lightbox: limpio
+[121/1615] wordpress-popular-posts: limpio
+[122/1615] real-cookie-banner: limpio
+[123/1615] themeisle-companion: limpio
+[124/1615] schema-and-structured-data-for-wp: 4 vivos 💥
