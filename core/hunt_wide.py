@@ -102,6 +102,9 @@ def main() -> None:
 
     ok, fallos, hallazgos = [], [], []
     t0 = time.time()
+    os.makedirs(os.path.dirname(DONE), exist_ok=True)
+    done_f = open(DONE, "a")          # guardado incremental (crash-safe)
+    res_f = open(args.out + ".jsonl", "a")
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(_auditar, p): p for p in cola}
         for i, fut in enumerate(as_completed(futs), 1):
@@ -114,6 +117,9 @@ def main() -> None:
                     fallos.append(p["slug"])
                 else:
                     ok.append(p["slug"])
+                    done_f.write(p["slug"] + "\n"); done_f.flush()
+                    res_f.write(json.dumps({"slug": p["slug"], "res": res}) + "\n")
+                    res_f.flush()
                     for h in vivos:
                         h["slug"] = p["slug"]
                         h["paga"] = p["paga"]
@@ -128,7 +134,7 @@ def main() -> None:
             except Exception as e:
                 fallos.append(p["slug"])
                 print(f"[{i}/{len(cola)}] {p['slug']}: fallo {e}")
-    _save_done(ok)
+    done_f.close(); res_f.close()
     resumen = {"total": len(cola), "ok": len(ok), "fallos": len(fallos),
                "segundos": round(time.time() - t0, 1),
                "hallazgos": hallazgos,

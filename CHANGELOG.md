@@ -1,3 +1,14 @@
+## v0.49.0 — EVIDENCE-CHAIN hardening: bug de resolucion de rutas (2026-10-02)
+
+El usuario compartio una especificacion tecnica de Evidence Chain (principios de evidencia, veredictos no monotonicos, reachability honesta). Al contrastarla contra la implementacion v0.47.0, surgio un bug real durante la revision manual de un hallazgo del dia (link-whisper).
+
+- **FIX CRITICO `core/evidence.py build_chain`:** la resolucion de ruta por fallback (cuando `root + basename` no existe) recorria `os.walk` SIN romper el loop externo tras encontrar un candidato por nombre. Si dos archivos comparten basename (ej. `core/Wpil/Error.php` y `core/Wpil/Table/Error.php`), el motor terminaba analizando el ULTIMO archivo visitado, no el correcto. Fix: match por ruta relativa EXACTA primero; fallback a basename solo si no hay match exacto, tomando el PRIMERO (no el ultimo).
+- **Saneo indirecto:** `_sanitization_evidence` ahora detecta `$v[] = (int)...` / `absint(...)` / `intval(...)` antes de que `$v` llegue al sink (ej. `implode(',', $v)` dentro de un `$wpdb->query`). Antes solo veia el casteo si envolvia la variable DIRECTAMENTE en la linea del sink.
+- **Trazabilidad (`verdict_history` + `evidence_hash`):** cada cadena guarda un hash determinista de su evidencia normalizada y un historial minimo del veredicto emitido, siguiendo la recomendacion de la especificacion de no sobrescribir silenciosamente decisiones.
+- **Caso real que lo disparo:** link-whisper (`core/Wpil/Error.php:674`) salia DEMOSTRADO-ESTATICO por el bug de ruta (analizaba `Table/Error.php` en vez de `Error.php`) Y porque no veia el casteo indirecto. Tras el fix: 0 hallazgos vivos (correcto, el dato real se castea a entero antes del `implode`).
+- **Regresion:** 4/4 plugins previamente validados limpios (akismet, google-site-kit, wpforms-lite, woocommerce) siguen en 0 hallazgos tras el fix.
+- **Nota:** este bug pudo afectar cualquier chain previa donde el archivo del finding tuviera un homonimo en otra carpeta del mismo plugin; alcance exacto no cuantificado (no se re-corrio todo el historico).
+
 ## v0.48.0 — WIDE-HUNT: el corpus se multiplica (2026-10-02)
 
 Con los abogados cerrando los falsos positivos solos (v0.47.0), limitar la caza a los VDP de Patchstack dejó de tener sentido técnico: el VDP no decide a quien cazamos, solo a quien reportamos.

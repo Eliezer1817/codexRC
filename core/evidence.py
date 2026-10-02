@@ -35,6 +35,7 @@
 # ============================================================
 import json
 import os
+import hashlib
 import re
 import sys
 from typing import Any, Dict, List, Optional
@@ -242,8 +243,15 @@ def _sanitization_evidence(lines: List[str], funcs: List[Dict[str, Any]],
         if re.search(pat, joined) or re.search(pat, sink_line):
             ev["detalle"].append(f"{v} sanitizado")
             ev["efectiva"] = True
-        elif re.search(r"\b(?:int|absint|intval)\s*\([^;]*\%s" % re.escape(v), joined):
+        elif re.search(r"\b(?:int|absint|intval)\s*\([^;]*%s" % re.escape(v), joined):
             ev["detalle"].append(f"{v} casteado a entero")
+            ev["efectiva"] = True
+        # casteo INDIRECTO: v se construye con elementos ya casteados
+        # (ej. $v[] = (int)$x; ... implode($v)) antes de llegar al sink
+        elif re.search(r"%s\s*\[\s*\]\s*=\s*(?:\(int\)|\(float\)|absint\s*\(|intval\s*\()"
+                      % re.escape(v), joined):
+            ev["detalle"].append(f"{v} construido con elementos ya casteados "
+                                 f"(ej. {v}[] = (int)...)")
             ev["efectiva"] = True
     if PREPARE_SAFE.search("\n".join(lines[max(0, line - 2):line + 1])):
         ev["detalle"].append("wpdb->prepare con placeholders en el sink")
@@ -335,18 +343,48 @@ def _juez(chain: Dict[str, Any]) -> Dict[str, Any]:
 
 # ------------------------------------------------------------- build
 
+def _evidence_hash(chain: Dict[str, Any]) -> str:
+    """Hash determinista para detectar cambios accidentales entre corridas
+    (no es seguridad criptografica, es trazabilidad: sec. 11 del spec)."""
+    partes = [
+        str(chain["source"].get("fuentes")),
+        str(chain["flow"].get("vars")),
+        str(chain["auth"].get("entrada")),
+        str(chain["sanitization"].get("detalle")),
+        str(chain["sink"].get("tipo")) + str(chain["sink"].get("linea")),
+        str(chain.get("correlation")),
+        str(chain.get("dynamic")),
+    ]
+    return hashlib.sha256("|".join(partes).encode()).hexdigest()[:16]
+
+
 def build_chain(root: str, finding: Dict[str, Any],
                 gates: Optional[Dict[str, Any]] = None,
                 analyzers: Optional[List[str]] = None) -> Dict[str, Any]:
     """Cadena de evidencia completa para UN finding."""
     rel = finding["file"]
-    path = os.path.join(root, os.path.basename(rel))
+    path = os.path.join(root, rel)
     if not os.path.isfile(path):
+        # match por ruta relativa EXACTA primero (evita confundir archivos
+        # homonimos como Wpil/Error.php vs Wpil/Table/Error.php); fallback
+        # a basename solo si no hay ninguna coincidencia exacta, y ahi se
+        # toma la PRIMERA (antes el bug tomaba la ULTIMA del os.walk)
+        candidato_basename = None
         for d, _sd, fs in os.walk(root):
             for f in fs:
-                if rel.endswith(f):
-                    path = os.path.join(d, f)
+                full = os.path.join(d, f)
+                if os.path.relpath(full, root).replace("\\", "/") == rel.replace("\\", "/"):
+                    path = full
+                    candidato_basename = None
                     break
+                if candidato_basename is None and f == os.path.basename(rel):
+                    candidato_basename = full
+            else:
+                continue
+            break
+        else:
+            if candidato_basename:
+                path = candidato_basename
     lines = _read(path)
     funcs = _functions(lines)
     line = int(finding.get("line", 0))
@@ -369,6 +407,13 @@ def build_chain(root: str, finding: Dict[str, Any],
     chain["fiscal"] = _fiscal(chain)
     chain["defensa"] = _defensa(chain)
     chain["juez"] = _juez(chain)
+    chain["evidence_hash"] = _evidence_hash(chain)
+    chain["verdict_history"] = [{
+        "verdicto": chain["juez"]["verdicto"],
+        "motivo": f"fiscal {chain['juez']['puntos_fiscal']}, "
+                 f"defensa {chain['juez']['refutaciones_defensa']} fuerte(s)",
+        "evidence_hash": chain["evidence_hash"],
+    }]
     return chain
 
 

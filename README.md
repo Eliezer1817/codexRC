@@ -17,7 +17,7 @@
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.48.0**).
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.49.0**).
 - **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
   - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
   - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
@@ -53,6 +53,7 @@ Solo los hitos, de lo más reciente a lo más antiguo. El detalle completo de ca
 (incluidos parches menores) está en [CHANGELOG.md](CHANGELOG.md).
 
 - **v0.42.0 — PLUGIN-BATCH:** caza estática de plugins WordPress por slugs con un comando (descarga + TAINT-TRACE + CVE-MATCH, filtro de ruido, flag VDP).
+- **v0.49.0 — EVIDENCE-CHAIN HARDENING:** siguiendo una especificación técnica recibida del usuario (principios: evidencia antes que conclusión, veredictos no se degradan silenciosamente, falta de evidencia ≠ evidencia de ausencia), se cerró un bug REAL de resolución de rutas en `build_chain`: cuando dos archivos comparten nombre (ej. `Wpil/Error.php` vs `Wpil/Table/Error.php`), el motor analizaba el archivo EQUIVOCADO (tomaba el último del recorrido, no el correcto). Esto producía veredictos sobre código que no era el del hallazgo. Se agregó también detección de saneo indirecto (`$v[] = (int)$x` antes de llegar al sink) y trazabilidad (`verdict_history` + `evidence_hash` por cadena). Validado: el caso real de hoy (link-whisper SQLi) pasó de DEMOSTRADO-ESTATICO (falso positivo por archivo mal resuelto) a cerrado tras el fix; regresión 4/4 en plugins ya validados limpios.
 - **v0.48.0 — WIDE-HUNT:** el corpus de caza pasa de los 1.300 VDP a TODOS los plugins wordpress.org con ≥5k instalaciones (3.260 blancos, descargables en segundos con `core/wide_corpus.py`). La mejora EVIDENCE-CHAIN hace que el ruido ya no sea excusa: se CAZA a todos, se REPORTA solo donde pagan (mapa `vdp_mapa.json` con los 1.298 VDP y su bounty individual; sin VDP = solo CVE credit). Runner: `core/hunt_wide.py` con workers paralelos, filtro de updates frescos, salto de ya-auditados y marca de pagabilidad por hallazgo.
 - **v0.47.0 — EVIDENCE-CHAIN + ABOGADOS:** motor de razonamiento de evidencia (estilo RacerD/Infer): cada finding recibe una cadena de evidencia (SOURCE controlable, FLOW, AUTH gates, SANITIZATION, SINK, CORRELATION) sobre la que actúan un FISCAL (debe probar los 4 requisitos del ataque), una DEFENSA (busca refutaciones: gate, sanitizador, prepare, contexto admin, inalcanzable) y un JUEZ determinista. Veredictos: CONFIRMED / DEMOSTRADO-ESTATICO / PROBABLE / CONTESTADO / DESCARTADO; los descartados por la defensa ya no llegan al informe. BFS de callers resuelve el alcance real (hook → ... → función del sink) y GATES-AUDIT ahora parsea loaders propios (`loader->add_action(hook, $obj, 'metodo')`).
 - **v0.46.0 — VDP-1300:** extracción del directorio COMPLETO de Patchstack (1.300 productos con VDP activo y bounty, no solo los 76 del GOLDEN LIST) y cruce automático con la API de wordpress.org para armar la lista maestra de blancos pagables.
