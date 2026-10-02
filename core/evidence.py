@@ -434,6 +434,11 @@ def annotate(root: str, findings: List[Dict[str, Any]],
                              ("type", "file", "line", "severity", "flow")}
             h["_chain"] = ch
             h["_verdict"] = ch["juez"]["verdicto"]
+            try:
+                from core.observe import log_verdict
+                log_verdict(ch, target=root)
+            except Exception:
+                pass  # CODEX-OBSERVE es best-effort, nunca bloquea la caza
         except Exception as e:
             h["_verdict"] = f"ERROR-CADENA: {e}"
     return findings

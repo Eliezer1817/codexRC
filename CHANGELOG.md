@@ -1,3 +1,35 @@
+## v0.50.0 — CODEX-OBSERVE + CODEX-REGRESS, alcance reducido (2026-10-02)
+
+El usuario comparti una segunda especificacion tecnica: CODEX-OBSERVE (observabilidad)
++ CODEX-INTEL (diagnostico de anomalias) + CODEX-REGRESS (regresion), 8 fases completas
+(event collector, anomaly engine, differential/metamorphic/property-based/fuzz testing,
+regression corpus, quality gates, IA diagnostica).
+
+Decision de alcance: implementar SOLO lo que protege plata real hoy. Para una herramienta
+de caza de bugs pagables, el motor de anomalias/fuzzing/metamorphic testing es inversion de
+ingenieria sin payoff claro (no encuentra bugs mas rapido, no cobra bounties). Lo que SI
+tiene valor inmediato es no repetir un bug ya corregido.
+
+Implementado:
+- `core/observe.py` (CODEX-OBSERVE, Fase 1 reducida): un evento VERDICT_CREATED por cada
+  cadena de evidencia resuelta (file, line, verdict, evidence_hash, module_version,
+  git_commit, run_id). JSONL en `.codexrc/intelligence/events/<fecha>.jsonl` (gitignored,
+  son logs operativos, no conocimiento versionado). Best-effort: si observe falla, la caza
+  sigue (nunca bloquea).
+- `core/regress.py` (CODEX-REGRESS, Regression Corpus solamente): casos de defectos reales
+  confirmados en `.codexrc/intelligence/regressions/corpus.jsonl` (SI versionado en git,
+  es conocimiento permanente). Semilla: RC-000127 = el bug de resolucion de rutas de v0.49.0
+  (archivos homonimos resolvian al archivo equivocado), fixed_in v0.49.1. `python3
+  core/regress.py` reproduce el caso con un root sintetico (Error.php real + Table/Error.php
+  homonimo) y falla si el motor vuelve a resolver mal.
+- Hook en `evidence.annotate`: cada veredicto generado dispara `log_verdict` automaticamente.
+
+Fuera de alcance (documentado, no implementado): Anomaly Engine (contradicciones, verdict
+instability), Differential testing entre versiones, Metamorphic testing, Property-based/fuzz
+testing interno, CODEX-INTEL (correlacion/diagnostico asistido por IA), Quality Gates de
+release. Se revisara si en el futuro aparecen inconsistencias reales de verdict entre corridas
+que justifiquen construir el Anomaly Engine.
+
 ## v0.49.1 — EVIDENCE-CHAIN hardening: bug de resolucion de rutas (2026-10-02)
 
 El usuario compartio una especificacion tecnica de Evidence Chain (principios de evidencia, veredictos no monotonicos, reachability honesta). Al contrastarla contra la implementacion v0.47.0, surgio un bug real durante la revision manual de un hallazgo del dia (link-whisper).

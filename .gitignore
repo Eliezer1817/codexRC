@@ -23,3 +23,4 @@ auto_update.log
 .server.pid
 waf_state.json
 tune_state.json
+.codexrc/intelligence/events/
