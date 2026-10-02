@@ -146,6 +146,11 @@ class TaintTracer:
                             not _VAR.findall(prep.group(1)):
                         if was:                      # prepare limpia el valor
                             tainted.discard(var); changed = True
+                    elif re.search(r"implode\s*\(\s*['\"]?[^)]*array_fill", rhs):
+                        # $placeholders = implode(',', array_fill(0, n, '%d'))
+                        # construye placeholders internos, no taint del usuario
+                        if was:
+                            tainted.discard(var); changed = True
                     # 2) sanitizador puro: corta el taint (nunca lo crea)
                     elif _sanitized_only(rhs, tainted):
                         if was:

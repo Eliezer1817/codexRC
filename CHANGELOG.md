@@ -3,6 +3,17 @@
 Historial completo de versiones, de la más reciente a la más antigua.
 Los parches menores (x.y.z) también viven aquí; el README solo lista los hitos.
 
+## v0.43.0 — GATES-AUDIT
+
+Nuevo modulo `core/gates_audit.py`: dictamina automaticamente si los handlers de un
+plugin estan protegidos. Mapea hooks `wp_ajax` / `wp_ajax_nopriv` / `wc_ajax` y rutas
+REST (`permission_callback __return_true`) a su callback, y busca compuertas
+(`current_user_can`, `wp_verify_nonce`, `check_ajax_referer`). Veredictos:
+CANDIDATO-BAC (anonimo sin caps ni nonce), REVISAR-AUTH (logueado sin caps ni nonce),
+PROTEGIDO, REST-ABIERTO. Integrado en PLUGIN-BATCH: cada hallazgo llega anotado con
+el veredicto del handler donde cae, y los candidatos van arriba. Parche en TAINT-TRACE:
+`implode(array_fill(...%d...))` (placeholders internos) ya no se taintea (FP de prepare).
+
 ## v0.42.0 — PLUGIN-BATCH (modo agente)
 
 Un solo comando caza plugins WordPress por slugs: descarga la última versión estable,

@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.taint_trace import trace_path  # noqa: E402
 from core.pattern_match import scan_path  # noqa: E402
 from core import vendor_farm  # noqa: E402
+from core.gates_audit import audit as gates_audit  # noqa: E402
 
 DL_URL = "https://downloads.wordpress.org/plugin/{}.latest-stable.zip"
 
@@ -129,6 +130,26 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
         h["_origin"] = "taint" if h in taint else "pattern"
         clean.append(h)
 
+    # 4) GATES-AUDIT: veredicto de proteccion por handler
+    try:
+        gates = gates_audit(code)
+    except Exception:
+        gates = {"handlers": [], "rest_abiertas": [], "resumen": {}}
+    rec["gates_resumen"] = gates.get("resumen", {})
+    rec["gates_candidatos"] = [h for h in gates.get("handlers", [])
+                               if h.get("veredicto") in ("CANDIDATO-BAC",
+                                                         "REVISAR-AUTH")]
+    for h in clean:
+        gv = "SIN-HANDLER"   # archivo propio, fuera de handlers ajax
+        for g in gates.get("handlers", []):
+            f_cb = g.get("archivo_callback", "")
+            ln = h.get("line", 0)
+            if f_cb == h.get("file", "") and g.get("linea_callback", 10**9) <= ln:
+                gv = g.get("veredicto", "?")
+                break
+        h["_gate"] = gv
+    clean.sort(key=lambda h: 0 if h.get("_gate") == "CANDIDATO-BAC" else
+               (1 if h.get("_gate") == "REVISAR-AUTH" else 2))
     rec["hallazgos"] = clean
     rec["resumen"] = {
         "total_crudo": len(taint) + len(pats),
@@ -177,11 +198,16 @@ def main() -> None:
         rec = scan_slug(slug, args.workdir, vdp, args.top)
         results.append(rec)
         r = rec.get("resumen", {})
-        mark = "💥💥" if r.get("criticos") else ("💥" if r.get("propios") else "✅")
+        ncand = len(rec.get("gates_candidatos", []))
+        mark = "💥💥" if ncand else ("💥" if r.get("propios") else "✅")
         print(f"   {mark} propios={r.get('propios', 0)} "
-              f"criticos={r.get('criticos', 0)} "
+              f"candidatos-bac={ncand} "
               f"({r.get('segundos', '?')}s)"
               + (" [VDP ACTIVO]" if rec.get("vdp") else ""), flush=True)
+        for g in rec.get("gates_candidatos", [])[:8]:
+            print(f"      💥 [{g['veredicto']}] {g['accion']} -> "
+                  f"{g.get('callback','?')} ({g.get('archivo_callback', g['archivo'])}:"
+                  f"{g.get('linea_callback', g['linea_hook'])})", flush=True)
         for h in rec.get("hallazgos", [])[:10]:
             print(f"      [{h.get('severity', '?')}] {h.get('type', h.get('family', '?'))}"
                   f" {h.get('file', '')}:{h.get('line', '')}")

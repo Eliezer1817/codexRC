@@ -46,6 +46,7 @@ Solo los hitos, de lo más reciente a lo más antiguo. El detalle completo de ca
 (incluidos parches menores) está en [CHANGELOG.md](CHANGELOG.md).
 
 - **v0.42.0 — PLUGIN-BATCH:** caza estática de plugins WordPress por slugs con un comando (descarga + TAINT-TRACE + CVE-MATCH, filtro de ruido, flag VDP).
+- **v0.43.0 — GATES-AUDIT:** veredicto automático de protección por handler (caps/nonce/nopriv/REST abierto); PLUGIN-BATCH entrega cada hallazgo ya dictaminado y prioriza los candidatos BAC.
 - **v0.41.0 — VENDOR-FARM:** descubrimiento de familias de vendors WP en rango pagable (10k-200k installs) con estimación de paga Patchstack.
 - **v0.40.0 — VERIFICACIÓN DEL SISTEMA:** verificación automática de hallazgos (contraste anónimo, doble petición, CACHE-BAIT); los informes solo exponen veredictos automáticos.
 - **v0.39.0 — SPA-DISCOVERY v2:** login automático en apps JS modernas (fetch/Vite, escalera de rutas, reintentos anti-Cloudflare). Parches 0.39.1-0.39.2: TOKEN-INHERIT y SCHEME-PROBE (herencia de tokens y detección del scheme de auth en SPAs).
