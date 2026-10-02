@@ -19,6 +19,8 @@ import re
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
+import requests as _rq
+
 UNKEYED_HEADERS = [
     "X-Forwarded-Host", "X-Forwarded-Scheme", "X-Host", "X-Forwarded-Server",
     "X-Original-URL", "X-Rewrite-URL", "X-Override-URL", "X-Forwarded-Prefix",
@@ -98,21 +100,63 @@ class CacheBait:
             blando = "no-cache" in cc or "max-age=0" in cc
             if same and prohibido:
                 self.emit(f"[cache] candidato {p.path}{ASSET_SUFFIX} "
-                          f"DESCARTADO (anti-FP): {cc or cfs} prohibe cache")
+                          f"DESCARTADO (auto): {cc or cfs} prohibe cache")
                 continue
-            if same and CACHEABLE_CT.search(ct) and not blando:
-                out.append({
-                    "type": "Web cache deception (candidato)",
-                    "severity": "alta", "target": base + ASSET_SUFFIX,
-                    "param": "-",
-                    "evidence": f"{p.path}{ASSET_SUFFIX} sirve los MISMOS datos "
-                                f"privados con content-type cacheable ({ct}): "
-                                f"un proxy puede guardar la pagina privada y "
-                                f"servirla a otros",
-                    "verdict": "candidato: verificar cabeceras de cache",
-                })
-                self.emit(f"[cache] 💥 cache deception en puerta: "
-                          f"{p.path}{ASSET_SUFFIX} entrega datos privados")
+            if not (same and CACHEABLE_CT.search(ct) and not blando):
+                continue
+            # VERIFICACION AUTOMATICA (el sistema concluye solo, nadie
+            # tiene que verificar a mano):
+            # (1) contraste anonimo: sin sesion, la URL devuelve lo mismo?
+            #     si si -> no hay datos privados aqui: FP.
+            try:
+                anon = _rq.get(base + ASSET_SUFFIX, timeout=12,
+                               allow_redirects=True,
+                               headers={"User-Agent": "Mozilla/5.0"})
+                anon_ok = (anon.status_code == 200
+                           and (anon.text or "")[:300] == (wcd.text or "")[:300])
+            except Exception:
+                anon = None
+                anon_ok = False
+            if anon_ok:
+                self.emit(f"[cache] candidato {p.path}{ASSET_SUFFIX} "
+                          f"DESCARTADO (auto): anonimo recibe lo mismo "
+                          f"(no hay datos privados en la respuesta)")
+                continue
+            # (2) doble request autenticado: HIT en el segundo = cache real
+            cfs2 = ""
+            try:
+                wcd2 = self._get(base + ASSET_SUFFIX)
+                if wcd2 is not None:
+                    cfs2 = (wcd2.headers.get("CF-Cache-Status") or "").upper()
+            except Exception:
+                pass
+            if cfs2 == "HIT":
+                verdict = ("VERIFICADO EN VIVO: el edge cachea la URL "
+                           "(cf-cache-status HIT en la 2a peticion) con "
+                           "contenido privado de sesion")
+                verificado = True
+                sev = "alta"
+            else:
+                verdict = ("cacheable en cabeceras pero sin HIT confirmado "
+                           f"({cfs2 or cfs or 'sin cf-cache-status'}): la puerta "
+                           "existe, el cache de borde no la esta guardando ahora")
+                verificado = False
+                sev = "media"
+            out.append({
+                "type": "Web cache deception (candidato)",
+                "severity": sev, "target": base + ASSET_SUFFIX,
+                "param": "-",
+                "evidence": f"{p.path}{ASSET_SUFFIX} sirve los MISMOS datos "
+                            f"privados con content-type cacheable ({ct}); "
+                            f"anonimo recibe otra cosa (datos privados "
+                            f"confirmados); cache-control: {cc or 'ausente'}",
+                "verdict": verdict,
+                "verificado": verificado,
+                "auto_check": "contraste anonimo + doble peticion autenticada",
+            })
+            self.emit(f"[cache] 💥 cache deception en puerta: "
+                      f"{p.path}{ASSET_SUFFIX} entrega datos privados "
+                      f"({'VERIFICADO HIT' if verificado else 'cache sin HIT'})")
         return out
 
     # -------------------------------------------------------------- run

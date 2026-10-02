@@ -469,7 +469,9 @@ class DeepHunter:
                 "param": "-", "target": base_url,
                 "evidence": "sin cabecera Content-Security-Policy"
                             + (" (solo report-only presente)" if csp_ro else ""),
-                "verdict": "sin CSP: cualquier XSS reflejado/DOM se ejecuta sin freno"})
+                "verdict": "sin CSP: cualquier XSS reflejado/DOM se ejecuta sin freno",
+                "verificado": True,
+                "auto_check": "cabecera Content-Security-Policy leida en vivo"})
             self.log("[csp] 💥 el objetivo NO tiene CSP" +
                      (" (solo report-only)" if csp_ro else ""))
             return findings
@@ -496,7 +498,9 @@ class DeepHunter:
                 "param": "-", "target": base_url,
                 "evidence": "; ".join(weak[:4])
                             + f" · x-frame-options: {xfo or 'ausente'}",
-                "verdict": "CSP debil: un XSS puede ejecutarse dentro de estas reglas"})
+                "verdict": "CSP debil: un XSS puede ejecutarse dentro de estas reglas",
+                "verificado": True,
+                "auto_check": "politica CSP completa leida y analizada en vivo"})
             self.log(f"[csp] 💥 CSP debil: {'; '.join(weak[:3])}")
         else:
             findings.append({

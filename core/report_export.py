@@ -41,6 +41,43 @@ def summarize(job: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# --------------------------------------------- verificacion del sistema ----
+# El sistema verifica solo en vivo lo que puede verificar; el informe
+# muestra el VEREDICTO automatico de cada hallazgo. Sin comandos: nada
+# que el operador tenga que ejecutar a mano.
+
+
+def _veredicto_de(f: Dict[str, Any]) -> Dict[str, str]:
+    if f.get("descartado_fp"):
+        estado = "DESCARTADO POR EL SISTEMA (falso positivo)"
+    elif f.get("verificado"):
+        estado = "VERIFICADO EN VIVO POR EL SISTEMA"
+    else:
+        estado = "PENDIENTE (no verificable en automatico)"
+    det = (f.get("verdict") or f.get("evidence")
+           or f.get("reason") or "")[:300]
+    como = f.get("auto_check") or ("cabecera respuesta analizada en vivo"
+                                  if "csp" in (f.get("type") or "").lower() else "")
+    return {"estado": estado, "detalle": det, "como": como}
+
+
+def auto_verification(job: Dict[str, Any]) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    for f in job.get("findings") or []:
+        v = _veredicto_de(f)
+        if v["estado"].startswith("PENDIENTE") and not v["detalle"]:
+            continue
+        out.append({
+            "hallazgo": f.get("type"),
+            "severidad": f.get("severity"),
+            "target": f.get("target"),
+            "estado": v["estado"],
+            "como_verifico": v["como"],
+            "detalle": v["detalle"],
+        })
+    return out
+
+
 def _leaks(job: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [f for f in (job.get("findings") or []) if f.get("leak")]
 
@@ -56,6 +93,7 @@ def build_json(job: Dict[str, Any]) -> str:
     out["leaks"] = _leaks(job)
     out["tech_findings"] = _tech(job)
     out["export_summary"] = summarize(job)
+    out["verificacion_automatica"] = auto_verification(job)
     return json.dumps(out, indent=2, ensure_ascii=False, default=str)
 
 
@@ -131,6 +169,20 @@ def build_txt(job: Dict[str, Any]) -> str:
         L.append(f"        razon : {f.get('reason', '')[:160]}")
         L.append("")
 
+    av = auto_verification(job)
+    if av:
+        L.append(bar)
+        L.append(" VERIFICACION DEL SISTEMA (automatica, sin pasos manuales)")
+        L.append(bar)
+        for item in av:
+            L.append("")
+            L.append(f" [{item['estado']}]")
+            L.append(f"    hallazgo : {item['hallazgo']} ({(item['severidad'] or 'info').upper()})")
+            L.append(f"    blanco   : {item.get('target', '?')}")
+            if item.get("como_verifico"):
+                L.append(f"    sistema  : {item['como_verifico']}")
+            if item.get("detalle"):
+                L.append(f"    detalle  : {item['detalle'][:220]}")
     L.append(bar)
     L.append(" LOG COMPLETO DE LA CAZA")
     L.append(bar)
@@ -176,6 +228,15 @@ h2.leak::before { content: "!! "; }
 .leakbox { border: 2px solid #be123c; background: #fff1f2; border-radius: 10px;
            padding: 10px 12px; margin: 6px 0; page-break-inside: avoid; }
 .leakbox .top { font-weight: 700; color: #9f1239; }
+h2.pb { color: #0f766e; border-bottom-color: #14b8a6; }
+.pb { border: 1px solid #ccfbf1; background: #f0fdfa; border-radius: 8px;
+      padding: 8px 12px; margin: 6px 0; page-break-inside: avoid; }
+.pb .top { font-weight: 700; font-size: 12px; color: #134e4a; }
+.pb .step { font-size: 10.5px; color: #1e293b; margin: 5px 0 1px; }
+.pb .cmd { font-family: 'Consolas', monospace; font-size: 9.5px; color: #4ade80;
+           background: #0b1220; border-radius: 6px; padding: 6px 8px;
+           margin: 3px 0; white-space: pre-wrap; word-break: break-all; }
+.pb .esp { font-size: 9.5px; color: #475569; margin: 2px 0 6px; }
 .foot { margin-top: 26px; border-top: 1px solid #e2e8f0; padding-top: 8px;
         color: #94a3b8; font-size: 9.5px; }
 """
@@ -224,6 +285,19 @@ def _pdf_html(job: Dict[str, Any]) -> str:
         '<p class="row">Ninguna filtracion de datos de usuarios detectada.</p>'
     tech_html = "".join(_fblock(f) for f in tech) or \
         '<p class="row">Sin hallazgos tecnicos.</p>'
+    av = auto_verification(job)
+    pb_html = ""
+    for item in av:
+        como = (f'<div class="step">sistema: {_esc(item["como_verifico"])}</div>'
+                if item.get("como_verifico") else "")
+        det = (f'<div class="esp">{_esc(item["detalle"])}</div>'
+               if item.get("detalle") else "")
+        pb_html += (f'<div class="pb"><div class="top">{_esc(item["estado"])} · '
+                    f'{_esc(item["hallazgo"])} '
+                    f'({_esc((item.get("severity") or "info")).upper()})</div>'
+                    f'<div class="step">blanco: {_esc(item.get("target") or "?")}</div>'
+                    f'{como}{det}</div>')
+    pb_html = pb_html or '<p class="row">Sin hallazgos que verificar.</p>'
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>{_CSS}</style></head>
 <body><div class="cover"><h1>&gt;_ CODEXRC HUNTER</h1>
 <div class="sub">Informe de caza · generacion automatica</div>
@@ -231,6 +305,7 @@ def _pdf_html(job: Dict[str, Any]) -> str:
 <div class="wrap"><div class="cards">{cards}</div>
 <h2 class="leak">FILTRACION DE DATOS DE USUARIOS (critico)</h2>{leak_html}
 <h2>HALLAZGOS TECNICOS</h2>{tech_html}
+<h2 class="pb">VERIFICACION DEL SISTEMA (automatica)</h2>{pb_html}
 <div class="foot">CODEXRC HUNTER v{_ver(job)} · informe de solo lectura ·
 hallazgos verificados con navegador real cuando VERITAS esta activo ·
 pagina 1 de N</div></div></body></html>"""
@@ -322,6 +397,28 @@ def _pdf_fpdf2(job: Dict[str, Any]) -> Optional[bytes]:
     section("FILTRACION DE DATOS DE USUARIOS (critico)",
             (190, 18, 60), _leaks(job), leak=True)
     section("HALLAZGOS TECNICOS", (30, 41, 59), _tech(job))
+
+    # verificacion del sistema (automatica)
+    av = auto_verification(job)
+    if av:
+        pdf.set_font("helvetica", "B", 11)
+        pdf.set_text_color(15, 118, 110)
+        pdf.ln(4)
+        pdf.cell(0, 7, "VERIFICACION DEL SISTEMA (automatica)")
+        pdf.ln(8)
+        for item in av:
+            pdf.set_font("helvetica", "B", 9.5)
+            pdf.set_text_color(19, 78, 74)
+            pdf.multi_cell(0, 5, f"[{item['estado']}] {item['hallazgo']} "
+                                f"({(item['severidad'] or 'info').upper()})")
+            pdf.set_text_color(51, 65, 85)
+            pdf.set_font("helvetica", "", 8.5)
+            pdf.multi_cell(0, 4.5, f"blanco: {item.get('target', '?')}")
+            if item.get("como_verifico"):
+                pdf.multi_cell(0, 4.5, f"sistema: {item['como_verifico']}")
+            if item.get("detalle"):
+                pdf.multi_cell(0, 4.5, f"detalle: {item['detalle'][:200]}")
+            pdf.ln(3)
     return bytes(pdf.output())
 
 
