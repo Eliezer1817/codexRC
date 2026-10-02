@@ -158,6 +158,7 @@
       <input type="password" id="pwInput" placeholder="contraseña" autocomplete="off" />
       <button onclick="unlock()">DESBLOQUEAR</button>
     </div>
+    <div id="pendingBanner" style="display:none;background:#12060a;border:1px solid var(--red);color:var(--text);padding:0.6rem 0.7rem;margin:0.6rem 0;font-size:0.82rem;border-radius:2px"></div>
     <div class="hint">Cada intento queda registrado en el log del servidor.</div>
     <div id="msg"></div>
   </div>
@@ -292,7 +293,23 @@
         gb.querySelector("h3").textContent = "🔓 MODO EXTREMO ACTIVO";
         gb.querySelector(".pw-row").style.display = "none";
         msg.className = "ok";
-        msg.textContent = "🔓 activo. Elegí blanco y payload. Demostración mínima.";
+        msg.textContent = "🔓 activo. Demostración mínima.";
+        if (TARGETS.length) {
+          const b = document.getElementById("pendingBanner");
+          b.style.display = "block";
+          const conTipo = TARGETS.filter(t => catDeTipo(t.tipo)).length;
+          if (conTipo) {
+            b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> cargados · 🤖 AUTO arma el payload por tipo en cada uno (" +
+              conTipo + " con tipo reconocido). Directo a <b>🔥 LANZAR AL BLANCO</b>.";
+            document.getElementById("autoMode").checked = true;
+            document.getElementById("selInfo").textContent =
+              "🤖 AUTO armado: " + TARGETS.length + " blancos · payload por tipo de hallazgo · stop al primer impacto";
+            document.getElementById("fireBtn").disabled = false;
+          } else {
+            b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> cargados, pero sin tipo reconocible: elegí una cajita del PASO 3 a mano.";
+          }
+          document.getElementById("firepanel").scrollIntoView();
+        }
       } catch (e) {
         msg.className = "err"; msg.textContent = "error: " + e.message;
       }
@@ -402,6 +419,17 @@
         sessionStorage.removeItem("arsenal_queue");
       }
     } catch (e) {}
+    if (TARGETS.length) {
+      const b = document.getElementById("pendingBanner");
+      b.style.display = "block";
+      if (EXTREME) {
+        b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> llegaron del hunter. AUTO ya activo: directo a <b>🔥 LANZAR</b>.";
+        document.getElementById("firepanel").scrollIntoView();
+      } else {
+        b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> llegaron del hunter y ya están en cola.<br>PASO 1: poné la contraseña para armar el lote. Sin desbloquear no se lanza nada.";
+        document.getElementById("pwInput").focus();
+      }
+    }
 
     // mapea el tipo de hallazgo del hunter a categoria del arsenal
     function catDeTipo(tipo) {
