@@ -527,6 +527,14 @@ def dashboard():
     return resp
 
 
+@app.get("/assets/<path:filename>")
+def assets(filename):
+    """Logo/imagenes del repo (assets/ vive en la raiz, fuera de frontend/)."""
+    resp = send_from_directory(str(ROOT / "assets"), filename)
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "codexRC-backend", "version": VERSION, "time": utc_now()})

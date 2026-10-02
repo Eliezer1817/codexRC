@@ -22,10 +22,15 @@
     }
     a { color: var(--green); text-decoration: none; }
     header { border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; margin-bottom: 1rem; }
-    .prompt { font-size: 1.3rem; font-weight: bold; color: var(--green); text-shadow: var(--glow); letter-spacing: 0.1em; }
-    .prompt .ver { color: var(--muted); font-size: 0.8rem; margin-left: 0.5rem; }
-    nav { display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.9rem; }
-    nav a { color: var(--muted); padding: 0.15rem 0.6rem; border: 1px solid transparent; }
+    header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem; }
+    .brand { display: flex; align-items: center; gap: 0.7rem; }
+    .brand-logo { height: 30px; width: auto; border-radius: 3px; }
+    .prompt { font-size: 1.25rem; font-weight: bold; letter-spacing: 0.08em; display: flex; align-items: baseline; gap: 0.1rem; }
+    .prompt .cx { color: var(--green); text-shadow: var(--glow); }
+    .prompt .rc { color: #f2f5ee; }
+    .prompt .ver { color: var(--muted); font-size: 0.75rem; margin-left: 0.5rem; }
+    nav { display: flex; gap: 0.5rem; font-size: 0.9rem; }
+    nav a { color: var(--muted); padding: 0.3rem 0.7rem; border: 1px solid transparent; border-radius: 3px; min-height: 36px; display: flex; align-items: center; }
     nav a.on { color: var(--green); border-color: var(--border); background: var(--green-dark); }
     main { display: grid; grid-template-columns: 340px 1fr; gap: 1rem; }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; margin-bottom: 1rem; }
@@ -125,12 +130,19 @@
       main { grid-template-columns: 1fr; }
       body { font-size: 16px; padding: 0.5rem; }
       #output { max-height: 45vh; }
+      header { position: sticky; top: 0; z-index: 5; background: #000; padding: 0.6rem 0.3rem; }
+      .brand-logo { height: 24px; }
+      .prompt { font-size: 1.05rem; }
+      input, select, button, textarea { min-height: 44px; }
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="prompt"><span style="color:var(--green)">codex</span><span style="color:#f2f5ee">RC</span> // HUNTER MODE<span class="ver" id="appVersion">v?</span></div>
+    <div class="brand">
+      <img src="/assets/banner.jpg" alt="CodexRC" class="brand-logo" onerror="this.style.display='none'" />
+      <div class="prompt"><span class="cx">codex</span><span class="rc">RC</span> // HUNTER<span class="ver" id="appVersion">v?</span></div>
+    </div>
     <nav>
       <a href="/">escáner</a>
       <a href="/hunter.html" class="on">hunter</a>

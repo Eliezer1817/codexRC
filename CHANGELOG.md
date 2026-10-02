@@ -206,3 +206,11 @@ Lo nuevo de cada entrega, de la más reciente a la más antigua:
 - **Responsive real iOS/Android/PC**: sidebar deslizable en movil (menu hamburguesa), touch targets de 44px, font-size 16px en inputs (evita el zoom de iOS), safe-area insets para notch, meta theme-color + apple-mobile-web-app.
 - **Nuevo panel MOTOR DE CAZA en el dashboard**: progreso vivo de WIDE-HUNT y RETRO-HUNT (barras + ultimas lineas, refresco cada 30s) y runner de UNIVERSAL-ENGINE (input path o URL, muestra perfil, analizadores elegidos, ledger de cobertura ANALIZADO/DESCUBIERTO/NO ACCESIBLE/VERIFICADO y hallazgos con veredicto).
 - **Backend**: GET /api/hunt_status (progreso de cazas desde hechos/) y POST /api/universal (corre el motor sobre path o URL). VERSION 0.53.0.
+
+## v0.53.1 — fix UI movil real (2026-10-02)
+- **Logo roto (404)**: `/assets/banner.jpg` no cargaba porque Flask solo servia estaticos desde `frontend/`, no desde la raiz del repo donde vive `assets/`. Nueva ruta `GET /assets/<path>` en el backend sirve el logo correctamente (verificado con Chrome headless + emulacion movil: `naturalWidth` paso de 0 a 1280).
+- **Hamburguesa "se enzima" con el pipeline**: el boton de menu usaba `position:fixed` (flotaba libre sobre TODO el documento, sin relacion con el header). Paso a `position:absolute` anclado DENTRO del header (que ahora es `position:sticky`), asi nunca puede superponerse con el contenido de abajo.
+- **"El menu desplegable se queda abajo"**: el nav (escaner/hunter) se envolvia a una segunda linea dentro del header angosto. Se movio al drawer lateral (sidebar-nav, visible solo en movil, arriba del formulario de escaneo) y se oculta del header en pantallas chicas: ya no hay wrap raro, el header queda fijo en una sola fila.
+- Logo + marca CodexRC agregados tambien a hunter.html (identidad consistente en ambas paginas), con header sticky en movil.
+- Limpieza de CSS muerta (`.prompt` ya no existia tras el rebrand, quedaban reglas huerfanas).
+- Validado con Chrome headless real (CDP, emulacion de dispositivo 390px y 1366px) en las 4 combinaciones pagina x ancho: logo carga, hamburguesa solo aparece en movil, nav sin overlap, pipeline nunca se tapa.
