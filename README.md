@@ -147,6 +147,15 @@ Para desplegarlo: crea un worker en tu cuenta de Cloudflare con un namespace KV 
 - `GET /api/jobs` — lista los escaneos de la sesión (incluye sección `leaks`).
 - `GET /api/jobs/<id>` — consulta un escaneo.
 - `GET /api/jobs/<id>/log` — descarga el JSON completo del escaneo.
+- `GET /api/jobs/<id>/export?format=txt|json|pdf` — informe del escaneo (TXT plano, JSON dump o PDF estilizado; filtraciones arriba).
+- `POST /api/hunt_batch` — caza en LOTE: `{"targets": ["https://a.com", "https://b.com"], ...opciones}`; aislamiento por blanco, un blanco caído no tumba el lote.
+- `GET /api/batch/<id>` — progreso en vivo del lote (log + resumen agregado).
+- `GET /api/batches` — lista los lotes de la sesión.
+- `POST /api/bin` — BIN-AUDIT: análisis binario/nativo. `{"path": "sdk.zip"}` → secrets hardcodeados, endpoints internos, imports peligrosos, fingerprint.
+- `POST /api/re` — REVERSE: ingeniería inversa nivel 2. `{"path": "app.apk"}` → estructura interna (clases/métodos DEX, constant pool de JARs, .symtab de ELF, ofuscación, entropía).
+- `POST /api/decompile` — DECOMPILE: bytecode DEX → pseudocódigo legible. `{"path": "app.apk"}` (opcional `"all_methods": true`).
+- `POST /api/patterns` — CVE-MATCH: detección de familias de fallos históricos por patrón. `{"path": "plugin.php", "top": 20}`.
+- `POST /api/taint` — TAINT-TRACE: flujo de datos fuente→sink en PHP. `{"path": "carpeta_o_archivo", "top": 20}`.
 - `GET /api/pipeline/schema` — estructura visual del pipeline.
 
 Las credenciales y tokens se usan únicamente en memoria durante el escaneo y no se devuelven en la respuesta de autenticación.
