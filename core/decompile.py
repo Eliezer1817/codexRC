@@ -103,19 +103,19 @@ class DexLoader:
          _ps, _po, _fs, _fo, self.m_size, self.m_off,
          self.c_size, self.c_off) = struct.unpack("<12I", data[0x38:0x68])
         self.strings = []
-        for i in range(min(self.s_size, 20000)):
+        for i in range(min(self.s_size, 150000)):
             o, = struct.unpack("<I", data[self.s_off + 4 * i:
                                           self.s_off + 4 * i + 4])
             _sz, p = _uleb(data, o)
             end = data.find(b"\0", p)
             self.strings.append(data[p:end].decode("utf-8", errors="replace"))
         self.types = []
-        for i in range(min(self.t_size, 5000)):
+        for i in range(min(self.t_size, 30000)):
             t, = struct.unpack("<I", data[self.t_off + 4 * i:
                                          self.t_off + 4 * i + 4])
             self.types.append(self.strings[t] if t < len(self.strings) else "?")
         self.methods = []          # (clase, nombre)
-        for i in range(min(self.m_size, 20000)):
+        for i in range(min(self.m_size, 150000)):
             c, _p, n = struct.unpack("<HHI", data[self.m_off + 8 * i:
                                                   self.m_off + 8 * i + 8])
             cls = self.types[c] if c < len(self.types) else "?"
@@ -123,7 +123,7 @@ class DexLoader:
             self.methods.append((cls, nm))
 
     def class_defs(self):
-        for i in range(min(self.c_size, 5000)):
+        for i in range(min(self.c_size, 20000)):
             off = self.c_off + 32 * i
             c_idx, = struct.unpack("<I", self.data[off:off + 4])
             cd_off, = struct.unpack("<I", self.data[off + 0x18:off + 0x1c])
