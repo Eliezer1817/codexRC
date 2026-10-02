@@ -1267,6 +1267,15 @@ class XSSPro:
                 sinks = [s for s in self.PM_SINKS if s.lower() in win.lower()]
                 if not sinks:
                     continue
+                # FP-GUARD core-js: el scheduler de microtareas de core-js
+                # instala addEventListener("message") propio (polyfill de
+                # postMessage/MessageChannel). No acepta mensajes externos.
+                # Validado en Next.js 16 (xenpaid) tras verificacion dinamica.
+                _alrededor = t["text"][max(0, m.start() - 3000): m.start() + 3000]
+                if sinks == ["Function("] and any(
+                        _sig in _alrededor for _sig in
+                        (".port1.onmessage", "MessageChannel", 'Function("return this")')):
+                    continue
                 line = t["text"].count("\n", 0, m.start()) + 1
                 checked = bool(self.PM_CHECKS.search(win))
                 ev = (f"{t['origin']} (linea {line}) listener message -> "
@@ -1575,6 +1584,12 @@ class XSSPro:
         findings: List[Dict[str, Any]] = []
         for t in texts:
             for m in self.PP_SINKS.finditer(t["text"]):
+                # FP-GUARD webpack/turbopack: Object.assign(r.default,r) es el
+                # interop estandar de modulos ES al cargar el bundle; los
+                # TAINTS de modulos vecinos en el mismo chunk no lo alcanzan.
+                if re.search(r"Object\.assign\(\s*\w+\.default\s*,",
+                             t["text"][m.start():m.start() + 60]):
+                    continue
                 win = t["text"][max(0, m.start() - 600): m.start() + 800]
                 line = t["text"].count("\n", 0, m.start()) + 1
                 if any(x in win for x in self.TAINTS):
