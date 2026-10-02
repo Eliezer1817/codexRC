@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.38.3"
+VERSION = "0.38.4"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -359,11 +359,25 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
                     except Exception as exc:
                         log_event("auth_profile_error", request_id=g.get("request_id"), error=str(exc))
         else:
+            # Propagar el error real de auth.py si fallo un intento explicito
+            razon_real = "no_auth_method"
+            _debug = auth.login_debug
+            if _debug and _debug.get("success") is False:
+                razon_real = _debug.get("razon") or "credenciales_rechazadas"
+            elif _debug and _debug.get("resultado") == "login_api_fallo":
+                razon_real = "api_rechazo_credenciales_o_bloqueo"
+                # extraer status de la ultima prueba
+                for r in _debug.get("respuestas_servidor", []):
+                    if r.get("status") in (401, 403, 405):
+                        razon_real = f"rechazo_servidor_HTTP_{r.get('status')}"
+                        break
+            
             session_check = {
                 "verified": False,
                 "authenticated": False,
                 "username": None,
-                "reason": "no_auth_method",
+                "reason": razon_real,
+                "login_debug": _debug
             }
         return {
             "auth_info": safe_auth_info(auth),

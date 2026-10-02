@@ -10,7 +10,7 @@
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.38.3**).
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.38.4**).
 - **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
   - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
   - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
@@ -44,6 +44,7 @@
 
 Lo nuevo de cada entrega, de la más reciente a la más antigua:
 
+- **v0.38.4 — diagnóstico transparente de auth:** cuando el auto-descubrimiento falla por bloqueos de WAF (Cloudflare 403) o el servidor rechaza el POST (405), la UI ahora muestra la razón real (`rechazo_servidor_HTTP_405`, `api_rechazo_credenciales`) en vez del confuso `no_auth_method`.
 - **v0.38.3 — guardia blindado en Termux (`auto_update.sh`):** instancia única por lock con PID (dos watchers nunca pelean), resurrección del servidor ante muerte (OOM/Android/crash) con volcado de las últimas 15 líneas de `server.log` como diagnóstico, anti-cuelgue (proceso vivo pero `/health` mudo 3 ciclos → reinicio), anti-bucle (5 caídas seguidas → backoff progresivo 30/60/90/120s en vez de martillar el teléfono), liberación del puerto 8000 por PID con fallbacks `fuser`→`ss`→`lsof` (nunca `pkill -f`), rotación de `auto_update.log` (>512KB conserva 200 líneas), wake-lock automático con aviso si falta Termux:API. Validado en vivo: server muerto a propósito → detectado, diagnosticado y revivido solo; segundo watcher rechazado por el lock. Nota honesta: si Android mata Termux COMPLETO, ningún script interno revive; el ajuste "Batería → Sin restricciones" sigue siendo obligatorio.
 - **v0.38.2 — severidad honesta en cadenas XSS:** una cadena XSS+CSP débil o XSS+panel admin solo es CRÍTICA si alguna pieza XSS ejecutó en navegador real (`verificado` por VERITAS/kit PoC). Sin confirmación queda en ALTA "teórica" con la razón visible. Lección del lab real (vellius, 02/10): el sink `location.hash → innerHTML` nunca ejecutó pese al CSP ausente — el Hunter ya no grita CRÍTICA por piezas no confirmadas.
 - **v0.38.1 — parche de honestidad en ESCALADA:** si la petición con sesión no devuelve `Set-Cookie` (sesión ya activa, lo normal tras el login), el playbook ya NO afirma "cookies con HttpOnly": indica revisar la cookie a mano en DevTools (columna HttpOnly) para decidir el techo real (hijack vs. lectura en sesión).
