@@ -309,7 +309,20 @@ esperando objetivo...</pre>
       const box = document.getElementById("findings");
       document.getElementById("fCount").textContent = findings.length ? "· " + findings.length : "";
       if (!findings.length) return;
-      box.innerHTML = findings.map(f => {
+      const urls = findings.map(f => {
+        let u = (f.target || "").trim();
+        const p = (f.param || "").split("=")[0].trim();
+        if (!u) return "";
+        if (p) u += (u.includes("?") ? "&" : "?") + p + "={INJECT}";
+        return u;
+      }).filter(Boolean);
+      window._arsenalUrls = [...new Set(urls)];
+      const barra = `<div style="margin-bottom:0.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button style="width:auto;margin:0;background:var(--red-dark);border:1px solid var(--red);color:var(--red);font-size:0.8rem;min-height:40px"
+          onclick="enviarArsenal()">⚡ ENVIAR ${window._arsenalUrls.length} CANDIDATOS AL ARSENAL</button>
+        <span style="color:var(--muted);font-size:0.7rem;align-self:center">los manda con {INJECT} listo en su param; elegís payload en el arsenal y vuela a todos</span>
+      </div>`;
+      box.innerHTML = barra + findings.map(f => {
         const v = f.veredicto || {};
         return `
         <div class="finding ${f.severity}">
@@ -326,6 +339,13 @@ esperando objetivo...</pre>
           </div>
         </div>`;
       }).join("");
+    }
+
+    function enviarArsenal() {
+      const urls = window._arsenalUrls || [];
+      if (!urls.length) return alert("no hay candidatos con URL");
+      sessionStorage.setItem("arsenal_targets", JSON.stringify(urls));
+      location.href = "/arsenal.html";
     }
 
     function finishHunt(job) {

