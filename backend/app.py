@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.40.0"
+VERSION = "0.41.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -637,6 +637,28 @@ def info():
         "log_format": "jsonl",
         "features": ["session_verification", "username_detection", "structured_logs"],
     })
+
+
+@app.post("/api/vendor_farm")
+def api_vendor_farm():
+    """VENDOR-FARM: familias de vendor con installs en rango pagable.
+    Devuelve familias con paga estimada (tabla Patchstack), excluyendo
+    slugs ya auditados del corpus."""
+    data = request.get_json(force=True, silent=True) or {}
+    try:
+        from core.vendor_farm import run
+        res = run(
+            tag=data.get("tag"),
+            browse=data.get("browse", "popular"),
+            pages=int(data.get("pages", 5)),
+            min_installs=int(data.get("min", 10000)),
+            max_installs=int(data.get("max", 200000)),
+            family_min=int(data.get("family_min", 2)),
+            exclude_dir=data.get("exclude_dir"),
+            exclude_slugs=data.get("exclude_slugs"))
+        return jsonify(res)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.post("/api/auth_token")
