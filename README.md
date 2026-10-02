@@ -194,3 +194,12 @@ bash auto_update.sh 10      # vigila cada 10 segundos
 - Usa `termux-wake-lock` si tenés Termux:API, para que Android no duerma el proceso.
 - Toda la actividad queda en `auto_update.log`.
 - Ctrl+C detiene el watcher y el servidor.
+
+## v0.42.0 - PLUGIN-BATCH (modo agente)
+Caza estatica de plugins WordPress por slugs con un solo comando:
+```bash
+python3 core/plugin_batch.py slug1 slug2 --vdp vdp_matches.json --out resultados.json
+```
+Descarga la ultima version estable, corre TAINT-TRACE + CVE-MATCH, filtra ruido de
+librerias (vendor/plugin-fw/assets/...) y deja solo hallazgos en codigo propio,
+marcados con 💥. `--vdp` anota los plugins con programa VDP activo en Patchstack.
