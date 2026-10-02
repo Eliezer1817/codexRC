@@ -439,8 +439,10 @@ def _pdf_lines(job: Dict[str, Any]) -> List[Tuple[str, str]]:
     out.append(("b", f"OBJETIVO: {job.get('url', '?')}"))
     out.append(("b", f"ESTADO: {job.get('status', '?')}  ·  {_ver(job)}"))
     out.append(("b", f"FECHA: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"))
+    _nchains = len((job.get("results", {}).get("chain", {}).get("data", {}).get("chains", [])))
     out.append(("b", f"RESUMEN: {s.get('total', 0)} hallazgos · {s.get('alta', 0)} altos · "
-                     f"{s.get('verificados', 0)} verificados · {s.get('leaks', 0)} FILTRACIONES"))
+                     f"{s.get('verificados', 0)} verificados · {s.get('leaks', 0)} FILTRACIONES"
+                     + (f" · {_nchains} CADENAS DE IMPACTO" if _nchains else "")))
     out.append(("sp", ""))
 
     # 1) LO PRIMERO: filtraciones de usuarios
@@ -459,6 +461,27 @@ def _pdf_lines(job: Dict[str, Any]) -> List[Tuple[str, str]]:
         for ln in ev.splitlines():
             out.append(("mono", f"   {ln}"))
         out.append(("sp", ""))
+
+    # 1.5) CADENAS: el valor real -- severidad combinada que NO cuenta el summary base
+    chains = (job.get("results", {}).get("chain", {}).get("data", {}).get("chains", []))
+    if chains:
+        out.append(("h2", "1.5 CADENAS DE IMPACTO COMBINADO (severidad propia, no cuenta en el total base)"))
+        for c in chains:
+            out.append(("leak", f"   [{(c.get('severity') or '?').upper()}] {c.get('name', '?')}"))
+            out.append(("plain", f"   piezas: {', '.join(c.get('parts', []))}"))
+            out.append(("plain", f"   porque: {(c.get('reason') or '')[:220]}"))
+            out.append(("sp", ""))
+
+    esc = (job.get("results", {}).get("escalada", {}).get("data", {}).get("escalations", []))
+    if esc:
+        out.append(("h2", "1.6 ESCALADA — QUE HACER DESPUES (paso a paso)"))
+        for e in esc:
+            out.append(("sev", f"   [{e.get('verdict', '?')}] {e.get('chain', '?')}"))
+            if e.get("poc"):
+                out.append(("plain", f"   kit PoC local: {e.get('poc')}"))
+            for i, paso in enumerate(e.get("playbook", []), 1):
+                out.append(("plain", f"   {i}. {paso[:180]}"))
+            out.append(("sp", ""))
 
     # 2) hallazgos por severidad, encadenados: hallazgo -> veredicto -> verificacion
     out.append(("h2", "2. HALLAZGOS ENCADENADOS (gravedad -> veredicto -> verificacion)"))

@@ -221,6 +221,7 @@ esperando objetivo...</pre>
         <div class="card-head">Hallazgos <span id="fCount" style="color:var(--muted)"></span></div>
         <div class="card-body">
           <div id="summary"></div>
+          <div id="chains"></div>
           <div id="leaks"></div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem">
             <button id="btnZombies" onclick="zombiesKill()" style="width:auto;margin:0;background:#1a0508;border:1px solid var(--red-dim);color:#ff6b81;font-size:0.75rem;min-height:38px">🧟 MATAR ZOMBIS</button>
@@ -309,6 +310,26 @@ esperando objetivo...</pre>
         </div>`;
     }
 
+    function renderChains(chains) {
+      const box = document.getElementById("chains");
+      if (!box) return;
+      if (!chains || !chains.length) { box.innerHTML = ""; return; }
+      const colorDe = sv => sv === "critica" ? "var(--red)" : sv === "alta" ? "#e8914a" : "var(--muted)";
+      const items = chains.map(c => `
+        <div class="finding" style="border-color:${colorDe(c.severity)}">
+          <span class="sev" style="background:${colorDe(c.severity)}">${esc((c.severity || "?").toUpperCase())}</span>
+          <h4>${esc(c.name || "?")}</h4>
+          <div class="reason">piezas: ${esc((c.parts || []).join(" + "))}</div>
+          <div class="reason">${esc(c.reason || "")}</div>
+        </div>`).join("");
+      box.innerHTML = `
+        <div class="node" style="border-color:#e8914a; margin-bottom:0.6rem">
+          <h3 style="color:#e8914a">🔗 CADENAS DE IMPACTO COMBINADO (${chains.length})</h3>
+          <div class="empty">severidad propia: una pieza "media" sola puede ser CRÍTICA combinada con otra. No cuenta en el total base de abajo.</div>
+          ${items}
+        </div>`;
+    }
+
     function renderFindings(findings) {
       const box = document.getElementById("findings");
       document.getElementById("fCount").textContent = findings.length ? "· " + findings.length : "";
@@ -377,10 +398,12 @@ esperando objetivo...</pre>
       btn.textContent = ">> Iniciar Caza";
       document.getElementById("liveDot").style.display = "none";
       const s = job.summary || {};
+      const nChains = s.chains || 0;
       document.getElementById("summary").innerHTML =
         `CAZA TERMINADA · <b>${s.total || 0} hallazgos</b> · ` +
         `<span class="alta">${s.alta || 0} altos</span> · ` +
-        `<span class="media">${s.media || 0} medios</span> · ${s.baja || 0} bajos · ${s.info || 0} info`;
+        `<span class="media">${s.media || 0} medios</span> · ${s.baja || 0} bajos · ${s.info || 0} info` +
+        (nChains ? ` · <span style="color:#e8914a">🔗 ${nChains} CADENAS DE IMPACTO (ver arriba, severidad propia)</span>` : "");
       logLine("═════════ CAZA TERMINADA ═════════");
       if (job.log_url) {
         document.getElementById("logLink").innerHTML =
@@ -559,6 +582,7 @@ esperando objetivo...</pre>
             renderPipeline(job.pipeline?.nodes || {});
             const lines = job.live_log || [];
             for (; last < lines.length; last++) logLine(lines[last].msg);
+            renderChains((job.results && job.results.chain && job.results.chain.data && job.results.chain.data.chains) || []);
             renderLeaks(job.leaks);
             if (job.findings && job.findings.length) renderFindings(job.findings);
             if (job.status !== "running") {
@@ -586,6 +610,7 @@ esperando objetivo...</pre>
           document.getElementById("summary").innerHTML =
             `↩ ÚLTIMA CAZA (${esc(job.status)}) · <b>${(job.summary || {}).total || 0} hallazgos</b>`;
           renderPipeline(job.pipeline?.nodes || {});
+          renderChains((job.results && job.results.chain && job.results.chain.data && job.results.chain.data.chains) || []);
           renderLeaks(job.leaks || []);
           if ((job.findings || []).length) renderFindings(job.findings);
           document.getElementById("exportLinks").innerHTML =
