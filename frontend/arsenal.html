@@ -39,69 +39,93 @@
 
     .warn {
       border: 1px solid var(--red-dim); border-left: 4px solid var(--red);
-      background: var(--red-dark); padding: 0.8rem 1rem; margin-bottom: 1rem;
-      border-radius: 3px;
+      background: var(--red-dark); padding: 0.8rem 1rem; margin-bottom: 1rem; border-radius: 3px;
     }
     .warn h3 { color: var(--red); font-size: 0.95rem; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
     .warn p { color: var(--gray); font-size: 0.8rem; line-height: 1.5; }
 
-    /* cajitas rojas: una por categoria */
-    .caja-roja {
+    .card-red {
       border: 1px solid var(--red-dim); border-left: 4px solid var(--red);
-      background: var(--red-dark); border-radius: 3px; margin-bottom: 0.9rem;
-      box-shadow: var(--red-glow);
+      background: var(--red-dark); border-radius: 3px; margin-bottom: 0.9rem; box-shadow: var(--red-glow);
       max-width: 100%; overflow-wrap: anywhere;
     }
-    .caja-head {
+    .card-head {
       padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--red-dim);
-      display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
-      flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;
     }
-    .caja-head h3 { color: var(--red); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
-    .caja-head .count { color: var(--muted); font-size: 0.72rem; }
-    .caja-body { padding: 0.7rem 0.9rem; }
+    .card-head h3 { color: var(--red); font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .card-head .count { color: var(--muted); font-size: 0.72rem; }
+    .card-body { padding: 0.7rem 0.9rem; }
 
-    .pw {
-      background: #061002; border: 1px solid var(--red-dim); border-radius: 3px; padding: 0.7rem 0.9rem; margin-bottom: 1rem;
-    }
+    .pw { background: #061002; border: 1px solid var(--red-dim); border-radius: 3px; padding: 0.7rem 0.9rem; margin-bottom: 1rem; }
     .pw h3 { color: var(--red); font-size: 0.85rem; letter-spacing: 0.1em; margin-bottom: 0.35rem; }
     .pw-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .pw-row input {
       flex: 1 1 180px; background: #060904; border: 1px solid var(--red-dim); color: var(--text);
-      padding: 0.55rem 0.6rem; font-family: inherit; font-size: 0.95rem; border-radius: 2px;
+      padding: 0.55rem 0.6rem; font-family: inherit; font-size: 0.95rem; border-radius: 2px; min-height: 44px;
     }
     .pw-row input:focus { outline: none; border-color: var(--red); box-shadow: var(--red-glow); }
-    .pw-row button {
+    .pw-row button, .bigbtn {
       background: var(--red-dark); border: 1px solid var(--red); color: var(--red);
       font-family: inherit; font-weight: bold; font-size: 0.9rem; padding: 0.55rem 1.1rem;
-      cursor: pointer; letter-spacing: 0.08em; border-radius: 2px; width: auto; margin-top: 0;
-      min-height: 44px;
+      cursor: pointer; letter-spacing: 0.08em; border-radius: 2px; width: auto; margin-top: 0; min-height: 44px;
     }
-    .pw-row button:hover { background: var(--red); color: #000; box-shadow: var(--red-glow); }
+    .pw-row button:hover, .bigbtn:hover:not(:disabled) { background: var(--red); color: #000; box-shadow: var(--red-glow); }
+    .bigbtn:disabled { opacity: 0.4; cursor: wait; }
     .pw .hint { color: var(--muted); font-size: 0.7rem; margin-top: 0.45rem; }
+    label { display: block; color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0.25rem; }
+    input[type="url"] {
+      width: 100%; background: #060904; border: 1px solid var(--red-dim); color: var(--text);
+      padding: 0.55rem 0.6rem; font-family: inherit; font-size: 0.95rem; border-radius: 2px; min-height: 44px;
+    }
+    input[type="url"]:focus { outline: none; border-color: var(--red); box-shadow: var(--red-glow); }
 
-    .pl { border-bottom: 1px dashed rgba(255,46,76,0.18); padding: 0.45rem 0; }
-    .pl:last-child { border-bottom: none; }
-    .pl .pname { color: var(--amber); font-size: 0.75rem; }
+    /* ---- CAJITAS de payload (estilo finding, verticales) ---- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.6rem; }
+    .pl {
+      background: #061002; border: 1px solid #143d18; border-left: 4px solid var(--green-dim);
+      border-radius: 3px; padding: 0.55rem 0.7rem; cursor: pointer; max-width: 100%;
+    }
+    .pl:hover { border-color: var(--red-dim); }
+    .pl.sel { border-color: var(--red); border-left-color: var(--red); box-shadow: var(--red-glow); }
+    .pl .pname { color: var(--amber); font-size: 0.78rem; margin-bottom: 0.2rem; word-break: break-all; }
+    .pl.sel .pname { color: var(--red); font-weight: bold; }
     .pl code {
-      display: block; background: #061002; border: 1px solid #143d18; color: var(--gray);
-      padding: 0.35rem 0.5rem; font-size: 0.78rem; margin: 0.25rem 0;
+      display: block; background: #04120a; border: 1px solid var(--green-dark); color: var(--gray);
+      padding: 0.35rem 0.5rem; font-size: 0.74rem; margin: 0.25rem 0;
       overflow-x: auto; white-space: pre-wrap; word-break: break-all; border-radius: 2px;
     }
-    .pl .nota { color: var(--muted); font-size: 0.72rem; }
-    .pl.extremo .pname { color: var(--red); }
-    .locknote { color: var(--muted); font-size: 0.72rem; font-style: italic; }
+    .pl .nota { color: var(--muted); font-size: 0.7rem; line-height: 1.4; }
+    .pl .usar {
+      display: inline-block; margin-top: 0.35rem; font-size: 0.7rem; font-weight: bold;
+      color: var(--red); border: 1px solid var(--red-dim); padding: 0.15rem 0.6rem; border-radius: 2px;
+      letter-spacing: 0.08em; min-height: 30px; line-height: 26px;
+    }
+    .pl.sel .usar { background: var(--red); color: #000; }
+    .locknote { color: var(--muted); font-size: 0.72rem; font-style: italic; padding: 0.3rem 0; }
 
+    .firepanel { display: none; }
+    #selInfo { color: var(--amber); font-size: 0.8rem; margin: 0.5rem 0; min-height: 1.2rem; word-break: break-all; }
     #msg { font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.2rem; }
     #msg.ok { color: var(--green); }
     #msg.err { color: var(--red); }
-    .unlocked { color: var(--red); font-weight: bold; font-size: 0.8rem; letter-spacing: 0.1em; }
+
+    #result { display: none; }
+    #result pre {
+      background: #04120a; border: 1px solid var(--green-dark); color: var(--gray);
+      padding: 0.5rem; font-size: 0.74rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+      max-height: 300px; overflow-y: auto; border-radius: 2px;
+    }
+    .res-row { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.82rem; margin-bottom: 0.4rem; }
+    .res-row b { color: var(--green); }
+    .res-row .slow { color: var(--red); font-weight: bold; }
 
     @media (max-width: 700px) {
       body { font-size: 17px; padding: 0.6rem; }
       header { flex-direction: column; align-items: flex-start; }
       nav { width: 100%; }
       nav a { flex: 1; justify-content: center; }
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -120,101 +144,178 @@
 
   <div class="warn">
     <h3>⚠ ZONA DE ALTO RIESGO</h3>
-    <p>Payloads activos y potencialmente destructivos. Solo para tu laboratorio local o blancos
-    con programa de seguridad autorizado que permita estas pruebas. Demostración mínima:
-    stop al primer impacto confirmado. Sin dump masivo, sin persistencia, sin borrado.</p>
+    <p>Payloads activos que van DIRECTO al blanco que pongas abajo. Solo tu laboratorio
+    o blancos con programa de seguridad autorizado. Demostración mínima: stop al primer
+    impacto confirmado. Sin dump masivo, sin persistencia, sin borrado.</p>
   </div>
 
+  <!-- PASO 1: contraseña -->
   <div class="pw" id="gateBox">
-    <h3>🔒 MODO EXTREMO</h3>
+    <h3>🔒 PASO 1 · MODO EXTREMO</h3>
     <div class="pw-row">
       <input type="password" id="pwInput" placeholder="contraseña" autocomplete="off" />
       <button onclick="unlock()">DESBLOQUEAR</button>
     </div>
-    <div class="hint">Los payloads marcados como EXTREMO permanecen ocultos hasta desbloquear. Todo desbloqueo queda registrado en el log del servidor.</div>
+    <div class="hint">Cada intento queda registrado en el log del servidor.</div>
     <div id="msg"></div>
   </div>
 
-  <main id="categorias"></main>
+  <!-- PASO 2-3: blanco + elección de payload + disparo -->
+  <div class="firepanel" id="firepanel">
+    <div class="card-red">
+      <div class="card-head"><h3>🎯 PASO 2 · Blanco</h3></div>
+      <div class="card-body">
+        <label>URL objetivo del payload</label>
+        <input type="url" id="targetUrl" placeholder="https://blanco.com/page.php?dato={INJECT}" />
+        <div class="hint" style="color:var(--muted);font-size:0.7rem;margin-top:0.35rem">
+          Poné <code>{INJECT}</code> donde va el payload. Si la URL no lo tiene, el payload se agrega como
+          <code>?q=payload</code>. Para lab: <code>http://127.0.0.1:8000/...</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-red">
+      <div class="card-head"><h3>💥 PASO 3 · Elegí el payload (tocá la cajita)</h3></div>
+      <div class="card-body" id="categorias"></div>
+      <div class="card-body" style="border-top:1px solid var(--red-dim)">
+        <div id="selInfo">nada seleccionado</div>
+        <button class="bigbtn" id="fireBtn" onclick="fire()" disabled>🔥 LANZAR AL BLANCO</button>
+      </div>
+    </div>
+
+    <div class="card-red" id="result">
+      <div class="card-head"><h3>📡 RESPUESTA DEL BLANCO</h3></div>
+      <div class="card-body">
+        <div class="res-row">
+          <span>estado: <b id="rStatus">-</b></span>
+          <span>tiempo: <b id="rTime">-</b></span>
+          <span>reflejado: <b id="rRefl">-</b></span>
+        </div>
+        <pre id="rBody">-</pre>
+        <div class="hint" style="color:var(--muted);font-size:0.7rem">
+          ⏱ tiempo &gt; 3000ms con payload SLEEP = inyección ciega confirmada.
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    let EXTREME = false;
+    let TOKEN = null;
+    let PAYLOADS = [];   // {nombre, payload, nota, cat, titulo, extremo}
+    let SELECTED = null;
 
-    function pl(name, payload, note, extreme) {
-      const cls = extreme ? "pl extremo" : "pl";
-      const tag = extreme ? (EXTREME ? "" : "<div class='locknote'>🔒 extremo: bloqueado</div>") : "";
-      const body = EXTREME || !extreme
-        ? `<code>${escapeHtml(payload)}</code><div class="nota">${escapeHtml(note)}</div>`
-        : tag;
-      return `<div class="${cls}"><div class="pname">[${escapeHtml(name)}]${extreme ? " · EXTREMO" : ""}</div>${body}</div>`;
-    }
     function escapeHtml(s) {
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     function render(data) {
+      PAYLOADS = [];
       const m = document.getElementById("categorias");
       m.innerHTML = "";
       data.categorias.forEach(c => {
-        const all = (c.grupos || []).flatMap(g => g.items || []);
-        const ext = all.filter(p => p.extremo).length;
-        c.payloads = all;
         const box = document.createElement("div");
-        box.className = "caja-roja";
-        box.innerHTML = `
-          <div class="caja-head">
-            <h3>💥 ${escapeHtml(c.titulo)}</h3>
-            <span class="count">${c.payloads.length} payloads${ext ? " · " + ext + " extremos" : ""}</span>
-          </div>
-          <div class="caja-body">
-            ${c.grupos.map(g => `
-              <div class="pname" style="color:var(--green-dim)">— ${escapeHtml(g.nombre)} —</div>
-              ${g.items.map(p => pl(p.nombre, p.payload, p.nota, p.extremo)).join("")}
-            `).join("")}
-          </div>`;
+        box.className = "card-red";
+        box.style.boxShadow = "none";
+        box.style.margin = "0 0 0.9rem 0";
+        const groups = [];
+        (c.grupos || []).forEach(g => {
+          const items = (g.items || []).map(it => {
+            PAYLOADS.push({ ...it, cat: c.id, titulo: c.titulo });
+            const idx = PAYLOADS.length - 1;
+            return `<div class="pl" id="pl-${idx}" onclick="sel(${idx})">
+              <div class="pname">⚡ ${escapeHtml(it.nombre)}</div>
+              <code>${escapeHtml(it.payload)}</code>
+              <div class="nota">${escapeHtml(it.nota)}</div>
+              <div class="usar">SELECCIONAR</div>
+            </div>`;
+          });
+          groups.push(`<div class="pname" style="color:var(--green-dim);font-size:0.72rem;margin:0.4rem 0 0.3rem">— ${escapeHtml(g.nombre)} —</div><div class="grid">${items.join("")}</div>`);
+        });
+        box.innerHTML = `<div class="card-head"><h3>💥 ${escapeHtml(c.titulo)}</h3></div>
+          <div class="card-body">${groups.join("")}</div>`;
         m.appendChild(box);
       });
     }
 
-    async function load() {
-      const r = await fetch("/api/arsenal");
-      render(await r.json());
+    function sel(i) {
+      document.querySelectorAll(".pl").forEach(el => el.classList.remove("sel"));
+      const el = document.getElementById("pl-" + i);
+      el.classList.add("sel");
+      el.querySelector(".usar").textContent = "SELECCIONADO";
+      SELECTED = PAYLOADS[i];
+      document.getElementById("selInfo").textContent =
+        "seleccionado: [" + SELECTED.nombre + "] → se lanzará a la URL de arriba";
+      document.getElementById("fireBtn").disabled = false;
     }
 
     async function unlock() {
       const pw = document.getElementById("pwInput").value;
       const msg = document.getElementById("msg");
-      msg.className = ""; msg.textContent = "";
+      msg.className = ""; msg.textContent = "verificando...";
       try {
         const r = await fetch("/api/arsenal/extreme", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: pw })
         });
         if (!r.ok) {
           msg.className = "err";
-          msg.textContent = "❌ Contraseña incorrecta. El intento quedó registrado.";
+          msg.textContent = "❌ Contraseña incorrecta. Intento registrado.";
           document.getElementById("pwInput").value = "";
           return;
         }
-        EXTREME = true;
         const data = await r.json();
+        TOKEN = data.token;
         render(data);
-        msg.className = "ok unlocked";
-        msg.textContent = "🔓 MODO EXTREMO ACTIVADO — demostración mínima, stop al primer impacto.";
+        document.getElementById("firepanel").style.display = "block";
         const gb = document.getElementById("gateBox");
         gb.querySelector("h3").textContent = "🔓 MODO EXTREMO ACTIVO";
         gb.querySelector(".pw-row").style.display = "none";
+        msg.className = "ok";
+        msg.textContent = "🔓 activo. Elegí blanco y payload. Demostración mínima.";
       } catch (e) {
-        msg.className = "err";
-        msg.textContent = "error: " + e.message;
+        msg.className = "err"; msg.textContent = "error: " + e.message;
+      }
+    }
+
+    async function fire() {
+      const target = document.getElementById("targetUrl").value.trim();
+      if (!SELECTED || !target) return;
+      const btn = document.getElementById("fireBtn");
+      btn.disabled = true; btn.textContent = "🔥 LANZANDO...";
+      document.getElementById("result").style.display = "block";
+      document.getElementById("rBody").textContent = "esperando respuesta...";
+      try {
+        const r = await fetch("/api/arsenal/fire", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: TOKEN, target: target, payload: SELECTED.payload, nombre: SELECTED.nombre })
+        });
+        const d = await r.json();
+        if (!r.ok) {
+          document.getElementById("rStatus").textContent = "ERROR " + r.status;
+          document.getElementById("rBody").textContent = d.error || "error";
+          return;
+        }
+        document.getElementById("rStatus").textContent = d.status_code;
+        const tEl = document.getElementById("rTime");
+        tEl.textContent = d.elapsed_ms + " ms";
+        tEl.className = d.elapsed_ms > 3000 ? "slow" : "";
+        const refl = document.getElementById("rRefl");
+        refl.textContent = d.reflejado ? "SÍ" : "no";
+        refl.style.color = d.reflejado ? "var(--amber)" : "";
+        document.getElementById("rBody").textContent = d.body_head || "(sin cuerpo)";
+        if (d.elapsed_ms > 3000 && /sleep|benchmark|waitfor|blob/i.test(SELECTED.payload))
+          document.getElementById("rBody").textContent =
+            "💥 CONFIRMADO: respuesta lenta con payload temporal = inyección ciega probable.\n\n" + (d.body_head || "");
+      } catch (e) {
+        document.getElementById("rBody").textContent = "error: " + e.message;
+      } finally {
+        btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
       }
     }
 
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");
     }).catch(() => {});
-    load();
   </script>
 </body>
 </html>

@@ -1472,6 +1472,61 @@ def _safe_500(exc):
     return jsonify({"error": f"{type(exc).__name__}: {str(exc)[:200]}"}), 500
 
 
+_ARS_TOKENS: Dict[str, float] = {}
+
+
+def _ars_token_ok(token) -> bool:
+    exp = _ARS_TOKENS.get(str(token or ""))
+    if not exp:
+        return False
+    if time.time() > exp:
+        _ARS_TOKENS.pop(token, None)
+        return False
+    return True
+
+
+@app.post("/api/arsenal/fire")
+def api_arsenal_fire():
+    """Dispara UN payload elegido contra el blanco del operador.
+    Requiere token de desbloqueo (30 min). Registra target+nombre en log.
+    Mide tiempo de respuesta (deteccion de inyeccion ciega temporal) y
+    si el payload se refleja en la respuesta (deteccion de XSS reflejado).
+    Una sola peticion por llamada: demostracion minima."""
+    body = request.get_json(silent=True) or {}
+    if not _ars_token_ok(body.get("token")):
+        return jsonify({"error": "sesion de arsenal expirada o invalida: "
+                                 "desbloquea de nuevo"}), 401
+    target = str(body.get("target") or "").strip()
+    payload = str(body.get("payload") or "")
+    nombre = str(body.get("nombre") or "?")
+    if not target.startswith(("http://", "https://")):
+        return jsonify({"error": "URL del blanco invalida (http/https)"}), 400
+    if not payload:
+        return jsonify({"error": "payload vacio"}), 400
+    # punto de inyeccion: {INJECT} en la URL, o ?q= al final
+    if "{INJECT}" in target:
+        full = target.replace("{INJECT}", payload)
+    else:
+        sep = "&" if "?" in target else "?"
+        full = target + sep + "q=" + payload
+    app.logger.warning("[ARSENAL] DISPARO '%s' -> %s", nombre, target[:160])
+    t0 = time.time()
+    try:
+        r = requests.get(full, timeout=20, allow_redirects=False,
+                         headers={"User-Agent": "CodexRC-ARSENAL/audit"})
+    except Exception as exc:
+        return jsonify({"error": f"conexion fallida: {exc}"[:200]}), 502
+    elapsed_ms = int((time.time() - t0) * 1000)
+    text = r.text or ""
+    return jsonify({
+        "status_code": r.status_code,
+        "elapsed_ms": elapsed_ms,
+        "reflejado": payload in text,
+        "url_usada": full[:300],
+        "body_head": text[:600],
+    })
+
+
 @app.route("/hunter.html")
 def hunter_page():
     return send_from_directory(app.static_folder, "hunter.html")
@@ -1532,7 +1587,9 @@ def api_arsenal_extreme():
         app.logger.warning("[ARSENAL] intento de desbloqueo FALLIDO desde %s", remote)
         return jsonify({"error": "contrasena incorrecta"}), 403
     app.logger.warning("[ARSENAL] MODO EXTREMO desbloqueado desde %s", remote)
-    return jsonify(_arsenal_data(include_extreme=True) | {"extreme": True})
+    token = uuid.uuid4().hex
+    _ARS_TOKENS[token] = time.time() + 1800  # 30 min de sesion de disparo
+    return jsonify(_arsenal_data(include_extreme=True) | {"extreme": True, "token": token})
 
 
 if __name__ == "__main__":
