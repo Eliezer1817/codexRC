@@ -119,7 +119,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.39.2"
+VERSION = "0.39.3"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -636,6 +636,48 @@ def info():
         "started_at": STARTED_AT,
         "log_format": "jsonl",
         "features": ["session_verification", "username_detection", "structured_logs"],
+    })
+
+
+@app.post("/api/auth_token")
+def api_auth_token():
+    """Loguea (con credenciales dadas o heredadas del ultimo escaneo) y
+    devuelve el header Authorization listo para usar en curl. SOLO local:
+    es tu propio token de sesion, no lo compartas ni lo pegues en ningun lado."""
+    data = request.get_json(force=True, silent=True) or {}
+    url = str(data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "falta 'url'"}), 400
+    keys = ("username", "password", "login_url", "username_field",
+            "password_field", "success_indicator", "verification_url",
+            "cookies", "bearer_token", "custom_header_name",
+            "custom_header_value")
+    cfg = {k: data[k] for k in keys if data.get(k)}
+    origin = urlparse(url).netloc
+    if not _auth_config_of(cfg):
+        heredada = LAST_AUTH_CONFIGS.get(origin) or (
+            LAST_AUTH_CONFIG
+            if urlparse(LAST_AUTH_CONFIG.get("_for_url", "")).netloc == origin
+            else None)
+        if heredada:
+            cfg = dict(heredada)
+        else:
+            return jsonify({
+                "error": "sin credenciales: pasa username/password (y login_url "
+                         "opcional), o corre primero un escaneo con sesion para "
+                         "heredarla"}), 400
+    try:
+        auth = build_auth(cfg, target_url=url)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+    hdr = auth.session.headers.get("Authorization")
+    return jsonify({
+        "origin": origin,
+        "authenticated": bool(auth.authenticated),
+        "method": auth.auth_method,
+        "scheme": (auth.login_debug or {}).get("session_scheme"),
+        "authorization": hdr,
+        "cookie_names": sorted(auth.session.cookies.get_dict().keys()),
     })
 
 
