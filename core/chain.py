@@ -82,13 +82,18 @@ class Chainer:
                     "de ser teorico. Sesiones robables.")
                 self.emit("[chain] 💥 XSS verificado + CSP debil = XSS ejecutable, sesion robable")
             else:
-                add("XSS ejecutable (CSP no lo frena)", "alta", pzs,
+                # leccion xenpaid 02/10/2026: cadenas construidas sobre piezas
+                # SIN verificar salieron "alta" y eran falsas (eco RSC + core-js).
+                # Ahora: nombre HIPOTESIS + severidad media. Solo sube si VERITAS
+                # o el kit PoC confirman ejecucion real.
+                add("HIPOTESIS: XSS + CSP ausente (nada ha ejecutado)", "media", pzs,
                     "CSP ausente pero NINGUNA pieza XSS verificada en "
                     "navegador real (leccion vellius: sink DOM teorico que "
-                    "nunca ejecuto). Confirmar con kit PoC/VERITAS antes de "
-                    "subir a critica.")
-                self.emit("[chain] XSS teorico + CSP debil = ALTA pendiente de "
-                          "confirmacion en navegador real")
+                    "nunca ejecuto; leccion xenpaid: el eco escapado de "
+                    "Next.js/RSC refleja sin ejecutar). Es una hipotesis: "
+                    "confirmar con VERITAS/kit PoC antes de reportar.")
+                self.emit("[chain] XSS teorico + CSP debil = HIPOTESIS media "
+                          "pendiente de VERITAS (no se reporta como hallazgo)")
         if xss and admin:
             pzs = xss[:1] + admin[:1]
             if xss_ok:
@@ -98,10 +103,11 @@ class Chainer:
                     "sesion del administrador.")
                 self.emit("[chain] 💥 XSS verificado + panel admin = captura de sesion admin")
             else:
-                add("XSS alcance a panel admin", "alta", pzs,
+                add("HIPOTESIS: XSS + panel admin (pendiente verificar)", "media", pzs,
                     "Panel admin en el blanco con XSS SIN confirmar en "
-                    "navegador: teorico hasta verificar.")
-                self.emit("[chain] XSS teorico + panel admin = ALTA pendiente de confirmacion")
+                    "navegador: hipotesis hasta que VERITAS/kit PoC confirmen "
+                    "ejecucion real (leccion xenpaid 02/10/2026).")
+                self.emit("[chain] XSS teorico + panel admin = HIPOTESIS media pendiente de verificar")
         if sqli and admin:
             add("SQLi hacia el panel admin", "critica", sqli[:1] + admin[:1],
                 "SQLi + panel en el mismo blanco: extraccion de credenciales "

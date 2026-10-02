@@ -301,6 +301,15 @@ class DeepHunter:
         for m in re.finditer(
                 r"addEventListener\s*\(\s*[\"\']message[\"\']", text or ""):
             win = text[m.end(): m.end() + 400]
+            # FP-GUARD core-js (leccion xenpaid 02/10/2026): el scheduler de
+            # microtareas de core-js instala addEventListener("message")
+            # propio (polyfill de postMessage/MessageChannel) y NUNCA acepta
+            # mensajes externos. Este detector viejo lo reportaba igual y esa
+            # pieza falsa contaminaba las cadenas de impacto (chain.py).
+            alrededor = text[max(0, m.start() - 3000): m.start() + 3000]
+            if ("importScripts" in alrededor or "core-js" in (text or "")[:200000]
+                    or "__core-js" in (text or "")):
+                continue
             has_origin = re.search(r"\b(e|ev|event|msg)\s*\.\s*origin\b|"
                                    r"[\"\']https?://", win)
             sinks = [s for s in ("innerHTML", "document.write", "eval(",
