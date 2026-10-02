@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.55.7"
+VERSION = "0.55.8"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -1384,10 +1384,13 @@ def export_job(job_id: str):
     base = f"codexrc_{job_id}_caza"
     try:
         from core import report_export
+        # inline (no "attachment"): en movil Chrome abre directo en el visor,
+        # el usuario VE el informe aparecer en lugar de una descarga silenciosa
+        # a la carpeta Descargas sin aviso visible (bug real reportado 02/10/2026)
         if fmt == "json":
             return Response(report_export.build_json(job), mimetype="application/json",
                             headers={"Content-Disposition":
-                                     f'attachment; filename="{base}.json"'})
+                                     f'inline; filename="{base}.json"'})
         if fmt == "pdf":
             data, method = report_export.build_pdf(job)
             if not data:
@@ -1396,14 +1399,14 @@ def export_job(job_id: str):
                                          "(pip install fpdf2)"}), 503
             resp = Response(data, mimetype="application/pdf",
                             headers={"Content-Disposition":
-                                     f'attachment; filename="{base}.pdf"'})
+                                     f'inline; filename="{base}.pdf"'})
             resp.headers["X-Pdf-Method"] = method
             return resp
         if fmt != "txt":
             return jsonify({"error": "formato debe ser txt, json o pdf"}), 400
         return Response(report_export.build_txt(job), mimetype="text/plain; charset=utf-8",
                         headers={"Content-Disposition":
-                                 f'attachment; filename="{base}.txt"'})
+                                 f'inline; filename="{base}.txt"'})
     except Exception as exc:
         return jsonify({"error": f"exportando: {type(exc).__name__}: "
                                  f"{str(exc)[:150]}"}), 500
