@@ -260,6 +260,28 @@ class DeepHunter:
         "password", "private_key", "wallet_address",
     )
 
+    # ---- PASSWORD-LEAK: VALORES de contrasena/hash, no solo nombres de campo ----
+    # Formatos reales que los vendors pagan como "sensitive data exposure":
+    # phpass (WordPress), bcrypt, argon2, hex MD5/SHA, password con valor en JSON.
+    HASH_PATTERNS = (
+        (re.compile(r"\$P\$[./0-9A-Za-z]{20,}|\$H\$9[./0-9A-Za-z]{20,}"),
+         "hash phpass (WordPress)"),
+        (re.compile(r"\$2[aby]\$[0-9]{2}\$[./0-9A-Za-z]{53}"), "hash bcrypt"),
+        (re.compile(r"\$argon2(id)?\$[A-Za-z0-9=,$+/]{10,}"), "hash argon2"),
+        (re.compile(r"[\"'](user_pass|password_hash|pwd_hash|pass_hash)[\"']?\s*:\s*[\"'][0-9a-fA-F]{32,64}[\"']"),
+         "hash hexadecimal (MD5/SHA)"),
+        (re.compile(r"[\"'](password|user_pass|passwd|user_password)[\"']?\s*:\s*[\"'][^\"'\s*]{4,}[\"']"),
+         "password con valor en JSON"),
+    )
+
+    def _pw_leak(self, text: str) -> list:
+        """Detecta VALORES de contrasena/hash en una respuesta (deteccion,
+        nunca extraccion del valor). Devuelve etiquetas del tipo de filtracion."""
+        if not text:
+            return []
+        low = text[:20000]
+        return [label for pat, label in self.HASH_PATTERNS if pat.search(low)]
+
     SECRET_MARKERS = ("API_KEY", "SECRET", "PASSWORD", "PRIVATE_KEY", "DB_PASS", "TOKEN=")
     SECRET_PATTERNS = (
         (re.compile(r"AKIA[0-9A-Z]{16}"), "AWS Access Key"),
@@ -586,7 +608,23 @@ class DeepHunter:
                     continue
                 if self._waf_block(rp.status_code, rp.text):
                     continue
+                pw_p = self._pw_leak(rp.text)
                 pii_p = self._pii(rp.text)
+                if pw_p and not pii_p:
+                    # la sonda vecina devolvio contrasena/hash sin otros campos
+                    # personales: sigue siendo leak de datos
+                    findings.append({
+                        "severity": "alta", "type": "Password leak (lectura A->B)",
+                        "param": label.replace("body:", "body ").replace("=1", ""),
+                        "target": spec[1],
+                        "evidence": "respuesta vecina contiene " + ", ".join(pw_p)
+                                    + " (valores NO extraidos)",
+                        "verdict": "confirmado por lectura: hash/contrasena de otro "
+                                   "registro accesible",
+                        "leak": True, "leak_fields": pw_p})
+                    self.log(f"[idor] 💥 PASSWORD LEAK vecino: "
+                             f"{urlparse(spec[1]).path} ({', '.join(pw_p)})")
+                    continue
                 if not pii_p:
                     continue
                 try:
@@ -766,6 +804,21 @@ class DeepHunter:
                 self.log(f"[api] /{urlparse(u).path} contraste NO concluyente: "
                          f"el WAF bloqueo al anonimo (refinar con GHOSTGATE)")
             elif pii_a:
+                # PASSWORD-LEAK: la API autenticada entrega VALORES de
+                # contrasena/hash: eso se paga (sensitive data exposure).
+                pw_a = self._pw_leak(ra.text)
+                if pw_a:
+                    findings.append({
+                        "severity": "alta", "type": "Password leak en API",
+                        "param": "-", "target": u,
+                        "evidence": "la respuesta contiene " + ", ".join(pw_a)
+                                    + " (valores NO extraidos)",
+                        "verdict": "confirmado por lectura: hash/contrasena "
+                                   "accesible a la sesion actual",
+                        "leak": True, "leak_fields": pw_a})
+                    self.log(f"[api] 💥 PASSWORD LEAK: {urlparse(u).path} "
+                             f"entrega {', '.join(pw_a)}")
+                    continue
                 self.log(f"[api] API privada correcta: {urlparse(u).path} "
                          f"(datos solo con sesion: {', '.join(pii_a)})")
                 findings.append({"severity": "info", "type": "API privada mapeada",
