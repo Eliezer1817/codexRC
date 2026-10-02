@@ -34,6 +34,8 @@ class AuthManager:
         self.login_debug: Dict[str, Any] = {}
         self._spa_cache_origin: Optional[str] = None
         self._spa_cache_data: Optional[Dict[str, Any]] = None
+        self._session_token: Optional[str] = None
+        self._scheme_probe_done = False
 
     def load_cookies_from_file(self, filepath: str) -> bool:
         path = Path(filepath)
@@ -225,6 +227,11 @@ class AuthManager:
                 if api_ok:
                     result["reason"] = "api_authenticated"
                 else:
+                    # SCHEME-PROBE: probar en vivo Session/Bearer/Token/JWT/
+                    # cookies con el token del login antes de declarar 401
+                    _esq = self._probe_schemes(verification_url)
+                    if _esq:
+                        return self.verify_session(verification_url)
                     result["reason"] = "api_unauthorized_or_error"
             else:
                 soup = BeautifulSoup(response.text, "html.parser")
@@ -393,6 +400,7 @@ class AuthManager:
                         except Exception:
                             _j = {}
                         _tok = self._extraer_token(_j)
+                        self._session_token = _tok
                         if _tok:
                             _esq = (self._spa_cache_data or {}).get("auth_scheme") or "Bearer"
                             self.session.headers["Authorization"] = f"{_esq} {_tok}"
@@ -844,6 +852,71 @@ class AuthManager:
                 r = self._find_username(v, depth + 1)
                 if r:
                     return r
+        return None
+
+    def _probe_schemes(self, verification_url: str) -> Optional[str]:
+        """Prueba EN VIVO los schemes de autorizacion comunes con el token
+        del login. No depende de leer el JS (Cloudflare puede bloquearlo):
+        si el scheme descubierto/default no pasa, se prueban Session, Bearer,
+        Token, JWT, token plano y cookies hasta que la API responde 200.
+        El scheme ganador queda instalado en la sesion para todo el escaneo."""
+        t = self._session_token
+        if not t and getattr(self, "last_login_response", None) is not None:
+            try:
+                t = self._extraer_token(self.last_login_response.json())
+            except Exception:
+                t = None
+            self._session_token = t
+        if not t or self._scheme_probe_done:
+            return None
+        self._scheme_probe_done = True
+        _origin = "{0.scheme}://{0.netloc}".format(urlparse(verification_url))
+        h = {"Content-Type": "application/json", "Accept": "application/json",
+             "Origin": _origin, "Referer": _origin + "/"}
+
+        def _intenta(headers_extra=None, cookies_extra=None):
+            try:
+                r = self.session.get(verification_url, timeout=20, headers=h,
+                                     cookies=cookies_extra)
+                if r.status_code in (404, 405):
+                    r = self.session.post(verification_url, json={}, timeout=20,
+                                          headers=h, cookies=cookies_extra)
+                if r.status_code == 200 and "unauthorized" not in r.text.lower()[:200]:
+                    return True
+            except Exception:
+                pass
+            return False
+
+        for scheme in ("Session", "Bearer", "Token", "JWT"):
+            hh = dict(h)
+            hh["Authorization"] = f"{scheme} {t}"
+            try:
+                r = self.session.get(verification_url, timeout=20, headers=hh)
+                if r.status_code in (404, 405):
+                    r = self.session.post(verification_url, json={}, timeout=20, headers=hh)
+                if r.status_code == 200 and "unauthorized" not in r.text.lower()[:200]:
+                    self.session.headers["Authorization"] = hh["Authorization"]
+                    self.login_debug["session_scheme"] = scheme
+                    return scheme
+            except Exception:
+                continue
+        # token plano
+        hh = dict(h)
+        hh["Authorization"] = t
+        try:
+            r = self.session.get(verification_url, timeout=20, headers=hh)
+            if r.status_code == 200 and "unauthorized" not in r.text.lower()[:200]:
+                self.session.headers["Authorization"] = t
+                self.login_debug["session_scheme"] = "plain"
+                return "plain"
+        except Exception:
+            pass
+        # cookies
+        for name in ("session_key", "sessionid", "session", "token"):
+            if _intenta(cookies_extra={name: t}):
+                self.session.cookies.set(name, t)
+                self.login_debug["session_scheme"] = f"cookie:{name}"
+                return f"cookie:{name}"
         return None
 
     def _extraer_token(self, obj, depth: int = 0):

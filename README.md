@@ -10,7 +10,7 @@
 
 ## Arquitectura
 
-- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.39.1**).
+- **Backend:** `backend/app.py` es la única implementación del servidor Flask (versión actual: **v0.39.2**).
 - **Core:** autenticación, reconocimiento, detección tecnológica, CVE matcher, GHOSTGATE, pipeline y el HUNTER se ejecutan dentro del backend.
   - `core/hunter.py` — spider, corpus XSS, DeepHunter (BAC/IDOR/CSP/superficie) y batería XSS-PRO.
   - `core/ghostgate.py` — evasión de Cloudflare delegando a navegador real cuando la IP está quemada.
@@ -44,6 +44,7 @@
 
 Lo nuevo de cada entrega, de la más reciente a la más antigua:
 
+- **v0.39.2 — SCHEME-PROBE:** la verificación de sesión ya no depende de leer el JS del sitio (que Cloudflare puede bloquear). Si el token heredado no pasa con el scheme descubierto/default, se prueban EN VIVO `Session`, `Bearer`, `Token`, `JWT`, token plano y cookies (`session_key`, `sessionid`, `session`, `token`); el primero que responde 200 queda instalado en la sesión para todo el escaneo y se registra en el debug. Validado en lab sin JS (peor caso): login → 401 con Bearer → probe detecta `Session` → `api_authenticated` con perfil.
 - **v0.39.1 — TOKEN-INHERIT:** SPAs sin cookies (bitevolut, apps React con localStorage) ya no pierden la sesión tras loguear. El Hunter (1) descubre el scheme de autorización leyendo el JS (`Authorization: Session ${a}`, Bearer, Token, JWT), (2) extrae el token del JSON de respuesta del login (`session_key`, `access_token`, `sessionid`...), y (3) lo inyecta en el header `Authorization` para toda la sesión. Antes: login exitoso + verificación 401 (`api_unauthorized_or_error`). Validado en lab: login → token heredado → `/api/auth/me/` 200 con perfil del usuario.
 - **v0.39.0 — SPA-DISCOVERY v2:** el descubridor de login en apps JavaScript ya no queda ciego con apps modernas. (1) Extrae endpoints estilo `fetch` (strings sueltos `/api/...`) además de axios `.post()`; (2) rastrea chunks Vite/esbuild con hash (`assets/Login-BBdKUnr1.js`) además de webpack; (3) si Cloudflare bloquea la descarga de JS (403), reintenta con la sesión del escaneo (cloudscraper/GHOSTGATE-LITE hereda el pase); (4) escalera de rutas de login estándar (`/api/auth/login/`, `/api/login/`, `/api/v1/auth/login/`, etc.) cuando el auto-descubrimiento no encuentra nada, en vez de rendirse postean­do a la página HTML (el 405 clásico); (5) descarta un endpoint al primer 404/405 sin quemar los 3 payloads de campo. Validado en lab con estructura Vite+fetch real: descubre login, cuenta y wallet, filtra impersonate/captcha.
 - **v0.38.4 — diagnóstico transparente de auth:** cuando el auto-descubrimiento falla por bloqueos de WAF (Cloudflare 403) o el servidor rechaza el POST (405), la UI ahora muestra la razón real (`rechazo_servidor_HTTP_405`, `api_rechazo_credenciales`) en vez del confuso `no_auth_method`.
