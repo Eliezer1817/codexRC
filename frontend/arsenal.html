@@ -363,7 +363,8 @@
       if (!el) return;
       el.classList.remove("testing", "hit", "done");
       if (estado) el.classList.add(estado);
-      if (estado === "testing") el.scrollIntoView({ block: "nearest" });
+      // sin scrollIntoView: la luz se prende pero NUNCA mueve la pagina del
+      // operador (secuestraba el scroll hacia las cajitas en cada disparo)
     }
     function apagarLuces() {
       document.querySelectorAll(".pl").forEach(el => el.classList.remove("testing", "hit", "done"));
