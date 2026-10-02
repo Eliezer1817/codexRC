@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>codexRC · HUNTER MODE</title>
+  <title>CodexRC · HUNTER MODE</title>
+  <meta name="theme-color" content="#0a0f06" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <style>
     :root {
-      --bg: #000000; --panel: #000000; --border: #10381f;
-      --green: #00c853; --green-dim: #009a42; --green-dark: #0a2e18;
+      --bg: #000000; --panel: #000000; --border: #26320f;
+      --green: #9fce54; --green-dim: #71983f; --green-dark: #0d140a;
       --text: #eef5f0; --gray: #b0c2b6; --muted: #8fa396;
       --amber: #ffb000; --red: #ff2e4c;
-      --glow: 0 0 8px rgba(0, 200, 83, 0.4);
+      --glow: 0 0 8px rgba(159, 206, 84, 0.4);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -35,7 +37,7 @@
     .card-body { padding: 0.8rem; }
     label { display: block; color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0.25rem; }
     input[type="url"], input[type="text"], input[type="number"] {
-      width: 100%; background: #020a05; border: 1px solid var(--border); color: var(--text);
+      width: 100%; background: #060904; border: 1px solid var(--border); color: var(--text);
       padding: 0.55rem 0.6rem; font-family: inherit; font-size: 0.95rem; border-radius: 2px;
     }
     input:focus { outline: none; border-color: var(--green); box-shadow: var(--glow); }
@@ -128,7 +130,7 @@
 </head>
 <body>
   <header>
-    <div class="prompt">CODEXRC // HUNTER MODE<span class="ver" id="appVersion">v?</span></div>
+    <div class="prompt"><span style="color:var(--green)">codex</span><span style="color:#f2f5ee">RC</span> // HUNTER MODE<span class="ver" id="appVersion">v?</span></div>
     <nav>
       <a href="/">escáner</a>
       <a href="/hunter.html" class="on">hunter</a>

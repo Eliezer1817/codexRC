@@ -200,3 +200,9 @@ Lo nuevo de cada entrega, de la más reciente a la más antigua:
 - **UNIVERSAL-RECON**: perfil de fuente (PHP/JS/Python/Java/Go/Ruby, WP plugin/tema, Laravel, Django, Flask, Express, React, Android) y de URL viva (framework, Cloudflare, rutas tipicas).
 - **WP-LAB**: laboratorio WordPress local (PHP 8.2 + SQLite, sin MySQL) para AUTH-DIFF dinamico en sitio propio. Declarado como fase en el ledger; ejecucion a pedido (costo alto).
 - BROWSER-INTEL / UNIVERSAL-API / STATE-MACHINE / POLYGLOT-TRACE(js,python): fases declaradas en el perfil; el kernel las activa por tipo de blanco.
+
+## v0.53.0 — UI-RENAISSANCE (2026-10-02)
+- **Dashboard renovado con la identidad del logo**: paleta verde oliva militar extraida del banner (verde #9fce54 / logo puro #71983f / paneles #0d140a), marca "CodexRC" en el header (codex en verde, RC en blanco) con el banner como logo. Hunter con la misma identidad.
+- **Responsive real iOS/Android/PC**: sidebar deslizable en movil (menu hamburguesa), touch targets de 44px, font-size 16px en inputs (evita el zoom de iOS), safe-area insets para notch, meta theme-color + apple-mobile-web-app.
+- **Nuevo panel MOTOR DE CAZA en el dashboard**: progreso vivo de WIDE-HUNT y RETRO-HUNT (barras + ultimas lineas, refresco cada 30s) y runner de UNIVERSAL-ENGINE (input path o URL, muestra perfil, analizadores elegidos, ledger de cobertura ANALIZADO/DESCUBIERTO/NO ACCESIBLE/VERIFICADO y hallazgos con veredicto).
+- **Backend**: GET /api/hunt_status (progreso de cazas desde hechos/) y POST /api/universal (corre el motor sobre path o URL). VERSION 0.53.0.

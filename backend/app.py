@@ -11,6 +11,7 @@ Ejecutar:
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import traceback
 import logging
 from logging.handlers import RotatingFileHandler
 import sys
@@ -119,7 +120,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.43.0"
+VERSION = "0.53.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -701,6 +702,58 @@ def api_auth_token():
         "authorization": hdr,
         "cookie_names": sorted(auth.session.cookies.get_dict().keys()),
     })
+
+
+
+@app.get("/api/hunt_status")
+def api_hunt_status():
+    """Progreso vivo de las cazas por lotes (WIDE-HUNT / RETRO-HUNT)."""
+    def _n(path):
+        try:
+            with open(path) as f:
+                return sum(1 for _ in f)
+        except Exception:
+            return 0
+    def _tail(path, n=5):
+        try:
+            lines = open(path, errors="ignore").read().strip().splitlines()
+            return lines[-n:]
+        except Exception:
+            return []
+    out = {"wide": {}, "retro": {}}
+    w = out["wide"]
+    try:
+        corpus = json.load(open(ROOT / "wide_corpus.json"))
+        w["total_corpus"] = corpus.get("total") or len(corpus.get("plugins", []))
+    except Exception:
+        w["total_corpus"] = 3260
+    w["hechos"] = _n(ROOT / "hechos" / "hunt_wide_done.txt")
+    w["ultimos"] = _tail(ROOT / "hechos" / "wide_hunt.log" if (ROOT / "hechos" / "wide_hunt.log").exists() else ROOT / "hechos" / "wide_hunt_results.json.jsonl")
+    r = out["retro"]
+    r["total_cola"] = 1007  # cola pre-cooldown calculada al lanzar
+    r["hechos"] = _n(ROOT / "hechos" / "retro_done.txt")
+    r["ultimos"] = _tail(ROOT / "hechos" / "retro_hunt.log")
+    return jsonify(out)
+
+
+@app.post("/api/universal")
+def api_universal():
+    """UNIVERSAL-ENGINE: perfilar un blanco (path fuente o URL) y correr
+    el motor con eleccion automatica de analizadores + ledger de cobertura."""
+    data = request.get_json(silent=True) or {}
+    target = (data.get("target") or "").strip()
+    if not target:
+        return jsonify({"error": "falta 'target' (path o URL)"}), 400
+    if not target.startswith("http://") and not target.startswith("https://"):
+        import os
+        if not os.path.exists(target):
+            return jsonify({"error": "path inexistente", "target": target}), 404
+    from core.universal_engine import run
+    try:
+        res = run(target)
+    except Exception as e:
+        return jsonify({"error": str(e), "trace": traceback.format_exc()[-400:]}), 500
+    return jsonify(res)
 
 
 @app.get("/api/status")

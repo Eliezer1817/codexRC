@@ -3,21 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>codexRC // terminal</title>
+  <title>CodexRC // motor de caza</title>
+  <meta name="theme-color" content="#0a0f06" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <style>
     :root {
       --bg: #000000;
       --panel: #000000;
-      --border: #10381f;
-      --green: #00c853;
-      --green-dim: #009a42;
-      --green-dark: #0a2e18;
+      --border: #26320f;
+      --green: #9fce54;        /* verde logo (muestra #89b048, aclarado p/ legibilidad) */
+      --green-dim: #71983f;     /* verde logo puro */
+      --green-deep: #4d6b28;    /* sombra del logo */
+      --green-dark: #0d140a;    /* panel logo-verdoso casi negro */
       --text: #eef5f0;
       --gray: #b0c2b6;
       --muted: #8fa396;
       --amber: #ffb000;
       --red: #ff2e4c;
-      --glow: 0 0 8px rgba(0, 200, 83, 0.4);
+      --glow: 0 0 8px rgba(159, 206, 84, 0.4);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
@@ -116,7 +121,7 @@
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--green-dim);
-      box-shadow: 0 0 10px rgba(0, 200, 83, 0.15);
+      box-shadow: 0 0 10px rgba(159, 206, 84, 0.15);
     }
     select { color: var(--text); }
     select option { background: #000; color: var(--text); }
@@ -126,7 +131,7 @@
     button {
       width: 100%;
       padding: 0.75rem;
-      background: #00b34a;
+      background: #86b13f;
       border: none;
       color: #000;
       font-family: inherit;
@@ -137,15 +142,15 @@
       cursor: pointer;
       border-radius: 3px;
       margin-top: 0.5rem;
-      box-shadow: 0 0 18px rgba(0, 200, 83, 0.45);
+      box-shadow: 0 0 18px rgba(159, 206, 84, 0.45);
       transition: background 0.15s, box-shadow 0.15s;
     }
     button:hover:not(:disabled) {
-      background: #00e05c;
-      box-shadow: 0 0 26px rgba(0, 200, 83, 0.7);
+      background: #a8d45c;
+      box-shadow: 0 0 26px rgba(159, 206, 84, 0.7);
     }
     button:disabled { opacity: 0.35; cursor: not-allowed; animation: pulse-dim 1.2s ease-in-out infinite; }
-    @keyframes pulse-dim { 50% { box-shadow: 0 0 22px rgba(0, 200, 83, 0.6); } }
+    @keyframes pulse-dim { 50% { box-shadow: 0 0 22px rgba(159, 206, 84, 0.6); } }
 
     .auth-section { margin-top: 1.4rem; }
     .auth-section h2 {
@@ -220,7 +225,7 @@
     .node.running::before, .node.running::after { border-color: var(--amber); }
     .node.running .status { color: var(--amber); }
     @keyframes running-pulse { 50% { box-shadow: 0 0 22px rgba(255, 176, 0, 0.35); } }
-    .node.success { border-color: var(--green-dim); box-shadow: 0 0 14px rgba(0, 200, 83, 0.2); }
+    .node.success { border-color: var(--green-dim); box-shadow: 0 0 14px rgba(159, 206, 84, 0.2); }
     .node.success::before, .node.success::after { border-color: var(--green-dim); }
     .node.success .label { color: var(--green); }
     .node.success .status { color: var(--green-dim); }
@@ -364,16 +369,103 @@
       .prompt { font-size: 0.92rem; }
       .node { min-width: 92px; }
     }
-</style>
+
+    /* ===== marca CodexRC ===== */
+    .menu-btn {
+      display: none;
+      position: fixed; top: 0.6rem; left: 0.6rem; z-index: 50;
+      width: 44px; height: 44px; min-height: 44px;
+      background: var(--green-dark); color: var(--green);
+      border: 1px solid var(--border); border-radius: 4px;
+      font-size: 1.3rem; cursor: pointer;
+    }
+    .brand { display: flex; align-items: center; gap: 0.9rem; }
+    .brand-logo { height: 34px; width: auto; border-radius: 3px; opacity: 0.92; }
+    .brand-name {
+      font-family: 'Courier New', ui-monospace, monospace;
+      font-size: 1.5rem; font-weight: 700; letter-spacing: 0.06em;
+      display: flex; align-items: baseline; gap: 0.1rem;
+    }
+    .brand-name .cx { color: var(--green); text-shadow: 0 0 12px rgba(159,206,84,.35); }
+    .brand-name .rc { color: #f2f5ee; }
+    .brand-name .ver { font-size: 0.7rem; color: var(--muted); margin-left: 0.55rem; letter-spacing: 0.05em; }
+    .nav { display: flex; gap: 0.6rem; }
+    .nav a {
+      color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      padding: 0.35rem 0.8rem; border: 1px solid transparent; border-radius: 3px;
+    }
+    .nav a.active { color: var(--green); border-color: var(--border); background: var(--green-dark); }
+    header { justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+
+    /* ===== motor de caza (progreso + universal engine) ===== */
+    .hunt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem; margin-bottom: 1rem; }
+    .hunt-card {
+      border: 1px solid var(--border); background: rgba(13,20,10,0.85);
+      padding: 0.85rem 1rem; border-radius: 4px;
+    }
+    .hunt-card h4 { color: var(--green); font-size: 0.8rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .hunt-card .n { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+    .hunt-card .n small { font-size: 0.75rem; color: var(--muted); font-weight: 400; }
+    .hunt-log {
+      font-family: ui-monospace, monospace; font-size: 0.72rem; color: var(--muted);
+      max-height: 4.2em; overflow: hidden; margin-top: 0.45rem; line-height: 1.45;
+      white-space: nowrap; text-overflow: ellipsis;
+    }
+    .bar { height: 8px; background: #0d140a; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
+    .bar .fill { height: 100%; background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: var(--glow); }
+    .universal { border: 1px solid var(--border); border-radius: 4px; background: rgba(13,20,10,0.85); padding: 0.9rem 1rem; }
+    .universal .row-inline { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .universal input { flex: 1; min-width: 200px; margin-bottom: 0; }
+    .universal button { width: auto; min-width: 130px; min-height: 44px; }
+    .cov { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+    .cov span {
+      font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 10px;
+      border: 1px solid var(--border); color: var(--gray); background: #000;
+    }
+    .cov b { color: var(--green); }
+    .ue-out { font-family: ui-monospace, monospace; font-size: 0.78rem; line-height: 1.5; margin-top: 0.5rem; max-height: 300px; overflow: auto; white-space: pre-wrap; }
+
+    /* ===== responsive: movil primero que nada ===== */
+    @media (max-width: 900px) {
+      .menu-btn { display: block; }
+      main { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0; width: min(85vw, 340px);
+        z-index: 40; transform: translateX(-100%); transition: transform 0.25s;
+        box-shadow: 0 0 40px rgba(0,0,0,.8); padding-top: 4.2rem;
+      }
+      body.nav-open .sidebar { transform: translateX(0); }
+      body.nav-open::before {
+        content: ""; position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.6);
+      }
+      .brand-name { font-size: 1.2rem; }
+      .brand-logo { height: 26px; }
+      header { padding: 0.7rem 0.9rem 0.7rem 3.6rem; }
+      input, select, button, textarea { min-height: 44px; font-size: 16px; }  /* iOS sin zoom */
+      .hunt-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .nav { font-size: 0.8rem; }
+      .nav a { padding: 0.25rem 0.5rem; }
+    }
+    @supports (padding: max(0px)) {
+      body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+      header { padding-top: max(0.85rem, env(safe-area-inset-top)); }
+    }
+  </style>
 </head>
 <body>
   <canvas id="matrix"></canvas>
 
   <header>
-    <div class="prompt">CODEXRC<span class="ver" id="appVersion">v?</span></div>
-    <nav style="display:flex;gap:1rem;margin-top:0.5rem;font-size:0.9rem;">
-      <a href="/" style="color:var(--green);padding:0.15rem 0.6rem;border:1px solid var(--border);background:var(--green-dark);">escáner</a>
-      <a href="/hunter.html" style="color:var(--muted);padding:0.15rem 0.6rem;">hunter</a>
+    <button id="menuBtn" class="menu-btn" aria-label="menú">☰</button>
+    <div class="brand">
+      <img src="/assets/banner.jpg" alt="CodexRC" class="brand-logo" />
+      <h1 class="brand-name"><span class="cx">codex</span><span class="rc">RC</span><span class="ver" id="appVersion">v?</span></h1>
+    </div>
+    <nav class="nav">
+      <a href="/" class="active">escáner</a>
+      <a href="/hunter.html">hunter</a>
     </nav>
   </header>
 
@@ -480,6 +572,32 @@
         </div>
       </div>
 
+      <div class="hunt-section">
+        <div class="hunt-grid">
+          <div class="hunt-card">
+            <h4>WIDE-HUNT (>=5k installs)</h4>
+            <div class="n" id="wideHechos">— <small>auditados</small></div>
+            <div class="bar"><div class="fill" id="wideBar" style="width:0%"></div></div>
+            <div class="hunt-log" id="wideLog">…</div>
+          </div>
+          <div class="hunt-card">
+            <h4>RETRO-HUNT (pre-cooldown)</h4>
+            <div class="n" id="retroHechos">— <small>auditados</small></div>
+            <div class="bar"><div class="fill" id="retroBar" style="width:0%"></div></div>
+            <div class="hunt-log" id="retroLog">…</div>
+          </div>
+        </div>
+        <div class="universal">
+          <h4 style="color:var(--green);font-size:0.8rem;letter-spacing:0.12em;margin-bottom:0.55rem;">UNIVERSAL-ENGINE — perfilá cualquier blanco</h4>
+          <div class="row-inline">
+            <input type="text" id="ueTarget" placeholder="https://sitio.com  o  /ruta/a/plugin" />
+            <button id="btnUniversal" onclick="runUniversal()">Analizar</button>
+          </div>
+          <div class="cov" id="ueCov" style="display:none"></div>
+          <div class="ue-out" id="ueOut">El motor descubre solo qué es el blanco (WordPress, Laravel, Django, APK…), elige los analizadores que aplican y reporta la cobertura honesta: ANALIZADO / DESCUBIERTO / NO ACCESIBLE / VERIFICADO.</div>
+        </div>
+      </div>
+
       <div class="results">
         <div class="titlebar">
           <span class="dots"><i></i><i></i><i></i></span>
@@ -523,7 +641,7 @@
         for (let i = 0; i < cols; i++) {
           const ch = chars[Math.floor(Math.random() * chars.length)];
           const x = i * 22, y = drops[i] * 20;
-          ctx.fillStyle = Math.random() < 0.06 ? '#4dff96' : '#0a5c2e';
+          ctx.fillStyle = Math.random() < 0.06 ? '#b8e06a' : '#3c551d';
           ctx.fillText(ch, x, y);
           if (y > c.height && Math.random() > 0.975) drops[i] = 0;
           drops[i]++;
@@ -808,6 +926,74 @@
         btn.textContent = ">> Iniciar Pipeline";
       }
     }
+  
+    // ===== MOTOR DE CAZA: progreso vivo =====
+    function refreshHunt() {
+      fetch('/api/hunt_status').then(r => r.json()).then(d => {
+        const w = d.wide || {}, r = d.retro || {};
+        const wTot = w.total_corpus || 3260;
+        const wH = w.hechos || 0;
+        const rTot = r.total_cola || 1007;
+        const rH = r.hechos || 0;
+        document.getElementById('wideHechos').innerHTML = wH + ' <small>/ ' + wTot + ' auditados</small>';
+        document.getElementById('retroHechos').innerHTML = rH + ' <small>/ ' + rTot + ' auditados</small>';
+        document.getElementById('wideBar').style.width = Math.min(100, 100 * wH / wTot) + '%';
+        document.getElementById('retroBar').style.width = Math.min(100, 100 * rH / rTot) + '%';
+        if (w.ultimos && w.ultimos.length)
+          document.getElementById('wideLog').textContent = w.ultimos[w.ultimos.length - 1];
+        if (r.ultimos && r.ultimos.length)
+          document.getElementById('retroLog').textContent = r.ultimos[r.ultimos.length - 1];
+      }).catch(() => {});
+    }
+    refreshHunt();
+    setInterval(refreshHunt, 30000);
+
+    // ===== UNIVERSAL-ENGINE =====
+    function runUniversal() {
+      const t = document.getElementById('ueTarget').value.trim();
+      if (!t) return;
+      const out = document.getElementById('ueOut');
+      const cov = document.getElementById('ueCov');
+      const btn = document.getElementById('btnUniversal');
+      btn.disabled = true; out.textContent = 'perfilando ' + t + ' …';
+      fetch('/api/universal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: t })
+      }).then(r => r.json()).then(res => {
+        btn.disabled = false;
+        if (res.error) { out.textContent = '✗ ' + res.error; return; }
+        cov.style.display = 'flex';
+        cov.innerHTML = Object.entries(res.cobertura_resumen || {}).map(([k, v]) =>
+          '<span>' + esc(k) + ': <b>' + esc(String(v)) + '</b></span>').join('');
+        const prof = res.perfil || {};
+        let lines = [];
+        lines.push('perfil: ' + (prof.framework || prof.tipo || 'desconocido'));
+        lines.push('lenguajes: ' + (prof.lenguajes || []).join(', '));
+        lines.push('analizadores: ' + (res.analizadores_elegidos || []).join(' · '));
+        lines.push('');
+        (res.hallazgos || []).forEach(h => {
+          lines.push('[' + (h._verdict || '?') + '] ' + (h.type || '?') + ' ' + (h.file || '') + ':' + (h.line || ''));
+        });
+        if (!(res.hallazgos || []).length) lines.push('sin hallazgos vivos');
+        lines.push('');
+        lines.push('cobertura por ítem:');
+        Object.entries(res.cobertura || {}).slice(0, 12).forEach(([k, v]) => {
+          lines.push('  ' + k + ' → ' + v.estado + (v.nota ? ' (' + v.nota + ')' : ''));
+        });
+        out.textContent = lines.join('\n');
+      }).catch(e => { btn.disabled = false; out.textContent = '✗ ' + e; });
+    }
+
+    // ===== menu movil =====
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      document.body.classList.toggle('nav-open');
+    });
+    document.addEventListener('click', (e) => {
+      if (document.body.classList.contains('nav-open') &&
+          !e.target.closest('.sidebar') && !e.target.closest('.menu-btn'))
+        document.body.classList.remove('nav-open');
+    });
+
   </script>
 <script>
   // seguro extra: si el navegador quedo con un scroll horizontal viejo
