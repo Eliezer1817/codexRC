@@ -70,7 +70,7 @@ SINKS: List[Dict[str, Any]] = [
      r"(?:\beval\s*\(|\bsystem\s*\(|\bexec\s*\(|\bpassthru\s*\(|"
      r"shell_exec\s*\(|\bpopen\s*\(|proc_open\s*\()"},
     {"type": "SSRF (red)", "sev": "media", "pat":
-     r"(?:wp_remote_(?:get|post|request)\s*\(|curl_exec\s*\()"},
+     r"(?:wp_remote_(?:get|post|request)\s*\(|curl_exec\s*\(|fsockopen\s*\()"},
 ]
 
 _ASSIGN = re.compile(r"^\s*(?:global\s+[^;]+;\s*)?"

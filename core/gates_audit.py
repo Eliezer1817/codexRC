@@ -34,6 +34,10 @@ NONCE_RE = re.compile(r"wp_verify_nonce|check_ajax_referer|wp_nonce")
 HOOK_RE = re.compile(
     r"add_action\s*\(\s*['\"](wp_ajax_(nopriv_)?[\w\-]+|wc_ajax_[\w\-]+)['\"]"
     r"\s*,\s*(.+?)\s*\)")
+# loader propio (patron loader->add_action(hook, $obj, 'metodo'))
+LOADER_HOOK_RE = re.compile(
+    r"add_action\s*\(\s*['\"](wp_ajax_(nopriv_)?[\w\-]+|wc_ajax_[\w\-]+)"
+    r"['\"]\s*,\s*\$\w+\s*,\s*['\"]([A-Za-z_]\w*)['\"]")
 REST_RE = re.compile(r"register_rest_route\s*\(", re.I)
 PERM_TRUE_RE = re.compile(r"permission_callback['\"]?\s*=>\s*"
                           r"(__return_true|'__return_true')")
@@ -93,10 +97,16 @@ def audit(root: str) -> Dict[str, Any]:
     hook_targets: List[Dict[str, str]] = []
     for rel, lines in srcs.items():
         for i, line in enumerate(lines):
-            for m in HOOK_RE.finditer(line):
+            loader_actions = {mm.group(1) for mm in LOADER_HOOK_RE.finditer(line)}
+            for m in list(HOOK_RE.finditer(line)) + list(LOADER_HOOK_RE.finditer(line)):
                 action = m.group(1)
+                if m.re is HOOK_RE and action in loader_actions:
+                    continue
                 nopriv = "nopriv" in action
-                cb = _resolve_callback(m.group(3) or "")
+                if m.re is LOADER_HOOK_RE:
+                    cb = m.group(3)          # metodo directo del loader
+                else:
+                    cb = _resolve_callback(m.group(3) or "")
                 hook_targets.append({"action": action, "nopriv": nopriv,
                                      "cb": cb or "", "file": rel, "line": i + 1})
 

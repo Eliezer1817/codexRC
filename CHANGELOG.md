@@ -1,3 +1,15 @@
+## v0.47.0 — EVIDENCE-CHAIN + ABOGADOS: razonamiento de evidencia (2026-10-02)
+
+Cambio de filosofía inspirado en RacerD/Infer/Pysa: no preguntar "¿podría ser vulnerable?" sino "¿qué evidencia tengo para afirmar que lo es?". Nuevo `core/evidence.py`:
+
+- **Cadena de evidencia por finding:** SOURCE (¿input controlable por el atacante? con clasificación: superglobal/cookie/header-semi), FLOW (vars tainteadas y saltos), AUTH (compuertas: nonce/caps/nopriv + entrada resuelta por BFS de callers hasta 3 niveles: hook → callers → función del sink), SANITIZATION (sanitizadores en la ruta, incluida la línea del sink), SINK (tipo/línea/severidad), CORRELATION (qué analizadores lo vieron), DYNAMIC (slot para evidencia dinámica futura).
+- **Abogados deterministas (el LLM nunca es juez):** FISCAL debe probar los 4 requisitos del ataque (source controlado, taint al sink, sin sanitización efectiva, alcance sin privilegios); DEFENSA busca refutaciones fuertes (gate protegido, sanitizador en ruta, prepare con placeholders, contexto solo-admin, alcance no resuelto) y débiles (media); JUEZ pesa con reglas fijas.
+- **Veredictos en escala RacerD (se reporta solo lo demostrable):** CONFIRMED (estática completa + dinámica reproducida), DEMOSTRADO-ESTATICO (prueba estática completa), PROBABLE (flujo probado, alcance sin resolver), CONTESTADO (refutación parcial), DESCARTADO (refutación fuerte). Los DESCARTADO se filtran de los hallazgos vivos de DIFF-HUNT y se contabilizan en `descartados_defensa`.
+- **GATES-AUDIT v0.43.1:** parsea hooks registrados vía loader propio (`$this->loader->add_action('wp_ajax_nopriv_x', $obj, 'metodo')`) y deduplica contra HOOK_RE clásico.
+- **TAINT-TRACE:** nuevo sink `fsockopen` (red) en la familia SSRF.
+- **Validación:** (1) lab 3/3 — handler nopriv sin sanitizar → DEMOSTRADO-ESTATICO (fiscal 4/4), handler con nonce+caps → DESCARTADO por gate, sanitizado con absint → ni genera finding; (2) sobre RegistrationMagic real: los 4 candidatos del admin caen DESCARTADO (nonce+manage_options), el XSS de paypal.php cae DESCARTADO (esc_url en el sink), y el 0-day real del IPN downgrade (`test_ipn`) queda DEMOSTRADO-ESTATICO con alcance SIN AUTENTICACION y salto resuelto `validate_ipn -> callback -> paypal_ipn (wp_ajax_nopriv)`.
+- **Integración:** DIFF-HUNT adjunta `_chain` y `_verdict` a cada hallazgo vivo, ordena por veredicto y expone `descartados_defensa`. CLI: `python3 core/evidence.py <plugin_root>` (cadenas de todos los findings taint, ordenadas por veredicto).
+
 ## v0.46.0 — VDP-1300: directorio completo de Patchstack (2026-10-02)
 
 - Extracción del directorio publico de VDP activos de patchstack.com/database/vdp

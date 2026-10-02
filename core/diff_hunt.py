@@ -216,9 +216,23 @@ def scan(slug: str, workdir: str) -> Dict[str, Any]:
         vivos.append(h)
     fp_annotate(vivos, new_root)
     vivos = [h for h in vivos if not h.get("_fp")]
-    vivos.sort(key=lambda h: 0 if h.get("_gate") in
-               ("CANDIDATO-BAC", "REST-ABIERTO") else 1)
+    # v0.47.0: cadena de evidencia + abogados (fiscal/defensa/juez)
+    try:
+        from core.evidence import annotate as evidence_annotate
+        evidence_annotate(new_root, vivos, gates,
+                          analyzers=["TAINT-TRACE", "GATES-AUDIT",
+                                     "FP-AUTO-CLOSE", "DIFF-HUNT"])
+    except Exception:
+        pass
+    order_v = {"CONFIRMED": 0, "DEMOSTRADO-ESTATICO": 1, "PROBABLE": 2,
+               "CONTESTADO": 3, "DESCARTADO": 4}
+    n_desc = sum(1 for h in vivos if h.get("_verdict") == "DESCARTADO")
+    vivos.sort(key=lambda h: (order_v.get(h.get("_verdict", ""), 5),
+                              0 if h.get("_gate") in
+                              ("CANDIDATO-BAC", "REST-ABIERTO") else 1))
+    vivos = [h for h in vivos if h.get("_verdict") != "DESCARTADO"]
     rec["hallazgos"] = vivos
+    rec["descartados_defensa"] = n_desc
     rec["segundos"] = round(time.time() - t0, 1)
     return rec
 
@@ -278,7 +292,7 @@ def main() -> None:
             print(f"   [{h.get('severity', '?')}] "
                   f"{h.get('type', h.get('family', '?'))} "
                   f"{h.get('file', '')}:{h.get('line', '')} "
-                  f"gate={h.get('_gate', '?')}", flush=True)
+                  f"verdicto={h.get('_verdict', '?')} gate={h.get('_gate', '?')}", flush=True)
 
     with concurrent.futures.ThreadPoolExecutor(
             max_workers=args.workers) as ex:
