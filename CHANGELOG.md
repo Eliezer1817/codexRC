@@ -3,6 +3,19 @@
 Historial completo de versiones, de la más reciente a la más antigua.
 Los parches menores (x.y.z) también viven aquí; el README solo lista los hitos.
 
+## v0.45.0 — DIFF-HUNT
+
+Pivote de estrategia: en vez de auditar plugins enteros (los top estan blindados),
+caza SOLO el codigo nuevo. `core/diff_hunt.py`: descarga version actual + anterior de
+cada slug (API wp.org), calcula diff de lineas agregadas/modificadas en .php propios
+(sin vendor/assets), y corre TAINT-TRACE + CVE-MATCH + GATES-AUDIT + FP-AUTO-CLOSE
+restringido a esas lineas nuevas. Logica: lo recien escrito no paso por ningun auditor
+ni por los bots de los demas hunters. Flujo de operacion: filtrar GOLDEN LIST por
+`last_updated <= 21 dias` e `installs >= 10k` (API en paralelo), cazar los diffs de
+todos. Validado en vivo: 37 plugins VDP frescos diffeados; cartflows resulto ser un
+parche de seguridad (FP), captcha-code-authentication heredo una comparacion floja
+solo en registro (categoria no pagada).
+
 ## v0.44.0 — FP-AUTO-CLOSE
 
 Nuevo modulo `core/fp_autoclose.py`: segunda capa de verificacion tras GATES-AUDIT.

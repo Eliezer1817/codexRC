@@ -53,6 +53,7 @@ Solo los hitos, de lo más reciente a lo más antiguo. El detalle completo de ca
 (incluidos parches menores) está en [CHANGELOG.md](CHANGELOG.md).
 
 - **v0.42.0 — PLUGIN-BATCH:** caza estática de plugins WordPress por slugs con un comando (descarga + TAINT-TRACE + CVE-MATCH, filtro de ruido, flag VDP).
+- **v0.45.0 — DIFF-HUNT:** caza solo en líneas nuevas de versiones recientes (diff entre versión actual y anterior, filtrado por `last_updated`); lo recién escrito es lo menos auditado.
 - **v0.44.0 — FP-AUTO-CLOSE:** dictamina solo los falsos positivos conocidos (prepare/absint, XSS escapado, whitelist de upload, in_array estricto, gates protegidos, ruido público por diseño); la consola solo muestra hallazgos vivos.
 - **v0.43.0 — GATES-AUDIT:** veredicto automático de protección por handler (caps/nonce/nopriv/REST abierto); PLUGIN-BATCH entrega cada hallazgo ya dictaminado y prioriza los candidatos BAC.
 - **v0.41.0 — VENDOR-FARM:** descubrimiento de familias de vendors WP en rango pagable (10k-200k installs) con estimación de paga Patchstack.
