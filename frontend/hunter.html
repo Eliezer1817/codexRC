@@ -346,9 +346,13 @@ esperando objetivo...</pre>
         window._arsenalQueue.push({ url: u, tipo: (f.type || "").trim() });
       });
       const urls = window._arsenalQueue.map(x => x.url);
+      window._arsenalUrls = urls;  // FIX: variable muerta (renombrada a _arsenalQueue) tumbo el render completo en silencio
+      const label = urls.length
+        ? "⚡ ENVIAR " + urls.length + " CANDIDATOS AL ARSENAL"
+        : "⚡ ABRIR ARSENAL (sin candidatos inyectables: elegís blancos a mano)";
       const barra = `<div style="margin-bottom:0.6rem;display:flex;gap:0.5rem;flex-wrap:wrap">
         <button style="width:auto;margin:0;background:var(--red-dark);border:1px solid var(--red);color:var(--red);font-size:0.8rem;min-height:40px"
-          onclick="enviarArsenal()">⚡ ENVIAR ${window._arsenalUrls.length} CANDIDATOS AL ARSENAL</button>
+          onclick="enviarArsenal()">${label}</button>
         <span style="color:var(--muted);font-size:0.7rem;align-self:center">los manda con {INJECT} listo en su param; elegís payload en el arsenal y vuela a todos</span>
       </div>`;
       box.innerHTML = barra + findings.map(f => {
@@ -386,8 +390,7 @@ esperando objetivo...</pre>
     }
 
     function enviarArsenal() {
-      const urls = window._arsenalUrls || [];
-      if (!urls.length) return alert("no hay candidatos con URL");
+      // sin candidatos tambien abre: el arsenal tiene textarea para blancos a mano
       sessionStorage.setItem("arsenal_queue", JSON.stringify(window._arsenalQueue || []));
       window.open("/arsenal.html", "_blank");  // otra pestana: el hunter y su caza siguen aca
     }
@@ -589,7 +592,13 @@ esperando objetivo...</pre>
               clearInterval(poll);
               finishHunt(job);
             }
-          } catch (e) { /* seguimos intentando */ }
+          } catch (e) {
+            // error de render visible: nunca mas un boton muerto en silencio (lección ⚡)
+            if (!window._renderErrMostrado) {
+              window._renderErrMostrado = true;
+              logLine("XX error al pintar la caza: " + (e && e.message ? e.message : e));
+            }
+          }
         }, 900);
       } catch (err) {
         logLine("✗ ERROR: " + err.message);
