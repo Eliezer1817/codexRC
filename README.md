@@ -6,6 +6,10 @@
 
 > Solo usar en objetivos que tengas autorización para auditar.
 
+> **¿Sos una IA (o le vas a pasar esta herramienta a una)?** Leé primero
+> [AGENTS.md](AGENTS.md): manual operativo paso a paso con reglas de oro,
+> comandos y cómo interpretar cada veredicto.
+
 > ⚠️ **Proyecto en desarrollo activo:** se actualiza con mucha frecuencia (a veces varias versiones por día) y la interfaz y las baterías cambian sin aviso. **No recomendado todavía para uso en producción**: tomalo como una herramienta en construcción. Si igual lo probás, revisá siempre esta sección de novedades antes de correr la última versión. Las sondas son de lectura A→B: contrastan el acceso con y sin sesión, sin alterar datos del objetivo.
 
 ## Arquitectura
