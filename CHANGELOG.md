@@ -214,3 +214,6 @@ Lo nuevo de cada entrega, de la más reciente a la más antigua:
 - Logo + marca CodexRC agregados tambien a hunter.html (identidad consistente en ambas paginas), con header sticky en movil.
 - Limpieza de CSS muerta (`.prompt` ya no existia tras el rebrand, quedaban reglas huerfanas).
 - Validado con Chrome headless real (CDP, emulacion de dispositivo 390px y 1366px) en las 4 combinaciones pagina x ancho: logo carga, hamburguesa solo aparece en movil, nav sin overlap, pipeline nunca se tapa.
+
+## v0.53.2 — fix overflow real del panel motor de caza (2026-10-02)
+- Bug confirmado con datos reales (reportado por el usuario con captura: linea de log "[1578/1615] gelato-integration-for-woocommerce" cortada en el borde de pantalla): `.hunt-card` no tenia `min-width:0` ni `overflow:hidden`, asi que el texto `white-space:nowrap` de `.hunt-log` (lineas de progreso WIDE-HUNT/RETRO-HUNT) forzaba a la tarjeta a estirarse mas alla del viewport (clasico "minimo automatico" de CSS Grid con contenido nowrap). Medido con Chrome headless: antes del fix la tarjeta llegaba a 476px en una pantalla de 390px (86px afuera); despues del fix, 366px (adentro, 0 elementos desbordados).

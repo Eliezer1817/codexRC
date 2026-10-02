@@ -400,6 +400,7 @@
     .hunt-card {
       border: 1px solid var(--border); background: rgba(13,20,10,0.85);
       padding: 0.85rem 1rem; border-radius: 4px;
+      min-width: 0; overflow: hidden;  /* evita que el texto nowrap de .hunt-log estire la tarjeta fuera de pantalla */
     }
     .hunt-card h4 { color: var(--green); font-size: 0.8rem; letter-spacing: 0.12em; margin-bottom: 0.5rem; text-transform: uppercase; }
     .hunt-card .n { font-size: 1.25rem; font-weight: 700; color: var(--text); }
@@ -407,7 +408,7 @@
     .hunt-log {
       font-family: ui-monospace, monospace; font-size: 0.72rem; color: var(--muted);
       max-height: 4.2em; overflow: hidden; margin-top: 0.45rem; line-height: 1.45;
-      white-space: nowrap; text-overflow: ellipsis;
+      white-space: nowrap; text-overflow: ellipsis; max-width: 100%;
     }
     .bar { height: 8px; background: #0d140a; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin: 0.5rem 0; }
     .bar .fill { height: 100%; background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: var(--glow); }
