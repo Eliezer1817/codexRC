@@ -6,6 +6,9 @@
 
 > Solo usar en objetivos que tengas autorización para auditar.
 
+> **Demo real:** mira el dashboard cazando en vivo (login, sondas y hallazgo
+> verificado) en [docs/demo_caza_dashboard.mp4](docs/demo_caza_dashboard.mp4).
+
 > **¿Sos una IA (o le vas a pasar esta herramienta a una)?** Leé primero
 > [AGENTS.md](AGENTS.md): manual operativo paso a paso con reglas de oro,
 > comandos y cómo interpretar cada veredicto.
