@@ -1,0 +1,8 @@
+contact-form-7
+litespeed-cache
+elementor
+wordpress-seo
+akismet
+google-site-kit
+wpforms-lite
+woocommerce

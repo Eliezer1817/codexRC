@@ -1,3 +1,13 @@
+## v0.48.0 — WIDE-HUNT: el corpus se multiplica (2026-10-02)
+
+Con los abogados cerrando los falsos positivos solos (v0.47.0), limitar la caza a los VDP de Patchstack dejó de tener sentido técnico: el VDP no decide a quien cazamos, solo a quien reportamos.
+
+- **`core/wide_corpus.py`** — corpus completo de wordpress.org vía API pública (browse=popular, umbral configurable, por defecto ≥5k installs): **3.260 blancos** (2.186 con ≥10k, 466 con ≥100k) en ~16 segundos, refrescable con `--refresh`.
+- **`vdp_mapa.json`** — mapa de pagabilidad refrescado de `vdp.patchstack.com/api/database/vdp` (52 páginas): **1.298 VDP únicos, 710 con bounty individual** (de $100 a $14.400).
+- **`core/hunt_wide.py`** — runner: cola = corpus ∩ updates frescos (`--dias 90`) menos los ya auditados (`hechos/hunt_wide_done.txt`), DIFF-HUNT en paralelo (`--workers`), y cada hallazgo sale marcado con `vdp` y `paga`. Modo `--solo-pagables` para priorizar. Con `--limit N` para tandas cortas.
+- **Fix v0.47.1:** la cadena de evidencia ya no embebe el finding vivo (referencia circular al exportar JSON); guarda copia plana.
+- **Validación:** smoke 4/4 (akismet, google-site-kit, wpforms-lite, woocommerce limpios); cola real detectada: 2.108 plugins con updates ≤90 días, 417 pagables.
+
 ## v0.47.0 — EVIDENCE-CHAIN + ABOGADOS: razonamiento de evidencia (2026-10-02)
 
 Cambio de filosofía inspirado en RacerD/Infer/Pysa: no preguntar "¿podría ser vulnerable?" sino "¿qué evidencia tengo para afirmar que lo es?". Nuevo `core/evidence.py`:

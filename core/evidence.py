@@ -384,6 +384,9 @@ def annotate(root: str, findings: List[Dict[str, Any]],
             continue
         try:
             ch = build_chain(root, h, gates, analyzers)
+            # copia plana: evitar referencia circular (finding dentro de su cadena)
+            ch["finding"] = {k: h.get(k) for k in
+                             ("type", "file", "line", "severity", "flow")}
             h["_chain"] = ch
             h["_verdict"] = ch["juez"]["verdicto"]
         except Exception as e:
