@@ -432,8 +432,38 @@ esperando objetivo...</pre>
       const j = await r.json();
       if (!r.ok) { btn.disabled = false; btn.textContent = ">> Iniciar LOTE (caza en serie)";
         return alert(j.error || "error"); }
+      localStorage.setItem("codexrc_lastHunt", JSON.stringify({ type: "batch", id: j.batch_id }));
       logLine("═══ LOTE " + j.batch_id + " · " + j.total + " blancos ═══");
       pollBatch(j.batch_id, btn);
+    }
+
+    window._batchJobs = {};  // job_id -> job (hallazgos vivos del lote)
+
+    async function batchRenderJobs(b) {
+      // trae el detalle de cada blanco terminado: hallazgos, leaks, ⚡ y export
+      for (const row of b.results || []) {
+        if (!row.job_id || row.status === "invalid" || row.status === "running") continue;
+        if (window._batchJobs[row.job_id]) continue;
+        try {
+          const jr = await fetch("/api/jobs/" + row.job_id);
+          if (jr.ok) window._batchJobs[row.job_id] = await jr.json();
+        } catch (e) {}
+      }
+      const leaks = [], findings = [], exports = [];
+      for (const [jid, job] of Object.entries(window._batchJobs)) {
+        leaks.push(...(job.leaks || []));
+        findings.push(...(job.findings || []));
+        exports.push(`<div style="margin-bottom:0.25rem">▸ ${esc(job.url || "")} · ` +
+          `<a href="/api/jobs/${jid}/export?format=pdf">PDF</a> · ` +
+          `<a href="/api/jobs/${jid}/export?format=txt">TXT</a> · ` +
+          `<a href="/api/jobs/${jid}/export?format=json">JSON</a></div>`);
+      }
+      if (leaks.length) renderLeaks(leaks);
+      if (findings.length) renderFindings(findings);
+      else document.getElementById("findings").innerHTML =
+        '<div class="empty">sin hallazgos en el lote (todavía)</div>';
+      if (exports.length) document.getElementById("exportLinks").innerHTML =
+        "<b>Descargar informes del lote:</b>\n" + exports.join("");
     }
 
     async function pollBatch(bid, btn) {
@@ -443,6 +473,7 @@ esperando objetivo...</pre>
         const r = await fetch("/api/batch/" + bid);
         if (!r.ok) break;
         const b = await r.json();
+        await batchRenderJobs(b);
         panel.textContent = b.results.map(x => {
           if (x.status === "invalid") return "XX " + x.url + " (" + x.error + ")";
           const mark = x.status === "failed" ? "XX" : "OK";
@@ -517,6 +548,7 @@ esperando objetivo...</pre>
         });
         const started = await res.json();
         if (!res.ok) throw new Error(started.error || "Error al iniciar");
+        localStorage.setItem("codexrc_lastHunt", JSON.stringify({ type: "job", id: started.job_id }));
         logLine("→ job " + started.job_id + " · araña + corpus XSS en marcha");
         let last = 0;
         const poll = setInterval(async () => {
@@ -542,6 +574,39 @@ esperando objetivo...</pre>
         btn.textContent = ">> Iniciar Caza";
       }
     }
+
+    // ── restaurar la última caza: salir de la página (arsenal, etc.) ya no borra nada ──
+    (function restaurar() {
+      let last = null;
+      try { last = JSON.parse(localStorage.getItem("codexrc_lastHunt") || "null"); } catch (e) {}
+      if (!last) return;
+      if (last.type === "job") {
+        fetch("/api/jobs/" + last.id).then(r => r.ok ? r.json() : null).then(job => {
+          if (!job || !job.id) return;
+          document.getElementById("summary").innerHTML =
+            `↩ ÚLTIMA CAZA (${esc(job.status)}) · <b>${(job.summary || {}).total || 0} hallazgos</b>`;
+          renderPipeline(job.pipeline?.nodes || {});
+          renderLeaks(job.leaks || []);
+          if ((job.findings || []).length) renderFindings(job.findings);
+          document.getElementById("exportLinks").innerHTML =
+            "<b>Descargar informe:</b> " +
+            `<a href="/api/jobs/${last.id}/export?format=pdf">PDF</a> · ` +
+            `<a href="/api/jobs/${last.id}/export?format=txt">TXT</a> · ` +
+            `<a href="/api/jobs/${last.id}/export?format=json">JSON</a>`;
+          logLine("↩ última caza restaurada (job " + last.id + ")");
+        }).catch(() => {});
+      } else if (last.type === "batch") {
+        fetch("/api/batch/" + last.id).then(r => r.ok ? r.json() : null).then(b => {
+          if (!b) return;
+          document.getElementById("summary").innerHTML =
+            `↩ ÚLTIMO LOTE (${esc(b.status)}) · <b>${(b.summary || {}).hallazgos || 0} hallazgos</b>`;
+          batchRenderJobs(b).then(() => logLine("↩ último lote restaurado (batch " + last.id + ")"));
+          const panel = document.getElementById("batchPanel");
+          if (b.status === "finished" && panel && !panel.textContent.trim())
+            panel.textContent = "lote restaurado: informes y hallazgos abajo";
+        }).catch(() => {});
+      }
+    })();
 
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");
