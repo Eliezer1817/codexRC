@@ -156,7 +156,9 @@
       const m = document.getElementById("categorias");
       m.innerHTML = "";
       data.categorias.forEach(c => {
-        const ext = c.payloads.filter(p => p.extremo).length;
+        const all = (c.grupos || []).flatMap(g => g.items || []);
+        const ext = all.filter(p => p.extremo).length;
+        c.payloads = all;
         const box = document.createElement("div");
         box.className = "caja-roja";
         box.innerHTML = `
