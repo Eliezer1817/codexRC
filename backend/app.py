@@ -11,6 +11,7 @@ Ejecutar:
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import os
 import traceback
 import logging
 from logging.handlers import RotatingFileHandler
@@ -120,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.53.0"
+VERSION = "0.54.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -1474,6 +1475,64 @@ def _safe_500(exc):
 @app.route("/hunter.html")
 def hunter_page():
     return send_from_directory(app.static_folder, "hunter.html")
+
+
+@app.route("/arsenal.html")
+def arsenal_page():
+    return send_from_directory(app.static_folder, "arsenal.html")
+
+
+# ---------- ARSENAL: payloads gateados con contrasena ----------
+# Los payloads EXTREMO solo se entregan tras POST con contrasena
+# correcta (ARSENAL_PASSWORD, default "extremo"). Cada intento —
+# fallido o no — queda registrado en el log del backend (auditoria).
+ARS_PASSWORD = os.environ.get("ARSENAL_PASSWORD", "extremo")
+
+
+def _arsenal_data(include_extreme: bool) -> Dict[str, Any]:
+    from core.arsenal import CATEGORIES
+    categorias = []
+    for _cid, (titulo, grupos) in CATEGORIES.items():
+        gs = []
+        for gname, entries in grupos.items():
+            items = []
+            for name, payload, note in entries:
+                items.append({"nombre": name, "payload": payload,
+                              "nota": note, "extremo": True})
+            gs.append({"nombre": gname, "items": items})
+        categorias.append({"id": _cid, "titulo": titulo, "grupos": gs})
+    return {"version": VERSION, "categorias": categorias}
+
+
+@app.get("/api/arsenal")
+def api_arsenal():
+    """Inventario LAB: nombres y categorias; los payloads llegan
+    en cajas rojas, los EXTREMO se entregan solo con contrasena."""
+    from core.arsenal import CATEGORIES
+    categorias = []
+    for cid, (titulo, grupos) in CATEGORIES.items():
+        gs = []
+        for gname, entries in grupos.items():
+            items = [{"nombre": n, "payload": p, "nota": note, "extremo": False}
+                     for (n, p, note) in entries]
+            gs.append({"nombre": gname, "items": items})
+        categorias.append({"id": cid, "titulo": titulo, "grupos": gs})
+    return jsonify({"version": VERSION, "categorias": categorias,
+                    "extreme": False})
+
+
+@app.post("/api/arsenal/extreme")
+def api_arsenal_extreme():
+    """Desbloquea TODOS los payloads (incl. extremos). Exige contrasena.
+    Registra en log cada intento, exitoso o fallido (auditoria)."""
+    body = request.get_json(silent=True) or {}
+    pw = str(body.get("password") or "")
+    remote = request.remote_addr or "?"
+    if pw != ARS_PASSWORD:
+        app.logger.warning("[ARSENAL] intento de desbloqueo FALLIDO desde %s", remote)
+        return jsonify({"error": "contrasena incorrecta"}), 403
+    app.logger.warning("[ARSENAL] MODO EXTREMO desbloqueado desde %s", remote)
+    return jsonify(_arsenal_data(include_extreme=True) | {"extreme": True})
 
 
 if __name__ == "__main__":
