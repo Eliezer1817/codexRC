@@ -19,6 +19,7 @@
 # Salida: solo hallazgos VIVOS sobre lineas nuevas. 💥 = critico.
 # ============================================================
 import argparse
+import concurrent.futures
 import difflib
 import json
 import os
@@ -228,6 +229,7 @@ def main() -> None:
     ap.add_argument("--vdp", default="")
     ap.add_argument("--out", default="")
     ap.add_argument("--workdir", default=WORK)
+    ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
     slugs: List[str] = []
@@ -250,29 +252,42 @@ def main() -> None:
             pass
 
     results = []
-    for i, slug in enumerate(slugs, 1):
-        rec = scan(slug, args.workdir)
-        if slug in vdp:
+    done = [0]
+
+    def report(rec):
+        done[0] += 1
+        if rec.get("slug") in vdp:
             rec["vdp"] = True
         results.append(rec)
         if rec.get("status") != "ok":
-            print(f"[{i}/{len(slugs)}] {slug}: {rec.get('status')}")
-            continue
+            print(f"[{done[0]}/{len(slugs)}] {rec['slug']}: "
+                  f"{rec.get('status')}", flush=True)
+            return
         vivos = rec["hallazgos"]
         crit = [h for h in vivos if str(h.get("severity", "")).lower()
                 in ("critical", "alta", "high")]
         mark = "💥💥" if crit else ("💥" if vivos else "✅")
         vdp_tag = " [VDP ACTIVO]" if rec.get("vdp") else ""
-        print(f"[{i}/{len(slugs)}] {mark} {slug} v{rec['version']}: "
+        print(f"[{done[0]}/{len(slugs)}] {mark} {rec['slug']} "
+              f"v{rec['version']}: "
               f"+{rec['archivos_php_nuevos']} archivos, "
               f"+{rec['lineas_nuevas']} lineas nuevas, "
               f"{len(vivos)} vivos{vdp_tag} "
-              f"({rec.get('segundos', '?')}s)")
+              f"({rec.get('segundos', '?')}s)", flush=True)
         for h in vivos[:12]:
             print(f"   [{h.get('severity', '?')}] "
                   f"{h.get('type', h.get('family', '?'))} "
                   f"{h.get('file', '')}:{h.get('line', '')} "
-                  f"gate={h.get('_gate', '?')}")
+                  f"gate={h.get('_gate', '?')}", flush=True)
+
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=args.workers) as ex:
+        futs = [ex.submit(scan, slug, args.workdir) for slug in slugs]
+        for fut in concurrent.futures.as_completed(futs):
+            rec = fut.result()
+            if rec is None:
+                continue
+            report(rec)
 
     if args.out:
         with open(args.out, "w") as f:

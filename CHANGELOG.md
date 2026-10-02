@@ -1,3 +1,20 @@
+## v0.46.0 — VDP-1300: directorio completo de Patchstack (2026-10-02)
+
+- Extracción del directorio publico de VDP activos de patchstack.com/database/vdp
+  (1.300 productos con bounty) via navegador real (GHOSTGATE): el endpoint /api/database/vdp
+  solo responde con sesion de la app y la WP API (wp.patchstack.com) rechaza IPs no autorizadas.
+- Cruce automatico con api.wordpress.org: slug, version, installs, last_updated.
+- Lista maestra: cz_hunt/vdp/vdp_full.json (producto, installs, bounty USD, vendor, axp).
+- Motivacion: el GOLDEN LIST tenia 76 plugins y el lote 90-dias completo (69 plugins) dio
+  0 bugs pagables; el directorio real es 17x mas grande y esta lleno de medianos (1k-100k)
+  con bounty ($250-$2,600) poco cazados.
+
+## v0.45.1 — DIFF-HUNT paralelo (2026-10-02)
+
+- core/diff_hunt.py: ThreadPoolExecutor (--workers, default 4); cada slug se diffea y
+  escanea en paralelo, reporte de progreso en vivo con flush.
+- Uso: python3 core/diff_hunt.py --workers 6 --targets lista.txt
+
 # Changelog de codexRC
 
 Historial completo de versiones, de la más reciente a la más antigua.
