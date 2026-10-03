@@ -339,6 +339,22 @@ class AuthManager:
             # 4a. Auto-descubrimiento: buscar en el JavaScript de la SPA el
             #     endpoint real de login (ej. post("/auth/doSignin") + apiUrl).
             descubiertos = self._discover_spa_login_endpoints(login_url, soup)
+            # CONFIG-JSON (v0.56.4, caso lucha.cc): SPAs moviles (Vue/vite)
+            # esconden la API en un config.json runtime con baseApiUrl. El
+            # HTML no menciona la API en ningun lado; sin esto el Hunter solo
+            # ve la ruta Vue vacia y el login imposible.
+            _o = "{0.scheme}://{0.netloc}".format(urlparse(login_url))
+            _cfg_api = None
+            try:
+                _cfg = self.session.get(_o + "/config.json", timeout=15).json()
+                _base = _cfg.get("baseApiUrl")
+                if isinstance(_base, str) and _base.startswith("http"):
+                    _cfg_api = _base.rstrip("/")
+                    step("config_json_api", f"baseApiUrl -> {_cfg_api}")
+            except Exception:
+                pass
+            if _cfg_api:
+                descubiertos = [_cfg_api + "/login"] + (descubiertos or [])
             step("endpoints_descubiertos", descubiertos or "ninguno")
             if descubiertos:
                 api_urls = descubiertos[:3]
