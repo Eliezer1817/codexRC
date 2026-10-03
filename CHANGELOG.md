@@ -667,3 +667,11 @@ llena (2120) sin heredar nuestro avance; shard 0/2 + 1/2 = 1071 +
 Validado: --limit 12 sobre pagables reales (0 movidos, esquema de
 salida correcto); JSON de diff_hunt compatible con la memoria de
 versiones.
+
+## v0.62.7 — REVIVE-SOLO: Termux:Boot
+
+boot_install.sh: instala ~/.termux/boot/00-codexrc.sh para que cada
+reinicio de Android levante el server solo (wake-lock + auto_update).
+Requiere la app Termux:Boot de F-Droid, abrirla una vez, y luego
+bash boot_install.sh. Android puede matar Termux cuando quiera: con
+esto, cada arranque del telefono lo revive automaticamente.
