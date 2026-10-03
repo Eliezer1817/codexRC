@@ -1,3 +1,18 @@
+## v0.57.3 — HIGIENE DE DEPENDENCIAS (Termux-first)
+
+- requirements.txt reescrito: 100% instalable en Termux armv7l. Fuera `rich`
+  (declarado pero jamas importado), adentro `websocket-client` (COV-BAIT) y
+  `fpdf2` (export PDF) que se usaban sin estar declarados.
+- NUEVO requirements-pc.txt: `curl_cffi` sale del requirements base porque
+  NO compila en Termux y rompia `pip install -r requirements.txt` completo.
+  En PC: `pip install -r requirements-pc.txt`.
+- Chromium: `_find_browser()` ahora tambien mira `$PREFIX/bin/*` de Termux
+  (repo termux-x11) antes de darse por vencido.
+- `/api/status` devuelve `deps`: salud de cada dependencia opcional con su
+  fallback documentado (httpx→hilos, websocket→WS off, fpdf→TXT/JSON,
+  chromium→fpdf2). Verificar una instalacion de Termux = 1 request.
+- Validado: `pip install -r requirements.txt` resuelve limpio (7/7 OK).
+
 ## v0.50.0 — CODEX-OBSERVE + CODEX-REGRESS, alcance reducido (2026-10-02)
 
 El usuario comparti una segunda especificacion tecnica: CODEX-OBSERVE (observabilidad)

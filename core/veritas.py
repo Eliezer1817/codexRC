@@ -49,6 +49,14 @@ def _find_browser() -> Optional[str]:
                 p = b + n
                 if p and os.path.exists(p):
                     return p
+    # Termux (Android): chromium del repo tur-test/termux-x11 vive en
+    # $PREFIX/bin; normalmente ya esta en PATH pero lo aseguramos
+    prefix = os.environ.get("PREFIX", "")
+    if prefix:
+        for n in ("chromium-browser", "chromium", "chrome"):
+            p = os.path.join(prefix, "bin", n)
+            if os.path.exists(p):
+                return p
     return None
 
 

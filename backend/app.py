@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.57.2"
+VERSION = "0.57.3"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -773,12 +773,44 @@ def api_universal():
     return jsonify(res)
 
 
+def _deps_health() -> Dict[str, Any]:
+    """Salud de dependencias (opcional pesadas incluidas): muestra que
+    carriles estan activos y con cual fallback queda cada uno si falta
+    algo. Pensado para verificar una instalacion de Termux en 1 request."""
+    import importlib.util
+    activos = {}
+    for mod, nota in [
+        ("requests", "core HTTP (requerido)"),
+        ("bs4", "parser HTML (requerido)"),
+        ("httpx", "SLIPSTREAM async · sin esto: fallback a hilos"),
+        ("websocket", "COV-BAIT WS · sin esto: WS desactivado"),
+        ("fpdf", "export PDF · sin esto: informe TXT/JSON igual"),
+        ("cloudscraper", "Plan B anti-CF Termux"),
+        ("curl_cffi", "impersonacion TLS · solo PC, en Termux no aplica"),
+    ]:
+        activos[mod] = {
+            "instalado": bool(importlib.util.find_spec(mod)),
+            "nota": nota,
+        }
+    try:
+        from core.veritas import _find_browser
+        chrome = _find_browser()
+    except Exception:
+        chrome = None
+    activos["chromium"] = {
+        "instalado": bool(chrome),
+        "nota": "VERITAS/escalada/PDF-chrome · sin esto: verificacion en navegador off, PDF via fpdf2",
+    }
+    return activos
+
+
 @app.get("/api/status")
 def status():
     return jsonify({
         "status": "ok",
         "backend": "connected",
         "version": VERSION,
+        "deps": _deps_health(),
         "started_at": STARTED_AT,
         "jobs_in_memory": len(JOBS),
         "reports_directory": str(REPORTS_DIR),

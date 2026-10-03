@@ -1,0 +1,4 @@
+# codexRC — extras SOLO PC (NO instalar en Termux armv7l)
+# curl_cffi: impersonacion TLS de Chrome (GHOSTGATE nivel A).
+# En Termux su lugar lo ocupa cloudscraper (ya en requirements.txt).
+curl_cffi>=0.7.0
