@@ -1,4 +1,4 @@
-#CodexRC
+
 
 ![CodexRC](assets/banner.jpg)
 
