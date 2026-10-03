@@ -277,9 +277,15 @@ def _fiscal(chain: Dict[str, Any]) -> List[Dict[str, Any]]:
          "probado": bool(chain["source"]["controlable"]),
          "evidencia": chain["source"]["fuentes"][:2]},
         {"requisito": "taint alcanza el sink",
-         "probado": True,
-         "evidencia": f"flujo {chain['flow']['vars']} -> "
-                     f"{chain['sink']['tipo']} ({chain['sink']['linea']})"},
+         "probado": chain["def_use"]["proof"] == "DEF_USE_COMPLETE",
+         "evidencia": (
+             f"PRUEBA SSA {chain['def_use']['value']} "
+             f"lineage={len(chain['def_use']['lineage'])} -> "
+             f"{chain['sink']['tipo']} ({chain['sink']['linea']})"
+             if chain["def_use"]["proof"] != "DEF_USE_UNRESOLVED"
+             else f"sin prueba SSA (fallback nivel 1): flujo "
+                  f"{chain['flow']['vars']} -> "
+                  f"{chain['sink']['tipo']}")},
         {"requisito": "sin sanitizacion efectiva",
          "probado": not chain["sanitization"]["efectiva"],
          "evidencia": "; ".join(chain["sanitization"]["detalle"])},
@@ -297,6 +303,13 @@ def _fiscal(chain: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _defensa(chain: Dict[str, Any]) -> List[Dict[str, Any]]:
     """La defensa busca refutaciones del finding."""
     refuts: List[Dict[str, Any]] = []
+    du = chain.get("def_use", {})
+    if du.get("proof") == "DEF_USE_NO_SOURCE":
+        refuts.append({"refutacion": "SSA: version viva sin fuente "
+                                    "(reasignacion limpia demostrada)",
+                       "fuerza": "fuerte",
+                       "evidencia": f"value={du.get('value')} "
+                                    f"lineage={du.get('lineage')}"})
     gate = chain["auth"].get("compuertas", {})
     if gate.get("nonce") or gate.get("caps"):
         refuts.append({"refutacion": "gate protegido",
@@ -336,6 +349,10 @@ def _juez(chain: Dict[str, Any]) -> Dict[str, Any]:
         if semantic_core.blocks_demostrado(integridad):
             # INTEGRITY: evidencia de archivo equivocado o ambiguo nunca
             # alcanza veredicto alto (invariante RC-000127)
+            verdicto = "PROBABLE"
+        if chain.get("def_use", {}).get("proof") == "DEF_USE_INCOMPLETE":
+            # SSA (v0.60.0): ancestros desconocidos = el data-flow no
+            # esta probado por completo: nunca veredicto alto
             verdicto = "PROBABLE"
     elif len(fiscal) >= 3:
         verdicto = "PROBABLE"
@@ -401,6 +418,16 @@ def build_chain(root: str, finding: Dict[str, Any],
         "dynamic": finding.get("_dynamic", {"reproducido": False,
                                             "nota": "estatico: falta dinamico"}),
     }
+    # SSA-LITE (v0.60.0): prueba def-use del valor en el sink.
+    # SSA no dictamina: entrega genealogia (lineage/source/unknowns).
+    try:
+        from core.ssa import proof_for_finding
+        chain["def_use"] = proof_for_finding(path, finding)
+    except Exception:
+        chain["def_use"] = {"proof": "DEF_USE_UNRESOLVED", "value": None,
+                            "lineage": [], "source": None,
+                            "unknown_ancestors": [],
+                            "transformations": []}
     chain["fiscal"] = _fiscal(chain)
     chain["defensa"] = _defensa(chain)
     chain["juez"] = _juez(chain)

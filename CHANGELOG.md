@@ -1,3 +1,24 @@
+## v0.60.0 — SSA consume la evidencia: FISCAL exige prueba def-use
+
+- ssa.py: def_use_proof() — prueba estructurada {proof, value,
+  lineage, source, unknown_ancestors, transformations}. SSA no
+  dictamina vulnerabilidad: entrega genealogia del valor.
+  Estados: DEF_USE_COMPLETE / INCOMPLETE / NO_SOURCE / UNRESOLVED.
+- evidence.py: build_chain adjunta chain['def_use'].
+  FISCAL: "taint alcanza el sink" ya no es probado=True incondicional;
+  exige DEF_USE_COMPLETE (o fuente directa en el sink).
+  DEFENSA: DEF_USE_NO_SOURCE = refutacion fuerte demostrada.
+  JUEZ: DEF_USE_INCOMPLETE (ancestros desconocidos) nunca sostiene
+  DEMOSTRADO-ESTATICO (cap a PROBABLE, como INTEGRITY).
+- RC-000142 (hallado por muestreo antes de concluir seguridad): la
+  refutacion NO_SOURCE era inservida con asignaciones condicionales
+  (la limpia dentro de un if no mata la version con $_REQUEST en el
+  merge). Ahora exige dominancia CFG sobre el sink. Y el pipeline
+  crudo filtraba mal las vars sin version.
+- Medicion (5 plugins): DESCARTADO 34->37, PROBABLE 115->92,
+  CONTESTADO 0->20; 60/149 proofs COMPLETE. Pipeline 231 taint:
+  4 refutados con dominancia, 225 con cadena. Regresion 15/15.
+
 ## v0.59.0 — Fase 1.5: SSA-lite en TAINT-TRACE
 
 - core/ssa.py: grafo de versiones def-use intra-funcion. Cada

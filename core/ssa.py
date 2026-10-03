@@ -231,6 +231,139 @@ def _resolve(path: str, rel: str) -> Optional[str]:
 _SSA_CACHE: Dict[str, "SSAFile"] = {}
 
 
+def def_use_proof(ssa: "SSAFile", line: int, var: str) -> Dict[str, Any]:
+    """Prueba def-use estructurada de la version viva de $var en la
+    linea del sink. SSA NO dictamina vulnerabilidad: entrega la
+    genealogia completa del valor para que FISCAL/DEFENSA razonen.
+
+    proof:
+      DEF_USE_COMPLETE   hay SOURCE y NINGUN ancestro desconocido
+      DEF_USE_INCOMPLETE hay ancestros desconocidos (no se puede
+                         afirmar flujo completo aunque haya fuente)
+      DEF_USE_NO_SOURCE  NI fuente NI desconocidos: reasignacion
+                         limpia demostrada (refutacion DEFENSA)
+      DEF_USE_UNRESOLVED la var no tiene versiones (fallback nivel 1)
+    """
+    scope = ssa.scope_of_line(line)
+    v = ssa.live_version(var, line, scope)
+    if v is None:
+        return {"proof": "DEF_USE_UNRESOLVED", "value": None,
+                "lineage": [], "source": None,
+                "unknown_ancestors": [], "transformations": []}
+    lineage, unknowns, kinds = [], [], []
+    has_src = False
+    seen, stack = set(), [v.vid]
+    while stack:
+        cur = stack.pop()
+        if cur in seen:
+            continue
+        seen.add(cur)
+        ver = ssa.versions.get(cur)
+        if ver is None:
+            continue
+        lineage.append(cur)
+        kinds.append(ver.kind)
+        if ver.kind == "SOURCE":
+            has_src = True
+        if ver.kind in ("UNKNOWN-FN", "UNKNOWN-VAR"):
+            unknowns.append(cur)
+        stack.extend(ver.parents)
+    if has_src and not unknowns:
+        proof = "DEF_USE_COMPLETE"
+    elif has_src or unknowns:
+        proof = "DEF_USE_INCOMPLETE"
+    elif _domina_el_sink(ssa, v, line):
+        # solo es NO_SOURCE si la asignacion limpia DOMINA el sink:
+        # si la version viva viene de una rama condicional, versiones
+        # anteriores pueden seguir vivas en el merge (FP revisionary
+        # options.php: $_REQUEST vivo tras if($setActiveTab='post_types'))
+        proof = "DEF_USE_NO_SOURCE"
+    else:
+        proof = "DEF_USE_INCOMPLETE"
+    return {"proof": proof, "value": v.vid, "lineage": lineage,
+            "source": "HTTP_INPUT" if has_src else None,
+            "unknown_ancestors": unknowns,
+            "transformations": kinds}
+
+
+def _domina_el_sink(ssa: "SSAFile", v: Version,
+                    sink_line: int) -> bool:
+    """La asignacion que define la version limpia ¿domina el sink?
+    Sin CFG o sin parseo -> False (conservador: no se refuta)."""
+    try:
+        from core import cfg as _cfg
+    except ImportError:
+        import cfg as _cfg
+    fpath = None
+    for k in _SSA_CACHE:
+        if _SSA_CACHE.get(k) is ssa:
+            fpath = k
+            break
+    if not fpath:
+        return False
+    try:
+        src = open(fpath, encoding="utf-8", errors="replace").read()
+        r = _cfg.cfg_for_function(src, v.line)
+        if not r:
+            return False
+        g, _f = r
+        an = _cfg.line_node(g, v.line)
+        sn = _cfg.line_node(g, sink_line)
+        if an is None or sn is None:
+            return False
+        # mismo nodo (asignacion en la linea del sink) cuenta
+        if an == sn:
+            return True
+        dom = g.dominators()
+        return g.dominates(an, sn, dom)
+    except Exception:
+        return False
+
+
+def proof_for_finding(path: str, finding: Dict[str, Any]) -> Dict[str, Any]:
+    """Prueba def-use del finding completo (todas las vars del sink).
+    Fuente directa en la linea del sink = COMPLETE trivial."""
+    try:
+        fpath = _resolve(path, finding.get("file", ""))
+        if not fpath:
+            return {"proof": "DEF_USE_UNRESOLVED", "value": None,
+                    "lineage": [], "source": None,
+                    "unknown_ancestors": [], "transformations": []}
+        if fpath not in _SSA_CACHE:
+            _SSA_CACHE.clear()
+            _SSA_CACHE[fpath] = SSAFile(
+                open(fpath, encoding="utf-8", errors="replace").read())
+        ssa = _SSA_CACHE[fpath]
+    except Exception:
+        return {"proof": "DEF_USE_UNRESOLVED", "value": None,
+                "lineage": [], "source": None,
+                "unknown_ancestors": [], "transformations": []}
+    line = int(finding.get("line", 0))
+    code = finding.get("code", "")
+    if SOURCES_RE.search(code):
+        return {"proof": "DEF_USE_COMPLETE", "value": "DIRECTO",
+                "lineage": [f"sink@{line}"], "source": "HTTP_INPUT",
+                "unknown_ancestors": [], "transformations": ["SOURCE"]}
+    cands = set(_VAR.findall(code))
+    proofs = [def_use_proof(ssa, line, v) for v in cands]
+    proofs = [p for p in proofs if p["proof"] != "DEF_USE_UNRESOLVED"]
+    if not proofs:
+        return {"proof": "DEF_USE_UNRESOLVED", "value": None,
+                "lineage": [], "source": None,
+                "unknown_ancestors": [], "transformations": []}
+    # fusion: la peor de las var (conservador): NO_SOURCE solo si TODAS
+    # las vars lo son; COMPLETE solo si alguna es COMPLETE y ninguna
+    # aporta incertidumbre peor... regla: elige por severidad
+    # INCOMPLETE > NO_SOURCE > COMPLETE
+    for p in proofs:
+        if p["proof"] == "DEF_USE_INCOMPLETE":
+            return p
+    for p in proofs:
+        if p["proof"] == "DEF_USE_NO_SOURCE":
+            return p
+    return proofs[0]
+
+
 def enrich(path: str, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Adjunta 'chain' (cadena SSA def-use) a cada finding de taint
     y marca ssa_refuted cuando ninguna version viva del sink traza a
@@ -277,15 +410,18 @@ def enrich(path: str, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                            "SOURCE", "UNKNOWN-FN", "UNKNOWN-VAR")
                            for step in ch)
                        for ch in chains.values())
-            # BFS completo: el taint puede llegar por CUALQUIER padre
-            # de la version viva, no solo por el camino mostrado
             if not has_src:
-                live_ids = []
-                for v in set(cands):
-                    lv = ssa.live_version(v, int(line), scope)
-                    if lv:
-                        live_ids.append(lv.vid)
-                has_src = any(ssa.tainted_or_unknown(i) for i in live_ids)
+                # criterio UNICO def_use_proof (mismo que usan FISCAL/
+                # DEFENSA en evidence.py): exige NO_SOURCE con
+                # dominancia CFG para refutar
+                pv = [def_use_proof(ssa, int(line), v)
+                      for v in set(cands)]
+                # vars sin versiones ($wpdb, helpers) no opinan:
+                # solo cuentan las vars RESUELTAS del sink
+                pv = [p for p in pv
+                      if p["proof"] != "DEF_USE_UNRESOLVED"]
+                has_src = not (pv and all(
+                    p["proof"] == "DEF_USE_NO_SOURCE" for p in pv))
             if not has_src:
                 # SSA-REFUTACION: ninguna version viva del sink traza
                 # a una fuente (reasignacion limpia). FP por nombre.
