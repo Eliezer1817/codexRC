@@ -38,6 +38,11 @@ Uso:
 import json
 import os
 import re
+
+try:
+    from . import cfg as _cfg
+except ImportError:
+    import cfg as _cfg
 import sys
 from typing import Any, Dict, List, Optional
 
@@ -281,6 +286,20 @@ class PatternMatcher:
         r"capability|current_user_can|user_can\s*\(|"
         r"is_user_logged_in|\blogin\b|\brole\b|privilege|"
         r"\bcookie\b|manage_options|edit_others|manage_woocommerce")
+    # ---- RC-000137 (SEMANTIC CORE Fase 1): dominancia real ----
+    # gates que hacen la comparacion "puro router": capability checks
+    # SIEMPRE valen; nonces solo cuando el operando NO es credencial
+    # (un == sobre password no lo salva un nonce: el atacante lo tiene)
+    _CMP_GATE_CAP = re.compile(
+        r"current_user_can\s*\(|\buser_can\s*\(|is_user_logged_in\s*\("
+        r"|_can_access\b|manage_options|\bis_admin\s*\(", re.I)
+    _CMP_GATE_ANY = re.compile(
+        r"current_user_can\s*\(|\buser_can\s*\(|is_user_logged_in\s*\("
+        r"|_can_access\b|manage_options|\bis_admin\s*\("
+        r"|wp_verify_nonce|check_ajax_referer|check_admin_referer", re.I)
+    _CMP_CRED = re.compile(
+        r"password|passwd|user_pass|secret|api_?key", re.I)
+
     # ---- RC-000136: gate adyacente mata el loose-cmp ----
     # Si en +-1 linea de la comparacion senalada hay un capability check
     # o early-return de auth, esa llamada ES el control de acceso real;
@@ -310,15 +329,31 @@ class PatternMatcher:
         if m:
             flagged = line0 + body.count("\n", 0, m.start())
             lines = src.split("\n")
-            # RC-000136 PRIMERO: capability check / early-return de auth
-            # en +-1 linea = esa llamada ES el control de acceso real; el
-            # loose-cmp es router/filtro detras del gate -> FP
+            snip_raw = self._nocomments(
+                body[max(0, m.start() - 80):m.end() + 80])
+            # RC-000137: AUTORIDAD DEL CFG. Si el grafo parsea, la
+            # comparacion es FP cuando todo sink sensible dependiente
+            # de ella esta dominado por un gate real (a cualquier
+            # distancia: dominancia, no ventanas de texto).
+            try:
+                r = _cfg.cfg_for_function(src, flagged)
+                if r:
+                    g, _f = r
+                    gate_rx = self._CMP_GATE_CAP \
+                        if self._CMP_CRED.search(snip_raw) \
+                        else self._CMP_GATE_ANY
+                    if _cfg.cmp_router(g, flagged, gate_rx,
+                                       _cfg._SENSITIVE_RE):
+                        return False
+            except Exception:
+                pass  # CFG fallo: cae a las ventanas (fallback)
+            # RC-000136 (fallback textual): capability check / early
+            # return de auth en +-1 linea
             adj = self._nocomments(
                 "\n".join(lines[max(0, flagged - 2):flagged + 1]))
             if self._GATE_ADJ.search(adj):
                 return False
-            snip = self._nocomments(
-                body[max(0, m.start() - 80):m.end() + 80])
+            snip = snip_raw
             if self._AUTH_STRONG.search(snip):
                 return True
             if self._AUTH_OPERAND.search(snip):

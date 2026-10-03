@@ -1,3 +1,24 @@
+## v0.58.1 — SEMANTIC CORE Fase 1: CFG + dominancia en produccion
+
+- core/cfg.py (Python puro, ~650 lineas): tokenizer PHP-lite
+  (strings/comentarios/heredoc), parser de statements (if/elseif/else
+  encadenados, if sin llaves, alt-syntax : ... endif, loops, switch,
+  try, HTML embebido ?> ... <?php), CFG intra-funcion y dominadores
+  iterativos.
+- Consultas: gate_dominates_sink (el gate protege el sink?),
+  cmp_router (la comparacion solo rotea hacia region protegida?),
+  router_noise.
+- Integrado en loose-auth-cmp (RC-000137): la AUTORIDAD es el CFG;
+  las ventanas de texto quedan como fallback si el parseo falla.
+  Credenciales en operando exigen capability gate (nonce no salva
+  un == sobre password).
+- Medicion: SNAP 8/8 loose-cmp muertos por dominancia (incluidos los
+  2 residuos a 2-3 lineas que la ventana +-1 no veia). Gate a 30+
+  lineas detectado en lab. N1-VDP: 48 -> 1 vivo (familia distinta,
+  ya cerrada a mano en RC-000134). Lab 6875 SIGUE VIVO.
+- Caches por src (funciones y CFG): timeout 300s -> 1.2s en SNAP.
+- Regresion: 10/10 PASS.
+
 ## v0.58.0 — SEMANTIC CORE (nivel 0): identidad canonica + integridad
 
 Inicio del Semantic Core (recomendacion experta: el motor pasa de
