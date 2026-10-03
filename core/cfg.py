@@ -780,6 +780,28 @@ def gate_dominates_sink(g: CFG, gate_rx: re.Pattern, sink_line: int) -> bool:
                for g2 in gates)
 
 
+def all_protected(g: CFG, gate_rx: re.Pattern,
+                  sens_rx: re.Pattern) -> Optional[bool]:
+    """TODOS los sinks sensibles estan dominados por algun gate?
+    None = sin opinion (no hay sinks que evaluar); True = protegido
+    con prueba de dominancia; False = hay sink alcanzable sin pasar
+    por ningun gate (candidato real, RC-000132)."""
+    sens = [i for i in nodes_matching(g, sens_rx)
+            if i not in (g.entry, g.exit) and g.kind[i] == "stmt"]
+    if not sens:
+        return None
+    gates = [x for x in nodes_matching(g, gate_rx)
+             if x not in (g.entry, g.exit)]
+    if not gates:
+        return False
+    dom = g.dominators()
+    for snk in sens:
+        if not any(gg != snk and g.dominates(gg, snk, dom)
+                   for gg in gates):
+            return False
+    return True
+
+
 def cmp_router(g: CFG, cmp_line: int, gate_rx: re.Pattern = _GATE_CAP_RE,
               sens_rx: re.Pattern = _SENSITIVE_RE) -> bool:
     """La comparacion senalada solo rotea hacia region protegida:

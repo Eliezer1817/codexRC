@@ -2,7 +2,7 @@
 
 **Versión del documento:** 1.1 (03/10/2026)
 **Motor:** CodexRC / UNIVERSAL-ENGINE v0.58.0
-**Actualización 1.1:** tras revisión experta se inició el SEMANTIC CORE (v0.58.0, nivel 0: identidad canónica + integridad). Decisión arquitectónica adoptada: si un FP nuevo se puede expresar como propiedad del CFG/data-flow/types, NO se crea una nueva regla RC de texto; se mejora el Semantic Core (jerarquía de 4 niveles: textual → estructural → semántico → interprocedural; una señal de nivel inferior nunca contradice una prueba de nivel superior). Fase 1 CONSTRUIDA (v0.58.1): CFG intra-función + dominancia ya en producción para loose-auth-cmp (cmp_router; RC-000137). Pendiente: aplicar gate_dominates_sink al patrón BAC (RC-000132).
+**Actualización 1.1:** tras revisión experta se inició el SEMANTIC CORE (v0.58.0, nivel 0: identidad canónica + integridad). Decisión arquitectónica adoptada: si un FP nuevo se puede expresar como propiedad del CFG/data-flow/types, NO se crea una nueva regla RC de texto; se mejora el Semantic Core (jerarquía de 4 niveles: textual → estructural → semántico → interprocedural; una señal de nivel inferior nunca contradice una prueba de nivel superior). Fase 1 COMPLETA (v0.58.1-v0.58.2): dominancia en producción en loose-auth-cmp (cmp_router, RC-000137) y en el patrón BAC (all_protected, RC-000132 resuelto). Pendiente Fase 1.5: SSA-lite en TAINT-TRACE.
 **Autor:** elaborado por el agente de IA del operador (identidad del operador omitida por política)
 **Propósito:** presentar a expertos por área el historial real de falsos positivos y defectos del motor, con la causa raíz de cada uno, el fix aplicado y preguntas abiertas. Cada área es autocontenida: se puede enviar a un experto solo su sección.
 

@@ -196,6 +196,8 @@ class PatternMatcher:
         # cuerpo de CADA funcion escaneada (para resolver handlers
         # nopriv que viven en otro archivo/metodo)
         self._bodies: Dict[str, str] = {}
+        self._body_meta: Dict[str, Any] = {}   # cb -> (rel, linea)
+        self._file_srcs: Dict[str, str] = {}   # rel -> src completo
         self._bac_pending: List[Dict[str, Any]] = []
 
     def scan_file(self, path: str) -> List[Dict[str, Any]]:
@@ -204,10 +206,13 @@ class PatternMatcher:
         except Exception:
             return []
         rel = os.path.relpath(path)
+        self._file_srcs[rel] = src
         chunks = _iter_functions(src)
         for name, _l, body in chunks:
             if name:
-                self._bodies.setdefault(name.lower(), body)
+                nm = name.lower()
+                self._bodies.setdefault(nm, body)
+                self._body_meta.setdefault(nm, (rel, _l))
         for pat in PATTERNS:
             file_bonus = 0
             fb = pat.get("bonus_file")
@@ -371,6 +376,15 @@ class PatternMatcher:
         r"check_ajax_referer\s*\(|user_can\s*\(|"
         r"pods_is_admin\s*\(|manage_options")
 
+    # escrituras de estado (para la dominancia de RC-000132)
+    _WRITES_RE = re.compile(
+        r"update_option|update_site_option|add_option|delete_option|"
+        r"update_user_meta|update_post_meta|wp_insert_post|"
+        r"wp_update_post|wp_delete_post|wp_insert_user|wp_delete_user|"
+        r"->query|->insert|->update|->delete|->replace|"
+        r"file_put_contents|unlink|fwrite|move_uploaded_file|"
+        r"wp_handle_upload", re.I)
+
     def _bac_callbacks(self, body: str) -> List[str]:
         cbs: List[str] = []
         for m in re.finditer(
@@ -393,6 +407,7 @@ class PatternMatcher:
         for f in self._bac_pending:
             cbs = self._bac_callbacks(f.pop("_hook_body", ""))
             gated, seen = False, False
+            protected: Optional[bool] = None
             for cb in cbs:
                 body = self._bodies.get(cb)
                 if body is None:
@@ -400,9 +415,30 @@ class PatternMatcher:
                 seen = True
                 if self._GATES.search(body):
                     gated = True
+                    # RC-000132 (SEMANTIC CORE): el gate visible solo
+                    # limpia si DOMINA todas las escrituras. Si una rama
+                    # publica alcanza el sink sin pasar por el gate, es
+                    # candidato real.
+                    meta = self._body_meta.get(cb)
+                    srcf = self._file_srcs.get(meta[0]) if meta else None
+                    if srcf and meta:
+                        r = _cfg.cfg_for_function(srcf, meta[1])
+                        if r:
+                            g, _f2 = r
+                            protected = _cfg.all_protected(
+                                g, self._GATES, self._WRITES_RE)
                     break
+            if protected is False:
+                # gate presente pero NO domina: rama publica alcanza
+                # la escritura (RC-000132): candidato REAL
+                f["why"] += ("; RC-000132: gate presente pero no domina "
+                             "las escrituras (rama publica alcanza el "
+                             "sink)")
+                self.findings.append(f)
+                continue
             if gated:
-                continue          # handler con gate interno: FP documentado
+                continue          # protegido (con prueba de dominancia
+                                # si el CFG parseo; si no, FP nivel 1)
             if seen:
                 f["why"] += "; handler sin gates visibles nivel 1"
             self.findings.append(f)

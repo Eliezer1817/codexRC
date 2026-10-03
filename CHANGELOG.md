@@ -1,3 +1,19 @@
+## v0.58.2 — SEMANTIC CORE: RC-000132 resuelto en el patron BAC
+
+- cfg.py: all_protected(gate_rx, sens_rx) — True/False/None: ¿todos
+  los sinks estan dominados por un gate?
+- pattern_match.finalize: el handler nopriv resuelto ya NO se descarta
+  por "gate visible": el gate limpia solo si DOMINA todas las
+  escrituras. Si una rama publica alcanza la escritura sin pasar por
+  el gate, el hallazgo se conserva con anotacion RC-000132 (candidato
+  real). Fallback a la regla anterior si el CFG no parsea.
+- La pregunta abierta de la auditoria ("rama publica por diseno vs
+  alcanzable por salto de flujo") queda respondida: dominancia.
+- Mediciones: pods FP muerto con prueba de dominancia; N1-VDP 0 BAC
+  recuperados y 0 FP resucitados; regresion 11/11.
+- Hallazgo colateral: 28 loose-cmp vivos NO TRIADOS en js-support-
+  ticket (vivos ya en v0.58.1; nuevos para la cola de triaje).
+
 ## v0.58.1 — SEMANTIC CORE Fase 1: CFG + dominancia en produccion
 
 - core/cfg.py (Python puro, ~650 lineas): tokenizer PHP-lite
