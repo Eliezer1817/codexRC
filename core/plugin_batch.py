@@ -186,6 +186,8 @@ def main() -> None:
     ap.add_argument("slugs", nargs="*", help="slugs o archivo .txt con slugs")
     ap.add_argument("--vdp", default="", help="JSON slugs con VDP activo (opcional)")
     ap.add_argument("--out", default="", help="guardar JSON de resultados")
+    ap.add_argument("--shard", default="",
+                    help="fraccion de slugs para esta IA: '0/2', '1/3'...")
     ap.add_argument("--top", type=int, default=25, help="top por escaneo")
     ap.add_argument("--verbose", action="store_true",
                     help="mostrar tambien hallazgos autocerrados (FP)")
@@ -204,6 +206,18 @@ def main() -> None:
     if not slugs:
         print("uso: plugin_batch.py slug1 slug2 ... | slugs.txt | stdin")
         sys.exit(1)
+    if args.shard:
+        import hashlib
+        try:
+            n, m = args.shard.strip().split("/")
+            n, m = int(n), int(m)
+            assert 0 <= n < m >= 1
+        except Exception:
+            print("--shard formato N/M (ej: 0/2, 1/3)")
+            sys.exit(1)
+        slugs = [x for x in slugs
+                 if int(hashlib.sha256(x.encode()).hexdigest(), 16) % m == n]
+        print(f"shard {n}/{m}: {len(slugs)} slugs para esta IA")
 
     vdp: Dict[str, Any] = {}
     if args.vdp and os.path.isfile(args.vdp):

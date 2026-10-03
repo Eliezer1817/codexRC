@@ -26,7 +26,8 @@ from core import diff_hunt  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 CORPUS = os.path.join(ROOT, "wide_corpus.json")
 VDP = os.path.join(ROOT, "vdp_mapa.json")
-DONE = os.path.join(ROOT, "hechos", "hunt_wide_done.txt")
+from core import state as _state
+DONE = _state.hechos("hunt_wide_done.txt")
 
 
 def _load_done() -> set:
@@ -88,8 +89,10 @@ def main() -> None:
     ap.add_argument("--band", default="5000-50000",
         help="rango de installs priorizado (medianos: menos "
              "competencia que los top)")
-    ap.add_argument("--out", default=os.path.join(ROOT, "hechos",
-                                                  "wide_hunt_results.json"))
+    ap.add_argument("--out", default=_state.hechos("wide_hunt_results.json"))
+    ap.add_argument("--shard", default="",
+                    help="fraccion del corpus para esta IA: '0/2' toma la "
+                         "mitad 0, '1/2' la mitad 1 (reparto sin coordinar)")
     args = ap.parse_args()
 
     corpus = json.load(open(CORPUS))
@@ -97,6 +100,16 @@ def main() -> None:
     done = _load_done()
     frescos = _frescos(corpus, args.dias)
     cola = [p for p in frescos if p["slug"] not in done]
+    if args.shard:
+        import hashlib
+        try:
+            n, m = args.shard.strip().split("/")
+            n, m = int(n), int(m)
+            assert 0 <= n < m >= 1
+        except Exception:
+            raise SystemExit("--shard formato N/M (ej: 0/2, 1/3)")
+        cola = [p for p in cola
+                if int(hashlib.sha256(p["slug"].encode()).hexdigest(), 16) % m == n]
 
     # VDP-FRESH (v0.61.0): altas de la semana + bounty nuevos entran
     # SIN filtro de frescura (un VDP recien agregado se caza ya,

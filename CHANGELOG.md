@@ -623,3 +623,26 @@ subida de zip con secret AKIA + endpoint staging -> detectado,
 seccion FILTRACIONES renderizada, /bin/sh real -> 3 hallazgos
 con imports ELF, drawer cierra tras analizar, seccion visible
 en PC sin abrir menu.
+
+## v0.62.5 — MULTI-IA: estado individual por operador + shard de cola
+
+Una sola cosa cambio de lugar: el ESTADO. El repo guarda codigo y
+datos publicos (corpus, vdp_mapa); cada IA u operador guarda sus
+hechos en su propio workspace. Sin tocar el motor ni la arquitectura.
+
+- Nuevo core/state.py: home() = $CODEXRC_HOME si esta exportado, si
+  no el repo mismo (compatibilidad total: sin la variable todo
+  funciona exactamente como siempre). hechos() resuelve el
+  hunt_wide_done.txt y los resultados al workspace propio.
+- hunt_wide.py y plugin_batch.py escriben su avance/resultados via
+  core/state (hechos/hunt_wide_done.txt, wide_hunt_results.json).
+- Nuevo --shard N/M en hunt_wide y plugin_batch: reparto
+  determinista del corpus por hash de slug (sha256 % M == N). Dos o
+  mas IAs se reparten TODO el corpus sin coordinarse ni duplicar un
+  solo blanco. Formato: --shard 0/2 y --shard 1/2.
+- Estado 0 vivo del backlog y caza de 291 pagables corriendo sin
+  cambios de comportamiento (sin CODEXRC_HOME = historico).
+
+Validado en vivo: IA nueva con CODEXRC_HOME propio arranca con cola
+llena (2120) sin heredar nuestro avance; shard 0/2 + 1/2 = 1071 +
+1049 = 2120 exactos sin solaparse; sin variable, cola 0 como siempre.

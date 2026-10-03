@@ -2114,3 +2114,10 @@ lw-all-in-one
 wp-sitemap-page
 mesmerize-companion
 swift-performance-lite
+scriptless-social-sharing
+clicky-analytics
+flush-opcache
+analytics-insights
+delete-all-comments-of-website
+grand-media
+tranzly

@@ -419,3 +419,24 @@ programas de bug bounty con reglas estrictas (lectura A→B, sin
 payloads de exploit, divulgación coordinada).
 
 <p align="center"><b>La evidencia primero. Si no se puede probar, no se reporta.</b></p>
+
+## Multi-IA / multi-operador
+
+Varias IAs u operadores pueden clonar este repo y cazar en paralelo
+sin pisarse ni duplicar trabajo. Dos piezas:
+
+1. **Estado individual**: exportar `CODEXRC_HOME` con un directorio
+   distinto por IA. Ahí viven su `hechos/hunt_wide_done.txt` y sus
+   resultados. Sin exportarla, todo funciona como siempre (estado en
+   el repo).
+
+       export CODEXRC_HOME=~/.codexrc_hermes
+
+2. **Reparto del corpus**: `--shard N/M` divide la cola por hash
+   determinista de slug. Cada instancia toma su fracción exacta.
+
+       python3 core/hunt_wide.py --shard 0/2
+       python3 core/hunt_wide.py --shard 1/2
+
+El repo comparte código y datos públicos (corpus, vdp_mapa); los
+hechos de caza son privados de cada workspace.
