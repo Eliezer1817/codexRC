@@ -38,6 +38,103 @@ HOOK_RE = re.compile(
 LOADER_HOOK_RE = re.compile(
     r"add_action\s*\(\s*['\"](wp_ajax_(nopriv_)?[\w\-]+|wc_ajax_[\w\-]+)"
     r"['\"]\s*,\s*\$\w+\s*,\s*['\"]([A-Za-z_]\w*)['\"]")
+
+# ---------- v0.63.0 AUTHZ-PROOF CAPA 3: resolucion de hooks dinamicos ----------
+# add_action($var, ...) / add_action('hook', $cb) / array($this, $m_var)
+# y callbacks de closure en linea. Propagacion de constantes lite por
+# archivo: ultima asignacion previa a la linea de uso (vars y $this->props).
+
+ASSIGN_RE = re.compile(r"\$([\w]+|this->\w+)\s*=\s*([^;]+);")
+AJAX_NAME_RE = re.compile(r"^(wp_ajax_(nopriv_)?[\w\-]+|wc_ajax_[\w\-]+)$")
+DYN_HOOK_RE = re.compile(r"add_action\s*\(\s*([^,\n]+?)\s*,\s*([^,\n]+)")
+SQ_RE = re.compile(r"'([^']*)'")
+DQ_PLAIN_RE = re.compile(r'"([^"$]*)"')
+DQ_RE = re.compile(r'"([^"]*)"')
+VAR_USE_RE = re.compile(r"\$(\w+)")
+
+
+def _const_map(lines):
+    """var (o 'this->prop') -> (linea, expr) de la ultima asignacion."""
+    m = {}
+    for i, line in enumerate(lines):
+        mm = ASSIGN_RE.search(line)
+        if mm:
+            m[mm.group(1)] = (i, mm.group(2).strip())
+    return m
+
+
+def _resolve_expr(expr, cmap, depth=0):
+    """Evalua literales, $vars, $this->props, concatenacion e interpolacion."""
+    if not expr or depth > 4:
+        return None
+    expr = expr.strip().rstrip(";").strip()
+    m = SQ_RE.fullmatch(expr)
+    if m:
+        return m.group(1)
+    m = DQ_PLAIN_RE.fullmatch(expr)
+    if m:
+        return m.group(1)
+    m = DQ_RE.fullmatch(expr)
+    if m:
+        def _sub(mm):
+            ent = cmap.get(mm.group(1)) or cmap.get("this->" + mm.group(1))
+            return _resolve_expr(ent[1], cmap, depth + 1) if ent else ""
+        return VAR_USE_RE.sub(_sub, m.group(1))
+    if expr.startswith("$"):
+        ent = cmap.get(expr[1:])
+        if ent and ent[1].strip() != expr:
+            return _resolve_expr(ent[1], cmap, depth + 1)
+        return None
+    if "." in expr and "array(" not in expr:
+        parts = re.split(r"\s*\.\s*", expr)
+        out = []
+        for part in parts:
+            v = _resolve_expr(part, cmap, depth + 1)
+            if v is None:
+                return None
+            out.append(v)
+        return "".join(out)
+    return None
+
+
+
+def _action_args(line):
+    """Primeros 2 argumentos de cada add_action(...) de la linea,
+    cortando comas SOLO a profundidad 0 (respetar array($this, 'm'))."""
+    out = []
+    for mm in re.finditer(r"add_action\s*\(", line):
+        depth, cur, args, closed = 0, [], [], False
+        for ch in line[mm.end():]:
+            if ch in "([{":
+                depth += 1
+                cur.append(ch)
+            elif ch in ")]}":
+                if depth == 0:
+                    closed = True
+                    break
+                depth -= 1
+                cur.append(ch)
+            elif ch == "," and depth == 0:
+                args.append("".join(cur).strip())
+                cur = []
+            else:
+                cur.append(ch)
+        if not closed:
+            continue
+        args.append("".join(cur).strip())
+        if len(args) >= 2 and args[0] and args[1]:
+            out.append((args[0], args[1]))
+    return out
+
+
+def _hook_name_from_var(var_expr, cmap):
+    """Resuelve el nombre del hook desde $var, concatenacion o interpolacion."""
+    val = _resolve_expr(var_expr, cmap)
+    if val and AJAX_NAME_RE.match(val):
+        return val
+    return None
+
+
 REST_RE = re.compile(r"register_rest_route\s*\(", re.I)
 PERM_TRUE_RE = re.compile(r"permission_callback['\"]?\s*=>\s*"
                           r"(__return_true|'__return_true')")
@@ -90,12 +187,43 @@ def audit(root: str) -> Dict[str, Any]:
         lines = src.split("\n")
         srcs[rel] = lines
         for m in FUNC_RE.finditer(src):
-            ln = src[:m.start()].count("\n")
+            # RC-000149: m.start() cae en el \n ANTERIOR (el prefijo
+            # de FUNC_RE consume espacios/saltos) y con firma precedida
+            # por '}' el _body_of devolvia cuerpo vacio (off-by-one
+            # heredado, latente en codigo sin docblock). Se ancla al
+            # final de la firma, que SI esta en la linea correcta.
+            ln = src[:m.end()].count("\n")
             funcs[m.group(1)] = (rel, ln)
 
     # 1) hooks ajax: accion -> callback
+    # v0.63.0 CAPA 3: cmap por archivo para resolver hooks dinamicos
+    cmaps = {rel: _const_map(lines) for rel, lines in srcs.items()}
+
+    def _cb_from_expr(cb_expr, rel, line_i):
+        """Resuelve callback estatico, de variable o de closure."""
+        cm = cmaps[rel]
+        # array($this, $m_var) / $cb_var
+        if "$" in cb_expr:
+            mvar = re.search(r"\$this\s*,\s*\$(\w+)", cb_expr)
+            if mvar:
+                ent = cm.get(mvar.group(1))
+                if ent and ent[0] < line_i:
+                    return (_resolve_expr(ent[1], cm) or ""), None
+            if re.search(r"^\s*\$\w+\s*$", cb_expr):
+                ent = None
+                mkey = re.search(r"\$(\w+)", cb_expr)
+                if mkey:
+                    ent = cm.get(mkey.group(1))
+                if ent and ent[0] < line_i:
+                    return (_resolve_expr(ent[1], cm) or ""), None
+        if "function" in cb_expr or "fn (" in cb_expr:
+            # closure en linea: el cuerpo esta AHI MISMO, se analiza despues
+            return "", "closure"
+        return _resolve_callback(cb_expr), None
+
     hook_targets: List[Dict[str, str]] = []
     for rel, lines in srcs.items():
+        cm = cmaps[rel]
         for i, line in enumerate(lines):
             loader_actions = {mm.group(1) for mm in LOADER_HOOK_RE.finditer(line)}
             for m in list(HOOK_RE.finditer(line)) + list(LOADER_HOOK_RE.finditer(line)):
@@ -104,17 +232,51 @@ def audit(root: str) -> Dict[str, Any]:
                     continue
                 nopriv = "nopriv" in action
                 if m.re is LOADER_HOOK_RE:
-                    cb = m.group(3)          # metodo directo del loader
+                    cb, closure = m.group(3), None
                 else:
-                    cb = _resolve_callback(m.group(3) or "")
+                    cb, closure = _cb_from_expr(m.group(3) or "", rel, i)
                 hook_targets.append({"action": action, "nopriv": nopriv,
-                                     "cb": cb or "", "file": rel, "line": i + 1})
+                                     "cb": cb or "", "file": rel, "line": i + 1,
+                                     "closure": closure})
+            # v0.63.0 CAPA 3: add_action($hook_var, ...) — nombre de hook dinamico
+            if HOOK_RE.search(line) or LOADER_HOOK_RE.search(line):
+                pass  # ya procesado arriba
+            else:
+                seen_here = {t["action"] for t in hook_targets
+                              if t["file"] == rel and t["line"] == i + 1}
+                for hook_expr, cb_expr in _action_args(line):
+                    action = _hook_name_from_var(hook_expr, cm)
+                    if not action or action in seen_here:
+                        continue
+                    nopriv = "nopriv" in action
+                    cb, closure = _cb_from_expr(cb_expr or "", rel, i)
+                    hook_targets.append({"action": action, "nopriv": nopriv,
+                                         "cb": cb or "", "file": rel, "line": i + 1,
+                                         "closure": closure})
 
     # 2) para cada hook, hallar el cuerpo del callback y ver compuertas
     for h in hook_targets:
         rec: Dict[str, Any] = {"accion": h["action"], "archivo": h["file"],
                                "linea_hook": h["line"], "callback": h["cb"],
                                "anonimo": h["nopriv"]}
+        if h.get("closure"):
+            # closure en linea: el cuerpo vive en la misma linea del hook
+            body, _end = _body_of(srcs[h["file"]], h["line"] - 1)
+            rec["archivo_callback"] = h["file"]
+            rec["linea_callback"] = h["line"]
+            caps = bool(CAPS_RE.search(body))
+            nonce = bool(NONCE_RE.search(body))
+            rec["caps"] = caps
+            rec["nonce"] = nonce
+            rec["callback"] = "closure@" + h["file"] + ":" + str(h["line"])
+            if caps or nonce:
+                rec["veredicto"] = "PROTEGIDO"
+            elif h["nopriv"]:
+                rec["veredicto"] = "CANDIDATO-BAC"
+            else:
+                rec["veredicto"] = "REVISAR-AUTH"
+            handlers.append(rec)
+            continue
         cb = h["cb"]
         if cb and cb in funcs:
             frel, fln = funcs[cb]

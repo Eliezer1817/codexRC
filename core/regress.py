@@ -74,6 +74,43 @@ def seed_rc_000127() -> None:
     })
 
 
+
+def seed_rc_000149() -> None:
+    """RC-000149 (v0.63.0): hooks dinamicos en GATES-AUDIT.
+    add_action($var,...), callback/metodo en variable y closures en
+    linea quedaban CALLBACK-NO-RESUELTO o invisibles; ademas off-by-one
+    heredado en FUNC_RE hacia que firmas sin docblock tras '}' leyeran
+    cuerpo vacio (veredicto sin leer el handler)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000149" not in cases:
+        _write_case({
+            "id": "RC-000149",
+            "module": "GATES-AUDIT (AUTHZ-PROOF capa 3)",
+            "problem": "hooks dinamicos no resueltos: add_action($var, ...) "
+                       "por concatenacion/interpolacion, add_action('h', $cb), "
+                       "array($this, $m_var) y closures en linea quedaban "
+                       "CALLBACK-NO-RESUELTO o directamente invisibles; "
+                       "off-by-one heredado en FUNC_RE (prefijo consume el "
+                       "salto de linea previo) => cuerpo vacio en firmas "
+                       "sin docblock precedidas por '}'",
+            "first_seen": "v0.62.8 (hallado al implementar AUTHZ-PROOF capa 3)",
+            "fixed_in": "v0.63.0 (const-prop lite por archivo + _action_args "
+                        "a profundidad 0 + analisis de closures; ln=src[:"
+                        "m.end()].count para FUNC_RE)",
+            "repro": {"plugin": "6 hooks dinamicos en un solo archivo",
+                      "expect": {"wp_ajax_rc149_save": "PROTEGIDO",
+                                 "wp_ajax_nopriv_rc149_leak": "CANDIDATO-BAC",
+                                 "wp_ajax_rc149_global": "REVISAR-AUTH",
+                                 "wp_ajax_rc149_dyn": "REVISAR-AUTH",
+                                 "wp_ajax_nopriv_rc149_closure_ok": "PROTEGIDO",
+                                 "wp_ajax_nopriv_rc149_closure_bad": "CANDIDATO-BAC"}},
+            "case_real": "eRoom 1.7.1: 17 hooks, el 0-day "
+                         "wp_ajax_nopriv_stm_zoom_meeting_sign sigue "
+                         "CANDIDATO-BAC y los 12 PROTEGIDO intactos",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -82,7 +119,54 @@ def run() -> int:
     seed_rc_000127()
     cases = _load_cases()
     fails = 0
+    seed_rc_000149()
+    cases = _load_cases()
     for c in cases:
+        if c["id"] == "RC-000149":
+            import tempfile
+            from core.gates_audit import scan_path
+            repro_php = """<?php
+class RC149_Plugin {
+    public function __construct() {
+        $this->prefix = 'rc149';
+        add_action('wp_ajax_' . $this->prefix . '_save', array($this, 'save_handler'));
+        $hook2 = "wp_ajax_nopriv_rc149_leak";
+        add_action($hook2, array($this, 'leak_handler'));
+        $cb3 = 'rc149_global_handler';
+        add_action('wp_ajax_rc149_global', $cb3);
+        $m4 = 'dyn_method_handler';
+        add_action('wp_ajax_rc149_dyn', array($this, $m4));
+        add_action('wp_ajax_nopriv_rc149_closure_ok', function () {
+            check_ajax_referer('rc149_nonce');
+        });
+        add_action('wp_ajax_nopriv_rc149_closure_bad', function () {
+            echo get_option('admin_email');
+        });
+    }
+    public function save_handler() {
+        if (!current_user_can('manage_options')) { wp_die('no'); }
+    }
+    public function leak_handler() { echo get_option('admin_email'); }
+    public function dyn_method_handler() { echo $_POST['id']; }
+}
+function rc149_global_handler() { wp_send_json(get_users()); }
+"""
+            with tempfile.TemporaryDirectory() as tmp:
+                open(os.path.join(tmp, "rc149.php"), "w").write(repro_php)
+                res = scan_path(tmp)
+                got = {h["accion"]: h["veredicto"] for h in res["handlers"]}
+                exp = cases_exp = {
+                    "wp_ajax_rc149_save": "PROTEGIDO",
+                    "wp_ajax_nopriv_rc149_leak": "CANDIDATO-BAC",
+                    "wp_ajax_rc149_global": "REVISAR-AUTH",
+                    "wp_ajax_rc149_dyn": "REVISAR-AUTH",
+                    "wp_ajax_nopriv_rc149_closure_ok": "PROTEGIDO",
+                    "wp_ajax_nopriv_rc149_closure_bad": "CANDIDATO-BAC"}
+                ok = all(got.get(k) == v for k, v in exp.items()) and len(got) == 6
+                print(f"[{c['id']}] {len(got)}/6 hooks dinamicos resueltos -> "
+                      f"{'PASS' if ok else 'FAIL ' + str(got)}")
+                if not ok:
+                    fails += 1
         if c["id"] == "RC-000127":
             import tempfile
             with tempfile.TemporaryDirectory() as tmp:

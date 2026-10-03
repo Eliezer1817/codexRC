@@ -1,3 +1,31 @@
+## v0.63.0 — AUTHZ-PROOF capa 3: resolucion de hooks dinamicos (RC-000149)
+
+GATES-AUDIT dejaba CALLBACK-NO-RESUELTO (o directamente no veia)
+los handlers registrados con nombre de hook o callback dinamico —
+justo el patron que usan los plugins ofuscados o con loaders
+complejos. Ahora se resuelven 6 clases:
+
+- add_action($hook, ...) con $hook por constante, concatenacion
+  ('wp_ajax_' . $this->prefix . '_save') o interpolacion
+  ("wp_ajax_nopriv_x"): propagacion de constantes lite por archivo
+  (vars + $this->props, ultima asignacion previa al uso).
+- add_action('hook', $cb) con callback en variable.
+- array($this, $m_var) con metodo en variable.
+- Closures en linea: el cuerpo se analiza directamente (PROTEGIDO
+  si tiene nonce/caps dentro del closure).
+- _action_args corta comas SOLO a profundidad 0 (array($this,'m')
+  ya no se rompe).
+- 💥 BUG HEREDADO corregido en FUNC_RE: el prefijo consumia el
+  salto de linea previo (off-by-one) y firmas de funciones SIN
+  docblock precedidas por '}' devolvian cuerpo VACIO -> caps/nonce
+  falsos -> veredictos sin haber leido el handler. Latente desde
+  v0.43.0; invisible en plugins con docblocks (estandar WP) pero
+  activo en codigo sucio (mid-band). Fix: ln = src[:m.end()].
+
+Validacion: repro sintetico 6/6 (corpus RC-000149, regresion 20/20
+PASS) + eRoom 1.7.1 real: 17 hooks, 0-day nopriv_stm_zoom_meeting_sign
+sigue CANDIDATO-BAC, 12 PROTEGIDO intactos.
+
 ## v0.62.8 — FP-FILTER de reflejo en pagina de bloqueo WAF
 
 Leccion greenlightdispensary (03/10): el Arsenal reporto 16
