@@ -1,3 +1,24 @@
+## v0.59.0 — Fase 1.5: SSA-lite en TAINT-TRACE
+
+- core/ssa.py: grafo de versiones def-use intra-funcion. Cada
+  asignacion crea una version (kind: SOURCE/SANITIZED/PREPARED/
+  CONCAT/COPY/CONST/UNKNOWN-FN/UNKNOWN-VAR) con padres y linea.
+- El sink ya no reporta "$q aparece cerca": reporta la CADENA
+  ($sql <- COPY <- $term <- SOURCE @L11), evidencia directa para la
+  capa FISCAL/JUEZ.
+- Refutacion conservadora (SSA-REFUTADO): solo cuando el BFS sobre
+  TODOS los padres prueba que ninguna version alcanzable trae
+  fuente, taint ni valor desconocido. Llamadas no resueltas y vars
+  sin version BLOQUEAN la refutacion (jsst SSRF vuelve a vivo).
+- Bugs de solidez encontrados y corregidos por muestreo real:
+  .= no matcheaba la regex de asignacion; vars interpoladas sin
+  version contaban como limpias; refutacion caminaba solo el primer
+  padre del DAG.
+- Integrado en plugin_batch.py y diff_hunt.py (refutados filtrados,
+  cadenas en el output).
+- Medicion N1-VDP: 231 taint -> 10 refutados, 219 con cadena, 2 sin
+  vars resueltas. Regresion 14/14.
+
 ## v0.58.3 — Triage de los 29 cerrado: 0 candidatos, 2 clases semanticas nuevas
 
 - RC-000139 (cmp_router): comparacion dominada POR un gate = corre

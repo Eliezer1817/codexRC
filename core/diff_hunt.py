@@ -180,6 +180,13 @@ def scan(slug: str, workdir: str) -> Dict[str, Any]:
         return rec
 
     taint = trace_path(new_root, top=100)
+    # SSA-lite: cadena def-use + refutacion de FPs por nombre
+    try:
+        from core.ssa import enrich as ssa_enrich
+        taint = ssa_enrich(new_root, taint)
+        taint = [t for t in taint if not t.get("ssa_refuted")]
+    except Exception:
+        pass
     try:
         pats = scan_path(new_root, top=100)
     except Exception:

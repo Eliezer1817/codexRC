@@ -108,6 +108,14 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
 
     # 1) TAINT-TRACE: flujo fuente->sink
     taint = trace_path(code, top=top)
+    # 1b) SSA-lite: cadena def-use por version + refutacion de FPs
+    #     por nombre (reasignacion limpia antes del sink)
+    try:
+        from core.ssa import enrich as ssa_enrich
+        taint = ssa_enrich(code, taint)
+        taint = [t for t in taint if not t.get("ssa_refuted")]
+    except Exception:
+        pass
     # 2) CVE-MATCH: patrones de familias CVE reales + outlier baseline
     try:
         pats = scan_path(code, top=top)
