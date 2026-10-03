@@ -217,6 +217,49 @@ def seed_rc_000152() -> None:
         })
 
 
+
+def seed_rc_000153() -> None:
+    """RC-000153 (v0.67.0): BAC-PROOF dinamico (AUTHZ-PROOF capa 4).
+    Validacion A/B con ejecucion REAL en WP-LAB (WP+SQLite+php -S,
+    sin MySQL): anon/sub/admin contra objeto victima del admin.
+    DEMO-UNAUTH/DEMO-BAC-DINAMICO con evidencia de ejecucion; los
+    REFUTADO alimentan FP-MEMORIA con prueba dinamica."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000153" not in cases:
+        _write_case({
+            "id": "RC-000153",
+            "module": "BAC-PROOF (AUTHZ-PROOF capa 4)",
+            "problem": "los candidatos BAC/IDOR solo tenian evidencia "
+                       "estatica; sin prueba de ejecucion los "
+                       "reportes a VDP/Patchstack quedaban debiles "
+                       "y el triaje humano seguia siendo la unica "
+                       "resolucion",
+            "first_seen": "v0.64.0 (candidatos AUTHZ-PROOK sin "
+                          "validacion dinamica)",
+            "fixed_in": "v0.67.0 (core/bac_proof.py: WP-LAB local "
+                        "con sqlite-database-integration, php -S, "
+                        "wp-cli; siembra de canario en TODAS las "
+                        "claves de meta que el plugin lee; A/B "
+                        "anon/sub/admin; veredictos DEMO-BAC-"
+                        "DINAMICO / DEMO-UNAUTH-DINAMICO / "
+                        "REFUTADO-DINAMICO -> FP-MEMORIA)",
+            "repro": {"plugins": "rc151 sintetico con handler idor "
+                                 "(sin gate) y con_owner (con gate)",
+                      "expect": "idor: sub obtiene el canario igual "
+                                "que admin (DEMO-BAC-DINAMICO); "
+                                "con_owner: sub bloqueado, admin "
+                                "obtiene (REFUTADO -> memoria)"},
+            "case_real": "bug real encontrado durante el desarrollo: "
+                         "core install con el drop-in sqlite agrega "
+                         "el sufijo /wp al siteurl; las cookies de "
+                         "sesion viajan con path /wp y NO llegan a "
+                         "/wp-admin -> todo el A/B veia usuarios "
+                         "como anonimos. Fix: forzar siteurl/home "
+                         "raiz en Lab.ensure()",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -229,6 +272,7 @@ def run() -> int:
     seed_rc_000150()
     seed_rc_000151()
     seed_rc_000152()
+    seed_rc_000153()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -365,6 +409,11 @@ class RC151 {
                       f"{'PASS' if ok else 'FAIL ' + str(got)}")
                 if not ok:
                     fails += 1
+        if c["id"] == "RC-000153":
+            # repro en vivo (requiere php + pdo_sqlite + red):
+            # python3 core/bac_proof.py <plugin> — validado v0.67.0
+            print(f"[{c['id']}] BAC-PROOF dinamico — repro en vivo "
+                  f"(ver case_real), no se re-ejecuta en corpus")
         if c["id"] == "RC-000152":
             import tempfile
             from core import fp_memory

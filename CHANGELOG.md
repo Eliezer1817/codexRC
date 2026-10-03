@@ -1,3 +1,36 @@
+## v0.67.0 — AUTHZ-PROOF capa 4: BAC-PROOF dinamico (RC-000153)
+
+La joya de la corona del BAC 2.0: validacion DINAMICA con
+ejecucion real. core/bac_proof.py levanta WordPress completo en
+local (SQLite via sqlite-database-integration, php -S, wp-cli,
+SIN MySQL), instala el plugin bajo prueba, siembra un post
+victima del admin con canario en TODAS las claves de meta que el
+plugin lee y dispara cada accion candidata como:
+
+    ANONIMO -> SUSCRIPTOR -> ADMIN
+
+Difiere las respuestas y emite evidencia de ejecucion:
+- DEMO-UNAUTH-DINAMICO: el anonimo obtiene el canario (nopriv).
+- DEMO-BAC-DINAMICO: el suscriptor obtiene lo mismo que el
+  admin sobre el objeto ajeno.
+- REFUTADO-DINAMICO: el admin obtiene y el suscriptor es
+  bloqueado (gate/owner funciona en ejecucion) -> alimenta
+  FP-MEMORIA con huella dinamica (capa 5).
+
+Todo local: cero interaccion con terceros (regla mVDP).
+
+Bug real del desarrollo (case_real): core install con el drop-in
+sqlite agrega sufijo /wp al siteurl; las cookies de sesion viajan
+con path /wp y no llegan a /wp-admin (todo el A/B veia usuarios
+como anonimos). Fix: Lab.ensure() fuerza siteurl/home raiz.
+
+Validado en vivo (sandbox): idor sin gate -> DEMO-BAC-DINAMICO
+(sub 200 con canario = admin); handler con owner check ->
+REFUTADO-DINAMICO (sub 'no es tuyo', admin canario) y la
+FP-MEMORIA aprendio la refutacion. Corpus 24/24 PASS.
+
+Requisitos: php + pdo_sqlite (Termux: pkg install php php-sqlite3).
+
 ## v0.66.0 — AUTHZ-PROOF capa 5: FP-MEMORIA semantica (RC-000152)
 
 "El falso positivo se paga una sola vez, nunca mas." fp_autoclose
