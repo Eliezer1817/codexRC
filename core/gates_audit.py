@@ -168,6 +168,59 @@ def _roles_of_body(body):
 
 
 
+
+# ---------- v0.65.0 AUTHZ-PROOF CAPA 2: OBJECT-OWNER (IDOR estatico) ----------
+# Sigue el id que llega del usuario hasta el acceso al objeto. Si el
+# camino no pasa por ninguna verificacion de dueño (post_author ==,
+# get_current_user_id comparado, current_user_can('edit_post', $id))
+# y el rol exigido no es editor/admin -> CANDIDATO-IDOR (horizontal).
+
+ID_SOURCE_RE = re.compile(
+    r"\$(\w+)\s*=\s*[^;\n]*\$_(?:GET|POST|REQUEST)\s*\[", re.I)
+RENAME_RE = re.compile(r"\$(\w+)\s*=\s*\$(\w+)\s*;")
+SINK_CALL_RE = re.compile(
+    r"\b(get_post|get_page|wp_update_post|wp_delete_post|"
+    r"get_post_meta|update_post_meta|delete_post_meta|"
+    r"get_userdata|get_user_by|wp_update_user|wp_delete_user|"
+    r"get_user_meta|update_user_meta|delete_user_meta|"
+    r"get_term_by|wp_delete_term|wp_get_attachment_url)\s*\(([^)]*)",
+    re.I)
+SINK_SUPERGLOBAL_RE = re.compile(
+    r"\b(get_post|get_page|wp_update_post|wp_delete_post|"
+    r"get_post_meta|update_post_meta|get_userdata|get_user_by|"
+    r"get_user_meta|update_user_meta)\s*\(\s*[^)]*\$_(?:GET|POST|"
+    r"REQUEST)\s*\[", re.I)
+OWNER_RE = re.compile(
+    r"post_author\s*[!=]=|[!=]=\s*\$?\w*->post_author|"
+    r"[!=]=\s*get_current_user_id|get_current_user_id\s*\(\s*\)"
+    r"[^;]{0,40}[!=]=|"
+    r"current_user_can\s*\(\s*['\"]edit_(?:post|page|others_posts)|"
+    r"current_user_can\s*\(\s*['\"]delete_(?:post|page)|"
+    r"get_the_author_meta\s*\(\s*['\"]id", re.I)
+
+
+def _idor_of_body(body):
+    """(tainted, sinks, owner) del cuerpo de un handler."""
+    tainted = {m.group(1) for m in ID_SOURCE_RE.finditer(body)}
+    for _ in range(3):
+        added = False
+        for m in RENAME_RE.finditer(body):
+            if m.group(2) in tainted and m.group(1) not in tainted:
+                tainted.add(m.group(1))
+                added = True
+        if not added:
+            break
+    sinks = []
+    for m in SINK_CALL_RE.finditer(body):
+        args_vars = set(re.findall(r"\$(\w+)", m.group(2)))
+        if args_vars & tainted:
+            sinks.append({"func": m.group(1).lower(), "vars": sorted(args_vars & tainted)})
+    if SINK_SUPERGLOBAL_RE.search(body):
+        sinks.append({"func": "directo-superglobal", "vars": ["$_REQUEST"]})
+    owner = bool(OWNER_RE.search(body))
+    return tainted, sinks, owner
+
+
 def _annotate_roles(rec, body, caps, nonce, nopriv):
     """Veredicto clasico + anotacion ROLE-SOLVER (capa 1)."""
     caps_req, rol, sens = _roles_of_body(body)
@@ -188,6 +241,17 @@ def _annotate_roles(rec, body, caps, nonce, nopriv):
         rec["veredicto"] = "CANDIDATO-BAC"
     else:
         rec["veredicto"] = "REVISAR-AUTH"
+    # capa 2: OBJECT-OWNER (IDOR horizontal estatico)
+    tainted, sinks, owner = _idor_of_body(body)
+    if sinks:
+        rec["object_access"] = sinks
+        rec["owner_check"] = owner
+        if (not nopriv and not owner
+                and rol not in ("administrator", "editor")
+                and rec["veredicto"] in ("REVISAR-AUTH", "PRIVILEGIO-DEBIL")):
+            # id controlado por el usuario toca objetos sin verificar
+            # de quien son, con un rol que no legitima el acceso ajeno
+            rec["veredicto"] = "CANDIDATO-IDOR"
 
 
 def _action_args(line):

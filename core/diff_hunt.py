@@ -319,7 +319,8 @@ def scan(slug: str, workdir: str) -> Dict[str, Any]:
     vivos.sort(key=lambda h: (order_v.get(h.get("_verdict", ""), 5),
                               0 if h.get("_gate") in
                               ("CANDIDATO-BAC", "REST-ABIERTO",
-                                   "PRIVILEGIO-DEBIL") else 1))
+                                   "PRIVILEGIO-DEBIL",
+                                   "CANDIDATO-IDOR") else 1))
     vivos = [h for h in vivos if h.get("_verdict") != "DESCARTADO"]
     rec["hallazgos"] = vivos
     rec["descartados_defensa"] = n_desc

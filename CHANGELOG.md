@@ -1,3 +1,27 @@
+## v0.65.0 — AUTHZ-PROOF capa 2: OBJECT-OWNER, IDOR estatico (RC-000151)
+
+El hueco admitido del BAC: GATES-AUDIT no miraba de QUIEN es el
+objeto. Un handler que hacia get_post_meta(absint($_POST['post_id']))
+sin comparar post_author/current_user_id pasaba inadvertido: IDOR
+horizontal invisible para el triaje aunque el rol exigido fuera
+bajo y el nonce solo probara identidad.
+
+Ahora cada handler anota:
+- object_access: sinks WP donde un id TAINTED ($var = ...$_GET/
+  $_POST/$_REQUEST, renames hasta 3 hops) llega (get_post,
+  get_post_meta, get_userdata, wp_update_post, wp_delete_*...).
+- owner_check: si el cuerpo compara dueño (post_author cmp,
+  get_current_user_id cmp, current_user_can('edit_post', ...)).
+
+Veredicto nuevo CANDIDATO-IDOR: id controlado por el usuario toca
+objetos, sin owner check, con rol exigido menor a editor (editor/
+administrator legitiman acceso ajeno; nopriv ya es CANDIDATO-BAC).
+diff_hunt prioriza el nuevo estado.
+
+Validacion: repro sintetico 4/4 (corpus RC-000151, regresion 22/22
+PASS) + eRoom 1.7.1 estable (0-day CANDIDATO-BAC preservado, 12
+PROTEGIDO intactos) + rc149 6/6 + rc150 4/4 sin cambios.
+
 ## v0.64.0 — AUTHZ-PROOF capa 1: ROLE-SOLVER (RC-000150)
 
 GATES-AUDIT trataba cualquier current_user_can como "protegido"

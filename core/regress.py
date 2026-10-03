@@ -147,6 +147,40 @@ def seed_rc_000150() -> None:
         })
 
 
+
+def seed_rc_000151() -> None:
+    """RC-000151 (v0.65.0): OBJECT-OWNER. Un id controlado por el
+    usuario que llega a get_post/get_post_meta sin verificacion de
+    dueño dejaba de ser candidato porque el handler tenia nonce."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000151" not in cases:
+        _write_case({
+            "id": "RC-000151",
+            "module": "GATES-AUDIT (AUTHZ-PROOF capa 2)",
+            "problem": "GATES-AUDIT no miraba de QUIEN es el objeto: "
+                       "absint($_POST['post_id']) -> get_post_meta sin "
+                       "comparar post_author/current_user_id pasaba "
+                       "inadvertido (IDOR horizontal invisible para el "
+                       "triaje aunque el rol exigido fuera bajo)",
+            "first_seen": "v0.64.0 (hueco admitido en el plan AUTHZ-PROOF)",
+            "fixed_in": "v0.65.0 (OBJECT-OWNER: taint de ids $_GET/"
+                        "$_POST/$_REQUEST + renames 3 hops + sinks de "
+                        "objeto WP + OWNER_RE (post_author cmp, "
+                        "current_user_id cmp, edit_post cap); sin owner "
+                        "y rol < editor -> CANDIDATO-IDOR)",
+            "repro": {"plugin": "4 handlers: idor puro, con owner check, "
+                               "con rol admin, sin taint",
+                      "expect": {"wp_ajax_rc151_idor": "CANDIDATO-IDOR",
+                                 "wp_ajax_rc151_con_owner": "REVISAR-AUTH",
+                                 "wp_ajax_rc151_admin": "PROTEGIDO",
+                                 "wp_ajax_rc151_sin_taint": "REVISAR-AUTH"}},
+            "case_real": "eRoom 1.7.1 estable (17 hooks, 0-day CANDIDATO-BAC "
+                         "preservado, 12 PROTEGIDO); rc149 6/6 y rc150 4/4 "
+                         "sin cambios",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -157,6 +191,7 @@ def run() -> int:
     fails = 0
     seed_rc_000149()
     seed_rc_000150()
+    seed_rc_000151()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -248,6 +283,50 @@ class RC150 {
                       f"solo_nonce={sn} -> "
                       f"{'PASS' if ok and sn else 'FAIL ' + str(got)}")
                 if not (ok and sn):
+                    fails += 1
+        if c["id"] == "RC-000151":
+            import tempfile
+            from core.gates_audit import scan_path
+            repro_php = """<?php
+class RC151 {
+    public function __construct() {
+        add_action('wp_ajax_rc151_idor', array($this, 'idor'));
+        add_action('wp_ajax_rc151_con_owner', array($this, 'con_owner'));
+        add_action('wp_ajax_rc151_admin', array($this, 'admin_toma'));
+        add_action('wp_ajax_rc151_sin_taint', array($this, 'sin_taint'));
+    }
+    public function idor() {
+        $post_id = absint($_POST['post_id']);
+        echo get_post_meta($post_id, 'secret_key', true);
+    }
+    public function con_owner() {
+        $post_id = absint($_POST['post_id']);
+        $p = get_post($post_id);
+        if ($p->post_author != get_current_user_id()) { wp_die('no'); }
+        echo get_post_meta($post_id, 'secret_key', true);
+    }
+    public function admin_toma() {
+        if (!current_user_can('manage_options')) { wp_die('no'); }
+        $post_id = absint($_POST['post_id']);
+        echo get_post_meta($post_id, 'secret_key', true);
+    }
+    public function sin_taint() {
+        echo get_post_meta(get_the_ID(), 'x', true);
+    }
+}
+"""
+            with tempfile.TemporaryDirectory() as tmp:
+                open(os.path.join(tmp, "rc151.php"), "w").write(repro_php)
+                res = scan_path(tmp)
+                got = {h["accion"]: h["veredicto"] for h in res["handlers"]}
+                exp = {"wp_ajax_rc151_idor": "CANDIDATO-IDOR",
+                       "wp_ajax_rc151_con_owner": "REVISAR-AUTH",
+                       "wp_ajax_rc151_admin": "PROTEGIDO",
+                       "wp_ajax_rc151_sin_taint": "REVISAR-AUTH"}
+                ok = all(got.get(k) == v for k, v in exp.items()) and len(got) == 4
+                print(f"[{c['id']}] idor estatico {len(got)}/4 -> "
+                      f"{'PASS' if ok else 'FAIL ' + str(got)}")
+                if not ok:
                     fails += 1
         if c["id"] == "RC-000127":
             import tempfile
