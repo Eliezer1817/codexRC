@@ -18,7 +18,7 @@ from logging.handlers import RotatingFileHandler
 import sys
 import time
 import uuid
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import requests
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.57.3"
+VERSION = "0.57.4"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -671,11 +671,23 @@ def api_vendor_farm():
         return jsonify({"error": str(exc)}), 500
 
 
+def _is_loopback(remote: Optional[str]) -> bool:
+    return (remote or "").startswith(("127.", "::1", "localhost"))
+
+
 @app.post("/api/auth_token")
 def api_auth_token():
     """Loguea (con credenciales dadas o heredadas del ultimo escaneo) y
     devuelve el header Authorization listo para usar en curl. SOLO local:
-    es tu propio token de sesion, no lo compartas ni lo pegues en ningun lado."""
+    es tu propio token de sesion, no lo compartas ni lo pegues en ningun lado.
+    FUERZA: peticiones desde fuera de loopback se rechazan (403) salvo
+    override explicito CODEXRC_LAN_TOKENS=1."""
+    remote = request.remote_addr
+    if not _is_loopback(remote) and not os.environ.get("CODEXRC_LAN_TOKENS"):
+        app.logger.warning("[AUTH_TOKEN] intento desde %s rechazado "
+                           "(ruta solo-local)", remote)
+        return jsonify({"error": "ruta solo-local: /api/auth_token entrega "
+                                 "tokens de sesion y no se expone a la red"}), 403
     data = request.get_json(force=True, silent=True) or {}
     url = str(data.get("url") or "").strip()
     if not url:
@@ -1711,7 +1723,18 @@ def api_arsenal_extreme():
 
 if __name__ == "__main__":
     print("\ncodexRC backend running at http://127.0.0.1:8000\n")
+    if ARS_PASSWORD == "extremo":
+        print("⚠ Arsenal usa la contrasena DEFAULT 'extremo'. Para cambiarla: "
+              "export ARSENAL_PASSWORD='tu_clave' antes de arrancar\n")
     _load_persisted_jobs()
     threading.Thread(target=_watchdog_loop, daemon=True).start()
     # threaded=True: un scan pesado nunca congela el dashboard ni las encuestas
-    app.run(host="0.0.0.0", port=8000, threaded=True, debug=False)
+    # SEGURIDAD: por defecto el server escucha SOLO en loopback (127.0.0.1).
+    # Escuchar en 0.0.0.0 expone jobs, informes y el Arsenal a todo el WiFi.
+    # Para usarlo desde otra maquina de la LAN (consciencia del riesgo):
+    #   CODEXRC_LAN=1 python backend/app.py
+    host = "127.0.0.1" if not os.environ.get("CODEXRC_LAN") else "0.0.0.0"
+    if host == "0.0.0.0":
+        print("⚠ CODEXRC_LAN=1: backend EXPUESTO a la red local "
+              "(jobs, informes y Arsenal visibles en el WiFi)")
+    app.run(host=host, port=8000, threaded=True, debug=False)

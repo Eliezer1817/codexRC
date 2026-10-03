@@ -1,3 +1,22 @@
+## v0.57.4 — AUDITORIA DE SEGURIDAD DEL PROPIO PROYECTO
+
+AUDITADO (sin cambios necesarios):
+- Arsenal: fire/resume/report/extreme exigian token de sesion (30 min) con
+  401/403 y log de auditoria con IP de origen. OK.
+- log_event: descarta claves password/token/cookies. safe_url: redacta query
+  params. safe_auth_info: Authorization [redacted], cookies solo NOMBRES.
+- Job dicts: guardan solo opts booleanos, nunca credenciales.
+- login_debug: pasos con nombres/conteos/codigos, jamas valores de credenciales.
+- field_adapt: registra el NOMBRE del campo requerido, no su valor.
+
+CORREGIDO:
+- Server escuchaba en 0.0.0.0: todo el WiFi veia jobs, informes y el Arsenal.
+  Ahora 127.0.0.1 por defecto; LAN solo con CODEXRC_LAN=1 (con aviso impreso).
+- /api/auth_token devolvia el header Authorization (token de sesion vivo) sin
+  autenticacion. Ahora rechaza peticiones no-loopback (403) con log del intento;
+  override explicito CODEXRC_LAN_TOKENS=1 para quien lo necesite.
+- Aviso al arrancar si ARSENAL_PASSWORD queda en la default 'extremo'.
+
 ## v0.57.3 — HIGIENE DE DEPENDENCIAS (Termux-first)
 
 - requirements.txt reescrito: 100% instalable en Termux armv7l. Fuera `rich`
