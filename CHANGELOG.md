@@ -1,3 +1,16 @@
+## v0.57.8 — TRIAJE de los 2 sobrevivientes no-loose-cmp: ambos MUERTOS
+
+- simple-floating-menu (BAC 1177/1214): MUERTO. Cero hooks nopriv/REST
+  en el plugin; los handlers imex cuelgan de admin_init con nonce
+  dedicado + manage_options. Era RC-000133 puro.
+- wc-multivendor-membership (pago degradable 57): MUERTO.
+  is_valid_member_id exige member_id == usuario actual; paymode contra
+  allow-list doble estricta (enabled ∩ offline); online solo via IPN
+  (vendor ya parcheo CVE-2026-12967). RC-000134 al corpus.
+- FIX del analisis del re-run: el match por ubicacion confundia TIPOS
+  de finding distintos en la misma linea. Sobrevivientes reales del
+  N1∩VDP: los 15 loose-cmp, nada mas.
+
 ## v0.57.7 — PATRON BAC MIRA EL CUERPO DEL HANDLER (RC-000131/133)
 
 - finalize() postergado: los hallazgos bac-ajax-nopriv esperan a tener el
