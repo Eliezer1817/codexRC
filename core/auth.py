@@ -338,46 +338,75 @@ class AuthManager:
             # ---------- 4. SPA / API JSON login ----------
             # 4a. Auto-descubrimiento: buscar en el JavaScript de la SPA el
             #     endpoint real de login (ej. post("/auth/doSignin") + apiUrl).
-            descubiertos = self._discover_spa_login_endpoints(login_url, soup)
-            # CONFIG-JSON (v0.56.4, caso lucha.cc): SPAs moviles (Vue/vite)
-            # esconden la API en un config.json runtime con baseApiUrl. El
-            # HTML no menciona la API en ningun lado; sin esto el Hunter solo
-            # ve la ruta Vue vacia y el login imposible.
+            # ---------- UNIVERSAL-API-MATRIX (v0.57.0) ----------
+            # Los parches por blanco (vellius doSignin, bitevolut Session,
+            # xenpaid Next.js, lucha.cc config.json) quedaron consolidados
+            # aqui: cualquier SPA cae en BASES x RUTAS x PAYLOADS, no en un
+            # caso suelto. BASES: prefijo del JS (apiUrl/baseApiUrl),
+            # archivos de config runtime, subdominio api.<host> y el origen.
+            # RUTAS: endpoints descubiertos en el JS + escalera estandar
+            # aplicada a CADA base (antes solo al origen). PAYLOADS:
+            # combinado (las APIs ignoran campos extra) y variantes
+            # minimas para APIs estrictas, mas un intento form-encoded.
             _o = "{0.scheme}://{0.netloc}".format(urlparse(login_url))
-            _cfg_api = None
-            try:
-                _cfg = self.session.get(_o + "/config.json", timeout=15).json()
-                _base = _cfg.get("baseApiUrl")
-                if isinstance(_base, str) and _base.startswith("http"):
-                    _cfg_api = _base.rstrip("/")
-                    step("config_json_api", f"baseApiUrl -> {_cfg_api}")
-            except Exception:
-                pass
-            if _cfg_api:
-                descubiertos = [_cfg_api + "/login"] + (descubiertos or [])
-            step("endpoints_descubiertos", descubiertos or "ninguno")
-            if descubiertos:
-                api_urls = descubiertos[:3]
-            else:
-                # escalera v2: rutas de API de login estandar en apps
-                # modernas (fetch, DRF, Laravel, Express) ANTES de rendirse
-                # con la pagina HTML como ultima opcion.
-                _o = "{0.scheme}://{0.netloc}".format(urlparse(login_url))
-                _paths = ("/api/auth/login/", "/api/auth/login", "/api/auth/signin/",
-                          "/api/login/", "/api/login", "/api/signin/",
-                          "/api/v1/auth/login/", "/api/auth/session",
-                          "/api/session", "/api/users/login",
-                          "/api/auth/doSignin", "/api/jwt/create")
-                api_urls = [_o + p for p in _paths if _o + p != login_url]
-                api_urls.append(login_url)
-                step("escalera_api", f"{len(api_urls)-1} rutas estandar + pagina")
+            _host = urlparse(login_url).hostname or ""
+            data_spa = self._scan_spa_js(login_url, soup)
+            descubiertos = self._discover_spa_login_endpoints(login_url, soup)
+            bases = []
+            _pref = (data_spa or {}).get("api_prefix") or ""
+            if _pref.startswith("http"):
+                bases.append(_pref.rstrip("/"))
+            for _b in self._sweep_config_files(_o, _host):
+                if _b not in bases:
+                    bases.append(_b)
+            if _o not in bases:
+                bases.append(_o)
+            # el guess de subdominio va ULTIMO: si no existe, son muchas
+            # rutas fallando por timeout antes de llegar a la base buena
+            if _host:
+                _api_sub = "https://api." + _host
+                if _api_sub != _o and _api_sub not in bases:
+                    bases.append(_api_sub)
+            step("bases_api", f"{len(bases)}: {', '.join(bases[:3])}")
+            _rutas_std = ("/login", "/api/login", "/auth/login", "/v1/login",
+                          "/user/login", "/api/auth/login", "/api/v1/auth/login",
+                          "/auth/doSignin", "/api/auth/doSignin", "/doLogin",
+                          "/signin", "/api/signin", "/auth/signin",
+                          "/api/user/login", "/member/login", "/account/login",
+                          "/api/v1/login", "/users/login", "/api/session",
+                          "/api/auth/session", "/api/jwt/create")
+            api_urls = []
+            for ep in descubiertos[:4]:
+                full = self._armar_url_api(login_url, ep)
+                if full not in api_urls:
+                    api_urls.append(full)
+            for _b in bases:
+                for _p in _rutas_std:
+                    _cand = _b + _p
+                    if _cand not in api_urls and _cand != login_url:
+                        api_urls.append(_cand)
+            api_urls = api_urls[:48]
+            step("endpoints_descubiertos",
+                 f"{len(api_urls)} candidatos ({len(descubiertos)} del JS + matriz)")
             step("modo", "spa_api_json (login por API)")
-            # candidatos de campo de usuario: el explicito primero, luego comunes
-            user_keys = [username_field] if username_field else []
-            user_keys += [k for k in ("username", "email", "login", "userid", "user_id") if k not in user_keys]
-            json_attempts = [
-                {ukey: username, "password": password} for ukey in user_keys
+            # payloads: (dict, form_encoded?). El combinado primero porque
+            # casi toda API ignora campos extra; los minimos resuelven las
+            # estrictas (FastAPI 422, validadores por campo).
+            json_attempts = []
+            if username_field:
+                json_attempts.append(({username_field: username,
+                                       "password": password}, False))
+            json_attempts += [
+                ({"username": username, "account": username, "email": username,
+                  "phone": username, "password": password}, False),
+                ({"username": username, "password": password}, False),
+                ({"account": username, "password": password}, False),
+                ({"email": username, "password": password}, False),
+                ({"login": username, "password": password}, False),
+                ({"username": username, "password": password}, True),
             ]
+            _req = 0
+            _TOPE_REQ = 60
             from urllib.parse import urlparse as _up
             _origin = "{0.scheme}://{0.netloc}".format(_up(login_url))
             headers_json = {
@@ -388,34 +417,101 @@ class AuthManager:
                 "Referer": login_url,
             }
             for api_url in api_urls:
-                for payload in json_attempts:
+                if _req >= _TOPE_REQ:
+                    step("tope_requests", f"{_req} intentos: corte de seguridad")
+                    break
+                for payload, _form in json_attempts:
+                    if _req >= _TOPE_REQ:
+                        break
+                    _req += 1  # antes del POST: una excepcion tambien es un
+                    # intento quemado; sin esto un host muerto consumia la
+                    # cola entera con timeouts que nunca contaban
+                    _cuerpo_kw = {"data": payload} if _form else {"json": payload}
                     try:
                         login_resp = self.session.post(
-                            api_url, json=payload, headers=headers_json,
-                            timeout=20, allow_redirects=True,
+                            api_url, headers=headers_json, timeout=20,
+                            allow_redirects=True, **_cuerpo_kw,
                         )
                     except Exception as exc:
                         step("api_json_error", f"{api_url}: {exc}")
-                        continue
+                        break  # host/endpoint muerto: no reintentar payloads
                     self.last_login_response = login_resp
-                    body = login_resp.text.lower()
-                    compact = login_resp.text.replace(" ", "")[:600].lower()
                     _ct = (login_resp.headers.get("Content-Type") or "").lower()
-                    es_json = "json" in _ct or login_resp.text.lstrip()[:1] == "{"
-                    exito = es_json and (
-                        (login_resp.status_code < 400 and "password" not in body[:500])
-                        or '"state":"success"' in compact
-                        or '"success":true' in compact
-                    )
+                    try:
+                        _j = login_resp.json()
+                    except Exception:
+                        _j = None
+                    es_json = _j is not None or "json" in _ct \
+                        or login_resp.text.lstrip()[:1] == "{"
+                    # VEREDICTO GENERICO: (1) token en el JSON = exito casi
+                    # seguro; (2) HTTP <400 + JSON sin senales de error.
+                    # Senales: code/status distinto de OK, o msg con palabras
+                    # de rechazo (cubre "Account or password incorrect" de
+                    # APIs que devuelven 200 con el error adentro).
+                    _tok = self._extraer_token(_j) if isinstance(_j, (dict, list)) else None
+                    _err_ind = False
+                    if isinstance(_j, dict):
+                        _code = str(_j.get("code", _j.get("status", ""))).strip().lower()
+                        if _code not in ("", "0", "1", "200", "ok", "true", "success"):
+                            _err_ind = True
+                        _msg = str(_j.get("msg", _j.get("message", ""))).lower()
+                        if any(w in _msg for w in (
+                                "incorrect", "invalid", "wrong", "error",
+                                "failed", "no exist", "not found", "captcha",
+                                "locked", "verify", "expired")):
+                            _err_ind = True
+                    elif login_resp.text:
+                        _body = login_resp.text[:600].lower()
+                        if any(w in _body for w in (
+                                "incorrect", "invalid", "wrong password",
+                                "failed", "captcha", "locked")):
+                            _err_ind = True
+                    exito = login_resp.status_code < 400 and (
+                        _tok or (es_json and not _err_ind))
+                    # FIELD-ADAPT: APIs estrictas dicen el campo que falta
+                    # ("Login is required", "account is required"). Si lo
+                    # nombran, reintenta UNA vez con ese campo exacto.
+                    if not exito and isinstance(_j, dict) and _req < _TOPE_REQ:
+                        _mre = re.search(
+                            r"([A-Za-z_]+)\s*is\s*required",
+                            str(_j.get("message", _j.get("msg", ""))))
+                        if _mre:
+                            _campo = _mre.group(1).strip().lower()
+                            _int = {_campo: username, "password": password}
+                            if _int not in [p for p, _f in json_attempts]:
+                                try:
+                                    _resp2 = self.session.post(
+                                        api_url, json=_int, headers=headers_json,
+                                        timeout=20, allow_redirects=True)
+                                    _req += 1
+                                    try:
+                                        _j2 = _resp2.json()
+                                    except Exception:
+                                        _j2 = None
+                                    _tok2 = self._extraer_token(_j2) if isinstance(
+                                        _j2, (dict, list)) else None
+                                    _ex2 = _resp2.status_code < 400 and (
+                                        _tok2 or (isinstance(_j2, dict) and not any(
+                                            w in str(_j2.get("message",
+                                                    _j2.get("msg", ""))).lower()
+                                            for w in ("required", "incorrect",
+                                                      "invalid", "wrong"))))
+                                    if _ex2:
+                                        login_resp = _resp2
+                                        _j = _j2
+                                        _tok = _tok2 or self._extraer_token(_j)
+                                        es_json = True
+                                        _err_ind = False
+                                        exito = True
+                                        step("field_adapt",
+                                             f"campo requerido '{_campo}' aceptado")
+                                except Exception:
+                                    pass
                     if exito:
                         # TOKEN-INHERIT: SPAs sin cookies devuelven el token
                         # en el JSON y lo esperan en el header Authorization.
                         # Sin esto el login entra pero la sesion no se hereda.
-                        try:
-                            _j = login_resp.json()
-                        except Exception:
-                            _j = {}
-                        _tok = self._extraer_token(_j)
+                        _tok = _tok or self._extraer_token(_j)
                         self._session_token = _tok
                         if _tok:
                             _esq = (self._spa_cache_data or {}).get("auth_scheme") or "Bearer"
@@ -647,7 +743,9 @@ class AuthManager:
                     js)
                 if _m:
                     auth_scheme = _m.group(1)
-            m = _re.search(r'apiUrl["\']?\s*[:=]\s*["\']([^"\']+)["\']', js)
+            m = _re.search(
+                r'(?:baseApiUrl|apiUrl|api_url|apiBase|api_base|apiPrefix|'
+                r'api_prefix|baseURL)["\']?\s*[:=]\s*["\']([^"\']+)["\']', js)
             if m and not api_prefix:
                 api_prefix = m.group(1)
             for mm in _re.finditer(r'\.post\(\s*["\'`]([^"\'`]+)["\'`]', js):
@@ -743,6 +841,11 @@ class AuthManager:
         return data
 
     def _armar_url_api(self, page_url: str, ep: str) -> str:
+        # endpoint ABSOLUTO: el JS ya trae la URL completa
+        # (caso vellius: .post("https://vellius.com/api/auth/doSignin")).
+        # Prefijarlo con origin/api generaba URLs dobles inservibles.
+        if ep.startswith(("http://", "https://")):
+            return ep
         origin = "{0.scheme}://{0.netloc}".format(urlparse(page_url))
         data = self._spa_cache_data or {}
         api_prefix = data.get("api_prefix") or ""
@@ -773,6 +876,83 @@ class AuthManager:
             if full not in finales:
                 finales.append(full)
         return finales
+
+    _CONFIG_NOMBRES = (
+        "/config.json", "/config.js", "/appconfig.json", "/app.config.js",
+        "/runtime-config.json", "/env.json", "/settings.json",
+        "/config/app.json", "/api/config", "/public/config.json",
+    )
+
+    def _sweep_config_files(self, origin: str, host: str) -> list:
+        """BASES de API escondidas en archivos de config runtime.
+
+        Caso real: lucha.cc (Vue/vite movil) solo expone baseApiUrl en
+        /config.json; el HTML nunca menciona la API. Se buscan claves
+        baseApiUrl/apiUrl/apiBase/baseURL en JSON, JS y texto plano,
+        filtrando a la misma familia de dominio del blanco (excluye CDNs
+        de terceros como aliyuncs/googleapis que viven en el bundle).
+        Cacheado por origen.
+        """
+        import re as _re
+        from urllib.parse import urlparse as _up
+        cache = getattr(self, "_config_cache", None) or {}
+        if cache.get("origin") == origin:
+            return cache.get("bases", [])
+        bases = []
+        vistos = set()
+        sld = ".".join((host or "").split(".")[-2:])
+        for path in self._CONFIG_NOMBRES:
+            try:
+                r = self.session.get(origin + path, timeout=8)
+                if r.status_code != 200 or len(r.text) > 200000:
+                    continue
+                t = r.text
+                # 1) claves con URL asignada (JSON, JS o texto plano)
+                for mm in _re.finditer(
+                        r'(?:baseApiUrl|apiUrl|api_url|apiBase|api_base|'
+                        r'apiPrefix|baseURL|apiHost)["\']?\s*[:=]\s*'
+                        r'["\']?(https?://[^"\'\s,}]+)', t):
+                    v = mm.group(1).rstrip("/")
+                    if v in vistos:
+                        continue
+                    vistos.add(v)
+                    nloc = (_up(v).netloc or "").lower()
+                    if sld and (nloc == (host or "").lower()
+                                or nloc.endswith("." + sld)
+                                or nloc == "api." + sld):
+                        bases.append(v)
+                # 2) JSON puro: cualquier valor URL cuya clave diga api
+                try:
+                    j = r.json()
+                except Exception:
+                    j = None
+                if isinstance(j, dict):
+                    def _walk(o):
+                        if isinstance(o, dict):
+                            for k, v in o.items():
+                                if isinstance(v, str) and v.startswith("http") \
+                                        and "api" in (k or "").lower():
+                                    vv = v.rstrip("/")
+                                    nloc = (_up(vv).netloc or "").lower()
+                                    if (vv not in vistos and sld
+                                            and (nloc == (host or "").lower()
+                                                 or nloc.endswith("." + sld)
+                                                 or nloc == "api." + sld)):
+                                        vistos.add(vv)
+                                        bases.append(vv)
+                                else:
+                                    _walk(v)
+                        elif isinstance(o, list):
+                            for v in o[:50]:
+                                _walk(v)
+                    _walk(j)
+                if bases:
+                    step_msg = f"config {path}: {', '.join(bases[:2])}"
+                    break
+            except Exception:
+                continue
+        self._config_cache = {"origin": origin, "bases": bases}
+        return bases
 
     def discover_account_urls(self, page_url: str) -> list:
         """Endpoints de API que devuelven datos de la cuenta (verificar sesion)."""
