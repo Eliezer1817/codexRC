@@ -111,6 +111,42 @@ def seed_rc_000149() -> None:
         })
 
 
+
+def seed_rc_000150() -> None:
+    """RC-000150 (v0.64.0): ROLE-SOLVER. El nonce prueba identidad, no
+    autorizacion: handler sensible con privilegio bajo (read/edit_posts)
+    dejaba de ser candidato solo por tener current_user_can + nonce."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000150" not in cases:
+        _write_case({
+            "id": "RC-000150",
+            "module": "GATES-AUDIT (AUTHZ-PROOF capa 1)",
+            "problem": "GATES-AUDIT trataba cualquier current_user_can "
+                       "como 'protegido' sin importar QUE privilegio "
+                       "exige ni QUE hace el handler: update_option "
+                       "accesible con current_user_can('read') (cualquier "
+                       "suscriptor logueado) pasaba como PROTEGIDO. El "
+                       "nonce prueba identidad, no autorizacion",
+            "first_seen": "v0.43.0 (latente desde el diseno original)",
+            "fixed_in": "v0.64.0 (ROLE-SOLVER: extraccion de caps "
+                        "reales + tabla cap->rol estandar WP + deteccion "
+                        "de acciones sensibles; caps bajas + sensible -> "
+                        "PRIVILEGIO-DEBIL; solo-nonce queda anotado)",
+            "repro": {"plugin": "4 handlers: read+update_option, "
+                                "manage_options+update_option, "
+                                "nopriv+nonce+update_option, "
+                                "edit_posts+eco",
+                      "expect": {"wp_ajax_rc150_bajo": "PRIVILEGIO-DEBIL",
+                                 "wp_ajax_rc150_admin": "PROTEGIDO",
+                                 "wp_ajax_nopriv_rc150_nonce": "PROTEGIDO",
+                                 "wp_ajax_rc150_bajo_insens": "PROTEGIDO"}},
+            "case_real": "eRoom 1.7.1: 12 PROTEGIDO intactos (todos con "
+                         "caps de administrador), 0-day nopriv sigue "
+                         "CANDIDATO-BAC; rc149 6/6 sin cambios",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -120,6 +156,7 @@ def run() -> int:
     cases = _load_cases()
     fails = 0
     seed_rc_000149()
+    seed_rc_000150()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -166,6 +203,51 @@ function rc149_global_handler() { wp_send_json(get_users()); }
                 print(f"[{c['id']}] {len(got)}/6 hooks dinamicos resueltos -> "
                       f"{'PASS' if ok else 'FAIL ' + str(got)}")
                 if not ok:
+                    fails += 1
+        if c["id"] == "RC-000150":
+            import tempfile
+            from core.gates_audit import scan_path
+            repro_php = """<?php
+class RC150 {
+    public function __construct() {
+        add_action('wp_ajax_rc150_bajo', array($this, 'bajo'));
+        add_action('wp_ajax_rc150_admin', array($this, 'admin_ok'));
+        add_action('wp_ajax_nopriv_rc150_nonce', array($this, 'solo_nonce'));
+        add_action('wp_ajax_rc150_bajo_insens', array($this, 'bajo_insens'));
+    }
+    public function bajo() {
+        if (!current_user_can('read')) { wp_die('no'); }
+        update_option($_POST['opt'], $_POST['val']);
+    }
+    public function admin_ok() {
+        if (!current_user_can('manage_options')) { wp_die('no'); }
+        update_option($_POST['opt'], $_POST['val']);
+    }
+    public function solo_nonce() {
+        check_ajax_referer('rc150');
+        update_option('rc150_opt', $_POST['val']);
+    }
+    public function bajo_insens() {
+        if (!current_user_can('edit_posts')) { wp_die('no'); }
+        echo get_option('blogname');
+    }
+}
+"""
+            with tempfile.TemporaryDirectory() as tmp:
+                open(os.path.join(tmp, "rc150.php"), "w").write(repro_php)
+                res = scan_path(tmp)
+                got = {h["accion"]: h["veredicto"] for h in res["handlers"]}
+                exp = {"wp_ajax_rc150_bajo": "PRIVILEGIO-DEBIL",
+                       "wp_ajax_rc150_admin": "PROTEGIDO",
+                       "wp_ajax_nopriv_rc150_nonce": "PROTEGIDO",
+                       "wp_ajax_rc150_bajo_insens": "PROTEGIDO"}
+                ok = all(got.get(k) == v for k, v in exp.items()) and len(got) == 4
+                sn = any(h.get("solo_nonce") for h in res["handlers"]
+                         if h["accion"] == "wp_ajax_nopriv_rc150_nonce")
+                print(f"[{c['id']}] privilege-escalation {len(got)}/4, "
+                      f"solo_nonce={sn} -> "
+                      f"{'PASS' if ok and sn else 'FAIL ' + str(got)}")
+                if not (ok and sn):
                     fails += 1
         if c["id"] == "RC-000127":
             import tempfile

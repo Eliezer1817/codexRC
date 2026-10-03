@@ -1,3 +1,30 @@
+## v0.64.0 — AUTHZ-PROOF capa 1: ROLE-SOLVER (RC-000150)
+
+GATES-AUDIT trataba cualquier current_user_can como "protegido"
+sin importar QUE privilegio exige ni QUE hace el handler: un
+update_option accesible con current_user_can('read') (cualquier
+suscriptor logueado) pasaba como PROTEGIDO. El nonce prueba
+IDENTIDAD, no AUTORIZACION.
+
+Ahora cada handler anota:
+- caps_req: capabilities/roles que exige de verdad (extraccion de
+  current_user_can/user_can/author_can/wc_current_user_has_role/
+  is_super_admin).
+- rol_minimo: rol estandar WP mas bajo que pasa el chequeo
+  (tabla cap->rol jerarquica administrator>editor>author>
+  contributor>subscriber).
+- sensible: si el cuerpo hace acciones sensibles (update_option,
+  wpdb->write, borrado de users/posts/terms, filesystem, exec...).
+
+Veredicto nuevo PRIVILEGIO-DEBIL: caps bajas (subscriber/
+contributor/author) + accion sensible = candidato de escalada,
+aunque tenga nonce. Handlers solo-nonce quedan anotados
+(solo_nonce) para el triaje. diff_hunt prioriza el nuevo estado.
+
+Validacion: repro sintetico 4/4 (corpus RC-000150, regresion 21/21
+PASS) + eRoom 1.7.1 estable (12 PROTEGIDO con caps de admin
+intactos, 0-day CANDIDATO-BAC preservado) + rc149 6/6 sin cambios.
+
 ## v0.63.0 — AUTHZ-PROOF capa 3: resolucion de hooks dinamicos (RC-000149)
 
 GATES-AUDIT dejaba CALLBACK-NO-RESUELTO (o directamente no veia)

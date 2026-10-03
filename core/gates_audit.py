@@ -98,6 +98,98 @@ def _resolve_expr(expr, cmap, depth=0):
 
 
 
+
+# ---------- v0.64.0 AUTHZ-PROOF CAPA 1: ROLE-SOLVER ----------
+# El nonce prueba IDENTIDAD, no AUTORIZACION. Esta capa extrae que
+# capability exige realmente cada handler, la traduce al ROL minimo
+# estandar de WP que la posee, y si el handler hace acciones
+# sensibles con un privilegio bajo -> PRIVILEGIO-DEBIL (candidato).
+
+CAP_EXTRACT_RE = re.compile(
+    r"current_user_can\s*\(\s*['\"]([a-z0-9_\-]+)['\"]"
+    r"|(?:user_can|author_can)\s*\(\s*[^,]+,\s*['\"]([a-z0-9_\-]+)"
+    r"['\"]", re.I)
+ROLE_EXTRACT_RE = re.compile(r"wc_current_user_has_role\s*\(\s*['\"]"
+                             r"([a-z0-9_\-]+)['\"]", re.I)
+SENS_RE = re.compile(
+    r"update_option|delete_option|wp_insert_post|wp_update_post|"
+    r"wp_delete_post|wp_insert_user|wp_update_user|wp_delete_user|"
+    r"wp_create_user|add_role|remove_role|set_role|wpdb->query|"
+    r"wpdb->delete|wpdb->update|wpdb->insert|file_put_contents|"
+    r"unlink\s*\(|fwrite|wp_mail\s*\(|system\s*\(|exec\s*\(|eval\s*\(|"
+    r"move_uploaded_file|wp_insert_term|wp_delete_term|"
+    r"wp_insert_comment|wp_delete_comment|wp_update_comment")
+# capability estandar -> rol minimo que la posee (jerarquia WP)
+CAP_ROLE = {
+    "manage_options": "administrator", "edit_users": "administrator",
+    "create_users": "administrator", "delete_users": "administrator",
+    "remove_users": "administrator", "promote_users": "administrator",
+    "edit_theme_options": "administrator", "install_plugins": "administrator",
+    "install_themes": "administrator", "activate_plugins": "administrator",
+    "edit_plugins": "administrator", "edit_themes": "administrator",
+    "update_core": "administrator", "update_plugins": "administrator",
+    "update_themes": "administrator", "delete_plugins": "administrator",
+    "delete_themes": "administrator", "unfiltered_html": "administrator",
+    "manage_network": "administrator", "switch_themes": "administrator",
+    "edit_files": "administrator", "manage_options_for_": "administrator",
+    "edit_others_posts": "editor", "edit_others_pages": "editor",
+    "edit_published_pages": "editor", "publish_pages": "editor",
+    "delete_others_pages": "editor", "delete_others_posts": "editor",
+    "delete_published_pages": "editor", "moderate_comments": "editor",
+    "manage_categories": "editor", "manage_links": "editor",
+    "edit_pages": "editor", "delete_pages": "editor",
+    "publish_posts": "author", "upload_files": "author",
+    "edit_published_posts": "author", "delete_published_posts": "author",
+    "delete_posts": "contributor", "edit_posts": "contributor",
+    "edit_post": "contributor", "delete_post": "contributor",
+    "read": "subscriber",
+}
+ROLE_ORDER = {"administrator": 0, "editor": 1, "author": 2,
+              "contributor": 3, "subscriber": 4, "custom": 99}
+
+
+def _roles_of_body(body):
+    """caps_req y rol minimo (el mas EXIGENTE que permite pasar)."""
+    caps = []
+    for m in CAP_EXTRACT_RE.finditer(body):
+        for g in m.groups():
+            if g:
+                caps.append(g)
+                break
+    roles_directos = ROLE_EXTRACT_RE.findall(body)
+    if re.search(r"is_super_admin\s*\(", body):
+        roles_directos.append("administrator")
+    roles = [CAP_ROLE.get(c, "custom") for c in caps]
+    roles += [r if r in ROLE_ORDER else "custom" for r in roles_directos]
+    # chequeos multiples en AND: el rol que pasa TODOS es el mas alto
+    rol = min(roles, key=lambda r: ROLE_ORDER.get(r, 99)) if roles else None
+    sens = bool(SENS_RE.search(body))
+    return caps, rol, sens
+
+
+
+def _annotate_roles(rec, body, caps, nonce, nopriv):
+    """Veredicto clasico + anotacion ROLE-SOLVER (capa 1)."""
+    caps_req, rol, sens = _roles_of_body(body)
+    rec["caps"] = caps
+    rec["nonce"] = nonce
+    rec["caps_req"] = caps_req
+    rec["rol_minimo"] = rol
+    rec["sensible"] = sens
+    if caps or nonce:
+        rec["veredicto"] = "PROTEGIDO"
+        if caps and rol in ("subscriber", "contributor", "author") and sens:
+            # exige un privilegio BAJO para una accion SENSIBLE:
+            # el nonce prueba identidad, no autorizacion
+            rec["veredicto"] = "PRIVILEGIO-DEBIL"
+        elif not caps and sens and nopriv:
+            rec["solo_nonce"] = True
+    elif nopriv:
+        rec["veredicto"] = "CANDIDATO-BAC"
+    else:
+        rec["veredicto"] = "REVISAR-AUTH"
+
+
 def _action_args(line):
     """Primeros 2 argumentos de cada add_action(...) de la linea,
     cortando comas SOLO a profundidad 0 (respetar array($this, 'm'))."""
@@ -266,15 +358,8 @@ def audit(root: str) -> Dict[str, Any]:
             rec["linea_callback"] = h["line"]
             caps = bool(CAPS_RE.search(body))
             nonce = bool(NONCE_RE.search(body))
-            rec["caps"] = caps
-            rec["nonce"] = nonce
+            _annotate_roles(rec, body, caps, nonce, h["nopriv"])
             rec["callback"] = "closure@" + h["file"] + ":" + str(h["line"])
-            if caps or nonce:
-                rec["veredicto"] = "PROTEGIDO"
-            elif h["nopriv"]:
-                rec["veredicto"] = "CANDIDATO-BAC"
-            else:
-                rec["veredicto"] = "REVISAR-AUTH"
             handlers.append(rec)
             continue
         cb = h["cb"]
@@ -285,14 +370,7 @@ def audit(root: str) -> Dict[str, Any]:
             rec["linea_callback"] = fln + 1
             caps = bool(CAPS_RE.search(body))
             nonce = bool(NONCE_RE.search(body))
-            rec["caps"] = caps
-            rec["nonce"] = nonce
-            if caps or nonce:
-                rec["veredicto"] = "PROTEGIDO"
-            elif h["nopriv"]:
-                rec["veredicto"] = "CANDIDATO-BAC"
-            else:
-                rec["veredicto"] = "REVISAR-AUTH"
+            _annotate_roles(rec, body, caps, nonce, h["nopriv"])
         else:
             # callback dinamico/heredado: dejar a revision manual
             rec["veredicto"] = "CALLBACK-NO-RESUELTO"
