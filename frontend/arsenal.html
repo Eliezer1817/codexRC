@@ -201,7 +201,7 @@
     </div>
 
     <div class="card-red">
-      <div class="card-head"><h3>💥 PASO 3 · Elegí el payload (tocá la cajita)</h3></div>
+      <div class="card-head"><h3>💥 PASO 3 · Payload manual (opcional) — con 🤖 AUTO no hace falta elegir nada</h3></div>
       <div class="card-body" id="categorias"></div>
       <div class="card-body" style="border-top:1px solid var(--red-dim)">
         <div id="selInfo">nada seleccionado</div>
@@ -333,7 +333,7 @@
               "🤖 AUTO armado: " + TARGETS.length + " blancos · payload por tipo de hallazgo · stop al primer impacto";
             document.getElementById("fireBtn").disabled = false;
           } else {
-            b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> cargados, pero sin tipo reconocible: elegí una cajita del PASO 3 a mano.";
+            b.innerHTML = "🎯 <b>" + TARGETS.length + " blancos</b> cargados sin tipo reconocible: 🤖 AUTO probará TODA la matriz LAB solo.";
           }
           document.getElementById("firepanel").scrollIntoView();
         }
@@ -440,7 +440,11 @@
     async function fire() {
       const raw = document.getElementById("targetsBox").value.trim();
       const lines = raw ? raw.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 1000) : [];
-      if (!SELECTED || !lines.length) return alert("Elegí un payload y poné al menos una URL");
+      if (!lines.length) return alert("Poné al menos una URL");
+      // v0.57.1 AUTO-INTELIGENTE: el payload elegido SOLO aplica en modo
+      // manual. Con AUTO activado nunca hay que elegir: si el blanco tiene
+      // tipo conocido escala su cadena; si no, se prueba TODA la matriz
+      // LAB (basicos de todas las categorias) uno por uno, en orden.
       const btn = document.getElementById("fireBtn");
       const stopAlImpacto = document.getElementById("stopImpact").checked;
       btn.disabled = true;
@@ -452,15 +456,10 @@
         ? TARGETS : lines.map(u => ({ url: u, tipo: "" }));
       const auto = document.getElementById("autoMode").checked;
       if (auto && !cola.some(t => t.tipo)) cola = cola.map(t => ({ ...t, tipo: "" }));
-      if (auto && !SELECTED && !cola.some(t => catDeTipo(t.tipo))) {
-        btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
-        document.getElementById("stopBtn").style.display = "none";
-        return alert("AUTO no reconoce el tipo de los hallazgos: elegí una cajita a mano o desactivá AUTO");
-      }
       if (!auto && !SELECTED) {
         btn.disabled = false; btn.textContent = "🔥 LANZAR AL BLANCO";
         document.getElementById("stopBtn").style.display = "none";
-        return alert("Elegí un payload o activá AUTO");
+        return alert("Modo manual: elegí una cajita de payload o activá 🤖 AUTO");
       }
 
       window._fireStop = false;
@@ -475,8 +474,20 @@
       for (let i = 0; i < cola.length; i++) {
         if (window._fireStop) { out += "\n🛑 DETENIDO por el operador en el blanco " + (i + 1) + "\n"; break; }
         const t = cola[i];
-        const cadena = auto && catDeTipo(t.tipo) ? cadenaDe(catDeTipo(t.tipo))
-                       : SELECTED ? [SELECTED] : [];
+        let cadena;
+        if (auto) {
+          const cat = catDeTipo(t.tipo);
+          // MATRIZ-LAB: sin tipo conocido, el arsenal prueba TODO solo:
+          // basicos de cada categoria en orden de impacto, uno por uno
+          cadena = cat ? cadenaDe(cat) : matrizLab();
+          if (!cadena.length) {
+            out += "   ⚠ sin payloads LAB disponibles\n";
+            FLOW[i].estado = "done"; FLOW[i].ultimo = ""; pintarFlow();
+            continue;
+          }
+        } else {
+          cadena = SELECTED ? [SELECTED] : [];
+        }
         FLOW[i].estado = "testing"; FLOW[i].ultimo = cadena.length ? cadena[0].nombre : "?";
         pintarFlow();
         let confirmadoBlanco = false, trofeoBlanco = null, reflejadoBlanco = null;
@@ -673,7 +684,7 @@
           const conTipo = TARGETS.filter(t => catDeTipo(t.tipo)).length;
           b.innerHTML = conTipo
             ? "🎯 <b>" + TARGETS.length + " blancos</b> en cola · sesión ya activa: directo a <b>🔥 LANZAR</b>."
-            : "🎯 <b>" + TARGETS.length + " blancos</b> en cola, sin tipo reconocible: elegí una cajita a mano.";
+            : "🎯 <b>" + TARGETS.length + " blancos</b> en cola sin tipo reconocible: 🤖 AUTO probará TODA la matriz LAB solo.";
           if (conTipo) { document.getElementById("autoMode").checked = true; document.getElementById("fireBtn").disabled = false; }
           document.getElementById("firepanel").scrollIntoView();
         }
@@ -692,6 +703,20 @@
       if (/deser|serial/.test(t)) return "deser";
       if (/waf|filtro|evasi/.test(t)) return "evasion";
       return null;
+    }
+
+    // MATRIZ-LAB (v0.57.1): todos los basicos, ordenados por categoria de
+    // impacto; el AUTO dispara esto completo cuando no conoce el tipo.
+    function matrizLab() {
+      const orden = ["sql", "xss", "lfi", "rce", "ssti", "deser", "upload", "evasion"];
+      const out = [];
+      for (const c of orden) {
+        for (const p of PAYLOADS.filter(p => p.cat === c && p.payload
+                 && !p.payload.startsWith("🔒") && !p.extremo)) {
+          if (!out.some(x => x.nombre === p.nombre)) out.push(p);
+        }
+      }
+      return out;
     }
 
     // cadena minima para un tipo: basicos primero, max 3, escalar solo lo necesario
