@@ -450,9 +450,25 @@
         box-shadow: 0 0 40px rgba(0,0,0,.8); padding-top: 1.1rem;
       }
       body.nav-open .sidebar { transform: translateX(0); }
-      body.nav-open::before {
+      /* RC-000146: el backdrop vivia en body::before (contexto RAIZ, rank
+         propio = 30) mientras el drawer vive dentro de <main>, que crea su
+         PROPIO contexto de apilamiento (position:relative + z-index:2).
+         El z-index:40 del .sidebar solo se compara DENTRO de ese contexto;
+         comparado desde afuera, TODO <main> vale "2" en la raiz. Con 30 > 2
+         el backdrop tapaba el drawer entero: el tap en "hunter"/"arsenal"
+         en realidad tocaba el backdrop, que solo cierra el menu (sin
+         navegar) via el listener de click-afuera. Fix: el pseudo-elemento
+         pasa a ser hijo de <main> (misma condicion body.nav-open), así
+         compite contra el z-index:40 del sidebar EN EL MISMO contexto. */
+      body.nav-open main::before {
         content: ""; position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.6);
       }
+      /* segunda mitad del fix: el header sticky (z-index:5) tapaba los
+         primeros ~56px del drawer (que vive dentro de <main>, z-index:2).
+         Mientras el menu esta abierto elevamos TODO <main> por encima del
+         header: drawer (40) > backdrop (30) > header (5). Al cerrar,
+         cada elemento vuelve a su lugar. */
+      body.nav-open main { z-index: 50; }
       .brand-name { font-size: 1.15rem; }
       .brand-logo { height: 26px; }
       header { padding: 0.7rem 0.9rem 0.7rem 3.6rem; min-height: 56px; }
@@ -484,7 +500,7 @@
     <button id="menuBtn" class="menu-btn" aria-label="menú">☰</button>
     <div class="brand">
       <img src="/assets/banner.jpg" alt="CodexRC" class="brand-logo" onerror="this.style.display='none'" />
-      <h1 class="brand-name"><span class="cx">codex</span><span class="rc">RC</span><span class="ver" id="appVersion">v?</span></h1>
+      <h1 class="brand-name"><span class="ver" id="appVersion">v?</span></h1>
     </div>
     <nav class="nav">
       <a href="/">escáner</a>
@@ -590,10 +606,6 @@
         <div class="card">
           <div class="card-head">Dominios <span class="count" id="cDom">—</span></div>
           <div class="card-body" id="bDom"><div class="empty">esperando escaneo…</div></div>
-        </div>
-        <div class="card">
-          <div class="card-head">Vulnerabilidades <span class="count" id="cCve">—</span></div>
-          <div class="card-body" id="bCve"><div class="empty">esperando escaneo…</div></div>
         </div>
         <div class="card">
           <div class="card-head">Autenticación <span class="count" id="cAuth">—</span></div>
@@ -831,23 +843,6 @@
          <div class="row"><span class="k">IPs</span></div><div class="chips">${ips || '<div class="empty">sin IPs</div>'}</div>` + subHtml + notes;
     }
 
-    function renderCve(rep) {
-      const total = rep.total_cves_found || 0;
-      const high = (rep.high_priority || []).length;
-      document.getElementById("cCve").textContent = total + " CVE · " + high + " altas";
-      const techsHtml = (rep.technologies || []).map(t => {
-        const n = (t.cves || []).filter(c => !c.error).length;
-        return `<div class="row"><span class="k">${esc(t.technology)}</span><span class="v">${n} CVEs${t.high_cvss_count ? ` · <span class="bad">${t.high_cvss_count} críticos</span>` : ""}</span></div>`;
-      }).join("");
-      const highHtml = (rep.high_priority || []).slice(0, 8).map(c =>
-        `<div class="row"><span class="k mono small">${esc(c.cve_id)}</span><span class="v small">CVSS ${esc(String(c.cvss ?? "?"))}</span></div>`).join("");
-      document.getElementById("bCve").innerHTML =
-        (total
-          ? `<div class="row"><span class="k">Total</span><span class="v ${high ? "bad" : "good"}">${total} CVEs · ${high} de prioridad alta</span></div>`
-          : '<div class="empty">sin CVEs conocidos para lo detectado</div>') +
-        techsHtml + (high ? '<div class="row"><span class="k">Prioridad alta (CVSS ≥ 7)</span></div>' + highHtml : "");
-    }
-
     function renderAuth(job, authNode) {
       const chk = (authNode.data || {}).session_check || {};
       const conn = job.connection || {};
@@ -867,7 +862,6 @@
       if (ok("tech_detect")) renderTech(R.tech_detect.data.technologies || []);
       if (ok("security_audit")) renderSec(R.security_audit.data.security_audit || {});
       if (ok("domain_map")) renderDom(R.domain_map.data.domain_map || {});
-      if (ok("cve_match")) renderCve(R.cve_match.data.cve_report || {});
       if (R.auth_status) renderAuth(job, R.auth_status);
     }
 
@@ -1030,7 +1024,17 @@
 
     // ===== menu movil =====
     document.getElementById('menuBtn').addEventListener('click', () => {
+      const abriendo = !document.body.classList.contains('nav-open');
       document.body.classList.toggle('nav-open');
+      // RC-000147: el drawer es position:fixed y mantiene su scroll interno
+      // entre aperturas (si el usuario habia bajado hasta Autenticacion,
+      // la proxima vez que abre el menu aparece YA scrolleado ahi, con
+      // "hunter"/"arsenal" fuera de pantalla arriba). Al abrir, siempre
+      // arranca desde arriba.
+      if (abriendo) {
+        const sb = document.querySelector('.sidebar');
+        if (sb) sb.scrollTop = 0;
+      }
     });
     document.addEventListener('click', (e) => {
       if (document.body.classList.contains('nav-open') &&

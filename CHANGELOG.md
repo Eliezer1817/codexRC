@@ -559,3 +559,40 @@ Lo nuevo de cada entrega, de la más reciente a la más antigua:
 
 ## v0.53.3 — fix denominador RETRO-HUNT (2026-10-02)
 - Usuario pregunto si "2087 y 1010" eran reales (captura con RETRO-HUNT mostrando "1010/1007 auditados", matematicamente imposible). Verificado contra disco: ambos contadores SON reales (hechos/hunt_wide_done.txt = 2087 lineas, hechos/retro_done.txt = 1010 lineas unicas sin duplicados, timestamps y logs coinciden con corridas reales en tmux). El bug era el DENOMINADOR: "total_cola" de retro estaba hardcodeado en 1007 (una foto del tamano de la cola al momento de lanzar un run), mientras "hechos" es un contador acumulado de TODAS las corridas de retro a lo largo del tiempo. Fix: `total_cola` ahora se calcula en vivo desde `wide_corpus.json` filtrando por el mismo criterio de cooldown (`last_updated < 2026-06-01`) que usa `core/retro_hunt.py` para armar su cola real. Resultado tras el fix: 1010/1010 (RETRO-HUNT efectivamente completo al 100% del universo pre-cooldown real).
+
+## v0.62.3 — drawer móvil navegable (RC-000146/147)
+
+Presentacion unicamente; sin cambios en el motor de caza.
+
+- RC-000146 (BUG REAL, reproducido con headless): al tocar
+  "hunter"/"arsenal" en el menu movil NO navegaba y el menu se
+  cerraba solo. Causa: el backdrop (body::before, z-index 30 en el
+  contexto RAIZ) tapaba el drawer entero, porque <main> crea su
+  propio contexto de apilamiento (position:relative + z-index:2):
+  el z-index:40 del .sidebar solo compite DENTRO de <main>; desde
+  afuera todo <main> vale "2". 30 > 2 -> backdrop sobre el drawer:
+  el tap caia en el backdrop y solo cerraba el menu. Fix: el
+  pseudo-elemento pasa a main::before (mismo contexto que el
+  drawer) + body.nav-open main { z-index: 50 } para que el drawer
+  tambien quede sobre el header sticky (z-index 5), que tapaba los
+  primeros ~56px del menu. Al abrir: drawer 40 > backdrop 30 >
+  header 5. Al cerrar: todo vuelve a su lugar. Cerrar = tocar la
+  zona oscura (comportamiento estandar de drawer).
+- RC-000147: el drawer (position:fixed) conservaba su scroll
+  interno entre aperturas; si el usuario habia bajado hasta
+  Autenticacion, al reabrir aparecia YA scrolleado con la nav fuera
+  de pantalla ("tenia que empujar un chiquito hacia arriba"). Al
+  abrir siempre arranca desde arriba.
+- Header: fuera el "codexRC" de texto duplicado en las 3 paginas
+  (quedaba logo + texto = 2 CodexRC visibles). Ahora solo logo,
+  "// HUNTER"/"// ARSENAL" y la version.
+- Escáner: fuera la card "Vulnerabilidades" (lista de CVEs
+  conocidos por tecnologia, sin relación con hallazgos; eso vive
+  en Hunter). Card + renderCve + integración eliminados.
+- VERSION del backend actualizada a 0.62.3 (quedaba clavada en
+  0.57.4, el header mostraba version vieja).
+
+Validado en vivo con Chromium headless viewport 390x844:
+navegacion real a hunter/arsenal OK, backdrop cierra, scrollTop
+0 al reabrir, 0 spans duplicados, card CVE ausente, esquinas base
+identicas rgb(29,42,34) en escáner y hunter.
