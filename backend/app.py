@@ -516,16 +516,20 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
     return scan
 
 
-@app.get("/")
-def dashboard():
-    # el navegador del celular (y a veces tabs viejas) cachean el HTML viejo
-    # y el usuario no vuelve a ver los cambios aunque el server ya este
-    # actualizado. Forzamos "no-store" para que SIEMPRE pida la version fresca.
-    resp = send_from_directory(app.static_folder, "index.html")
+def _frontend_page(name):
+    """Sirve un HTML del frontend SIEMPRE fresco: el navegador del
+    celular (y a veces tabs viejas) cachean el HTML viejo y el usuario
+    no vuelve a ver los cambios aunque el server ya este actualizado."""
+    resp = send_from_directory(app.static_folder, name)
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
     return resp
+
+
+@app.get("/")
+def dashboard():
+    return _frontend_page("index.html")
 
 
 @app.get("/assets/<path:filename>")
@@ -1645,12 +1649,12 @@ def api_zombies_kill():
 
 @app.route("/hunter.html")
 def hunter_page():
-    return send_from_directory(app.static_folder, "hunter.html")
+    return _frontend_page("hunter.html")
 
 
 @app.route("/arsenal.html")
 def arsenal_page():
-    return send_from_directory(app.static_folder, "arsenal.html")
+    return _frontend_page("arsenal.html")
 
 
 # ---------- ARSENAL: payloads gateados con contrasena ----------

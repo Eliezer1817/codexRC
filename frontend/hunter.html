@@ -135,6 +135,36 @@
       .prompt { font-size: 1.05rem; }
       input, select, button, textarea { min-height: 44px; }
     }
+    /* luces de esquina (v0.62.2): la luz vive en las esquinas del nodo */
+    .node::before, .node::after {
+      content: ""; position: absolute; width: 10px; height: 10px;
+      border-color: #1d2a22; border-style: solid; transition: border-color 0.25s;
+    }
+    .node::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .node::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+    .node.running::before, .node.running::after { border-color: var(--amber); box-shadow: 0 0 7px rgba(255,176,0,.7); }
+    .node.running::before { animation: corner-pulse-a 0.9s ease-in-out infinite; }
+    .node.running::after { animation: corner-pulse-b 0.9s ease-in-out infinite; }
+    @keyframes corner-pulse-a { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+    @keyframes corner-pulse-b { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+    .node.success::before, .node.success::after { border-color: var(--green); box-shadow: 0 0 7px rgba(159,206,84,.65); }
+
+    /* movil: grid de 2 columnas, los .conn no participan en el layout */
+    @media (max-width: 820px) {
+      .pipeline {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 0.75rem; width: 100%; align-items: stretch;
+      }
+      .pipeline .node { min-width: 0; width: 100%; padding: 0.75rem 0.45rem; }
+      .pipeline .conn { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -143,9 +173,9 @@
       <img src="/assets/banner.jpg" alt="CodexRC" class="brand-logo" onerror="this.style.display='none'" />
       <div class="prompt"><span class="cx">codex</span><span class="rc">RC</span> // HUNTER<span class="ver" id="appVersion">v?</span></div>
     </div>
-    <nav>
+    <nav id="topnav">
       <a href="/">escáner</a>
-      <a href="/hunter.html" class="on">hunter</a>
+      <a href="/hunter.html">hunter</a>
       <a href="/arsenal.html" style="color:#ff2e4c">arsenal</a>
     </nav>
   </header>
@@ -645,6 +675,17 @@ esperando objetivo...</pre>
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");
     }).catch(() => {});
+    // ===== nav activa por pathname (nunca hardcodeada) =====
+    (function initMobileNavigation() {
+      const path = window.location.pathname;
+      document.querySelectorAll("#topnav a").forEach(a => {
+        const href = new URL(a.href, window.location.origin).pathname;
+        const active = (path === "/" && href === "/") ||
+          (path === "/hunter.html" && href === "/hunter.html") ||
+          (path === "/arsenal.html" && href === "/arsenal.html");
+        a.classList.toggle("on", active);
+      });
+    })();
   </script>
 </body>
 </html>

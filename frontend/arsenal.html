@@ -144,6 +144,13 @@
       nav a { flex: 1; justify-content: center; }
       .grid { grid-template-columns: 1fr; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -152,10 +159,10 @@
       <img src="/assets/banner.jpg" alt="CodexRC" class="brand-logo" onerror="this.style.display='none'" />
       <div class="prompt"><span class="cx">codex</span><span class="rc">RC</span> // <span class="arz">ARSENAL</span><span class="ver" id="appVersion">v?</span></div>
     </div>
-    <nav>
+    <nav id="topnav">
       <a href="/">escáner</a>
       <a href="/hunter.html">hunter</a>
-      <a href="/arsenal.html" class="on red">arsenal</a>
+      <a href="/arsenal.html" style="color:#ff2e4c">arsenal</a>
     </nav>
   </header>
 
@@ -730,6 +737,18 @@
     fetch("/api/status").then(r => r.json()).then(d => {
       document.getElementById("appVersion").textContent = "v" + (d.version || "?");
     }).catch(() => {});
+    // ===== nav activa por pathname (nunca hardcodeada) =====
+    (function initMobileNavigation() {
+      const path = window.location.pathname;
+      document.querySelectorAll("#topnav a").forEach(a => {
+        const href = new URL(a.href, window.location.origin).pathname;
+        const active = (path === "/" && href === "/") ||
+          (path === "/hunter.html" && href === "/hunter.html") ||
+          (path === "/arsenal.html" && href === "/arsenal.html");
+        a.classList.toggle("on", active);
+        if (href === "/arsenal.html") a.classList.add("red");
+      });
+    })();
   </script>
 </body>
 </html>

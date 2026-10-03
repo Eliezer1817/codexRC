@@ -1,3 +1,26 @@
+## v0.62.2 — capa UI/UX del pipeline y la navegacion
+
+Presentacion unicamente; sin cambios en UNIVERSAL-ENGINE,
+TAINT-TRACE, EVIDENCE-CHAIN ni ningun modulo de caza.
+
+- Backend: helper _frontend_page con Cache-Control no-store
+  para las TRES paginas (/, /hunter.html, /arsenal.html):
+  Android ya no conserva un HTML viejo.
+- Nav: activa por location.pathname en los tres HTML
+  (initMobileNavigation), nunca mas hardcodeada; al navegar
+  se cierra el menu movil (nav-open).
+- Pipeline movil: el flex-wrap muere. Grid de 2 columnas
+  minmax(0,1fr); los .conn no participan del layout; los
+  nodos llenan su celda -> CVE/REPORT quedan alineados.
+- Luces de esquina: running = ambar con pulso alterno
+  (corner-pulse-a/b sobre ::before/::after); success = verde
+  fija. Solo el nodo RUNNING se anima; los success quedan en
+  luz estable (baratisimo en un telefono).
+- #matrix oculto en movil (<=820px): cero trabajo constante
+  de canvas en telefonos viejos.
+- prefers-reduced-motion: animaciones y transiciones a
+  0.001ms.
+
 ## v0.62.1 — HUNTER anonimo con potencia completa
 
 - MODO SIN SESION: nueva bateria _descubrir_acceso_anon. Sin
