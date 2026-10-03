@@ -1,3 +1,19 @@
+## v0.57.7 — PATRON BAC MIRA EL CUERPO DEL HANDLER (RC-000131/133)
+
+- finalize() postergado: los hallazgos bac-ajax-nopriv esperan a tener el
+  mapa de TODAS las funciones escaneadas, resuelven el callback del hook
+  ('fn', "fn", array($this|'Cls','method')) y escanean el cuerpo del
+  HANDLER en busca de gates (nonce/caps/is_user_logged_in). Handler
+  gateado = FP descartado (pods admin_ajax: 20 sinks -> 0).
+- Se exige el hook nopriv EN el cuerpo (RC-000133): el patron no dispara
+  solo por escribe+input+bonus nonce publico (FP pods admin_save, gate
+  en el caller I18n.php:123).
+- Lab: vulnerable con nonce publico DISPARA, control gateado MUERE,
+  pods y ad-inserter 0 BAC.
+- RE-RUN N1∩VDP (12 plugins, $48 hallazgos): 31 mueren solos, 17
+  sobreviven (15 loose-cmp + 1 BAC simple-floating-menu + 1 verificacion
+  de pago wcfmvm).
+
 ## v0.57.6 — TRIAJE BAC N1: pods y ad-inserter, ambos MUERTOS
 
 TRIAJE MANUAL (protocolo BAC: handler -> gate -> impacto):

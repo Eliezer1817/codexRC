@@ -188,6 +188,10 @@ class PatternMatcher:
     def __init__(self, baseline: Optional[Dict[str, Any]] = None):
         self.baseline = baseline or {}
         self.findings: List[Dict[str, Any]] = []
+        # cuerpo de CADA funcion escaneada (para resolver handlers
+        # nopriv que viven en otro archivo/metodo)
+        self._bodies: Dict[str, str] = {}
+        self._bac_pending: List[Dict[str, Any]] = []
 
     def scan_file(self, path: str) -> List[Dict[str, Any]]:
         try:
@@ -196,6 +200,9 @@ class PatternMatcher:
             return []
         rel = os.path.relpath(path)
         chunks = _iter_functions(src)
+        for name, _l, body in chunks:
+            if name:
+                self._bodies.setdefault(name.lower(), body)
         for pat in PATTERNS:
             file_bonus = 0
             fb = pat.get("bonus_file")
@@ -207,6 +214,12 @@ class PatternMatcher:
 
     def _match(self, pat, rel, src, fname, line0, body, file_bonus):
         score, whys = 0, []
+        # RC-000133: sin el hook nopriv NO hay BAC ajax. El patron no
+        # debe disparar solo por "escribe datos + usa input" (FP pods
+        # admin_save, cuyo gate vive en el CALLER).
+        if pat["id"] == "bac-ajax-nopriv" and not re.search(
+                pat["signals"][0]["pat"], body):
+            return
         for sig in pat["signals"]:
             m = re.search(sig["pat"], body)
             if m:
@@ -239,6 +252,10 @@ class PatternMatcher:
             "verdict": "patron abstracto de fallo historico detectado "
                        "(sin firma fija)",
         }
+        if pat["id"] == "bac-ajax-nopriv":
+            f["_hook_body"] = body      # RC-000131: postergado a finalize
+            self._bac_pending.append(f)
+            return self.findings
         st = self.baseline.get(pat["id"])
         if st:
             f["outlier"] = (f"{st['protected_pct']:.0f}% de las funciones "
@@ -248,6 +265,51 @@ class PatternMatcher:
         if key not in {(x["file"], x["function"],
                         x["cve_ref"]) for x in self.findings}:
             self.findings.append(f)
+
+
+    # ---- RC-000131: nopriv intencional con gate interno ----
+    _GATES = re.compile(
+        r"current_user_can\s*\(|is_user_logged_in\s*\(|"
+        r"wp_verify_nonce\s*\(|check_admin_referer\s*\(|"
+        r"check_ajax_referer\s*\(|user_can\s*\(|"
+        r"pods_is_admin\s*\(|manage_options")
+
+    def _bac_callbacks(self, body: str) -> List[str]:
+        cbs: List[str] = []
+        for m in re.finditer(
+                r"add_action\s*\(\s*['\"]wp_ajax_nopriv_[\w-]+['\"]"
+                r"\s*,\s*([^;]+);", body):
+            tok = m.group(1)
+            for cb in re.findall(r"['\"]([A-Za-z_]\w*)['\"]", tok):
+                if not cb.startswith("wp_ajax"):
+                    cbs.append(cb.lower())
+            if not cbs:
+                nm = re.match(r"\s*([A-Za-z_]\w*)\s*$", tok.strip())
+                if nm:
+                    cbs.append(nm.group(1).lower())
+        return cbs
+
+    def finalize(self) -> None:
+        """Resuelve los handlers nopriv y filtra los que tienen gate
+        interno (nonce/caps). Clase RC-000131: el patron disparaba por
+        el HOOK sin mirar el cuerpo del handler (FP pods admin_ajax)."""
+        for f in self._bac_pending:
+            cbs = self._bac_callbacks(f.pop("_hook_body", ""))
+            gated, seen = False, False
+            for cb in cbs:
+                body = self._bodies.get(cb)
+                if body is None:
+                    continue
+                seen = True
+                if self._GATES.search(body):
+                    gated = True
+                    break
+            if gated:
+                continue          # handler con gate interno: FP documentado
+            if seen:
+                f["why"] += "; handler sin gates visibles nivel 1"
+            self.findings.append(f)
+        self._bac_pending = []
 
 
 # ------------------------------------------------------------- linea base
@@ -312,6 +374,7 @@ def scan_path(path: str, top: int = 20,
                      if f.endswith(".php")]
     for f in sorted(files):
         matcher.scan_file(f)
+    matcher.finalize()            # RC-000131: gates del handler nopriv
     order = {"critica": 0, "alta": 1, "media": 2}
     matcher.findings.sort(
         key=lambda x: (order.get(x["severity"], 3), x["file"], x["line"]))
