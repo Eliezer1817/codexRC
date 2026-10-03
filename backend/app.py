@@ -726,6 +726,54 @@ def api_auth_token():
 
 
 
+def _descubrir_acceso_anon(session, base_url: str, emit, job: dict) -> list:
+    """MODO ANONIMO: sin credenciales no hay contraste A->B, pero si una
+    ruta tipicamente PRIVADA responde 200 a un visitante anonimo, eso es
+    un BAC directo y una semilla jugosa para la arana. Misma potencia que
+    el modo autenticado: en vez de comparar con sesion, compara contra la
+    huella del shell SPA (200 real != HTML shell)."""
+    from urllib.parse import urljoin as _ujoin
+    seeds: list = []
+    try:
+        shell = session.get(base_url, timeout=12, allow_redirects=True)
+        if "html" in (shell.headers.get("content-type") or "").lower():
+            shell_text = shell.text
+        else:
+            shell_text = None
+    except Exception:
+        shell_text = None
+    for path in PRIVATE_PATHS:
+        u = _ujoin(base_url, "/" + path)
+        try:
+            r = session.get(u, timeout=10, allow_redirects=False)
+        except Exception:
+            continue
+        if r.status_code != 200:
+            continue
+        ct = (r.headers.get("content-type") or "").lower()
+        if "html" not in ct and "json" not in ct:
+            continue
+        # el shell SPA del sitio no cuenta: los SPA reales sirven el
+        # HTML BYTE-IDENTICO para toda ruta (tolerancia minima, nunca
+        # una ventana de 120b que trague paginas privadas cortas)
+        if shell_text and "html" in ct and (
+                r.text == shell_text or abs(len(r.text) - len(shell_text)) < 10):
+            continue
+        emit(f"[anon-zone] 💥 ruta privada accesible SIN sesion: /{path} "
+             f"(200 a un visitante anonimo)")
+        job["findings"].append({
+            "severity": "alta", "type": "BAC (acceso anonimo)",
+            "param": "-", "target": u,
+            "evidence": f"/{path} responde 200 a un visitante anonimo; "
+                        "el shell SPA descartado por huella de contenido",
+            "verdict": "confirmada por lectura A->B (anonimo vs huella del sitio)"})
+        seeds.append(u)
+    if seeds:
+        emit(f"[anon-zone] {len(seeds)} zona(s) privada(s) accesibles "
+             "anonimamente; alimentando la arana")
+    return seeds
+
+
 @app.get("/api/hunt_status")
 def api_hunt_status():
     """Progreso vivo de las cazas por lotes (WIDE-HUNT / RETRO-HUNT)."""
@@ -1047,6 +1095,10 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
                 if hunter_data.get("cookies") or hunter_data.get("bearer_token") or \
                         (hunter_data.get("username") and hunter_data.get("password")):
                     seed_urls = _descubrir_zona_privada(session, url, emit)
+                else:
+                    # misma potencia sin sesion: las rutas privadas que un
+                    # anonimo alcanza SON hallazgo y semilla de la arana
+                    seed_urls = _descubrir_acceso_anon(session, url, emit, job)
 
                 node_state("spider", "running")
                 t0 = time.perf_counter()

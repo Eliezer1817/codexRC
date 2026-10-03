@@ -1,3 +1,18 @@
+## v0.62.1 — HUNTER anonimo con potencia completa
+
+- MODO SIN SESION: nueva bateria _descubrir_acceso_anon. Sin
+  credenciales no hay contraste A->B con sesion, pero una ruta
+  tipicamente PRIVADA (/dashboard, /admin, /wallet...) que
+  responde 200 a un visitante anonimo ES un BAC directo: se
+  reporta como hallazgo 'alta' y alimenta la arana como semilla.
+- Fingerprint anti-shell corregido: los SPA reales sirven HTML
+  byte-identico para toda ruta; la ventana fija de 120 bytes
+  tragaba paginas privadas cortas (bug hallado con lab local,
+  RC-000145). Ahora: comparacion byte-identica, tolerancia <10.
+- Validado: lab con /dashboard + /admin anon -> 2 hallazgos y 2
+  seeds; httpbin y vellius (SPA real) -> 0 falsos. Regresion
+  18/18.
+
 ## v0.62.0 — DIFF-HUNT v2: la fuente cambio, el motor se adapta
 
 - wp.org sello el historial de plugins (oct 2026): la API ya no
