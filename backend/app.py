@@ -121,7 +121,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.62.3"
+VERSION = "0.62.4"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -582,6 +582,92 @@ def api_re():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     return jsonify({"target": path, "count": len(res), "findings": res})
+
+
+@app.post("/api/reverse_run")
+def api_reverse_run():
+    """REVERSE-WEB (v0.62.4): corre BIN-AUDIT / RE-ENGINE / DECOMPILE sobre
+    un archivo (APK, zip, .so, dex, binario) elegido desde la web."""
+    data = request.get_json(silent=True) or {}
+    path = (data.get("path") or "").strip()
+    if not path:
+        return jsonify({"error": "falta 'path' (APK, zip, .so, dex...)"}), 400
+    if not os.path.exists(path):
+        return jsonify({"error": "path inexistente", "path": path}), 404
+
+    want = {"bin": bool(data.get("bin", True)),
+            "re": bool(data.get("re", True)),
+            "decompile": bool(data.get("decompile", True))}
+    all_m = bool(data.get("all_methods"))
+    out = {"path": path, "total": 0, "leaks": [], "errors": {}}
+
+    import json as _json
+    from core import bin_audit, re_engine, decompile
+
+    def _fila(f: dict) -> str:
+        sev = f.get("sev") or f.get("severity") or f.get("nivel") or ""
+        typ = f.get("tipo") or f.get("type") or f.get("title") or ""
+        ev = f.get("evidence") or f.get("valor") or f.get("value") or ""
+        rel = f.get("rel") or f.get("file") or f.get("archivo") or ""
+        line = " | ".join(str(x) for x in (sev, typ, ev, rel) if x)
+        return line or _json.dumps(f, ensure_ascii=False)[:300]
+
+    jobs = [
+        ("bin", lambda: bin_audit.audit_path(path)),
+        ("re", lambda: re_engine.analyze_path(path)),
+        ("decompile", lambda: decompile.decompile_path(path, all_methods=all_m)),
+    ]
+    for key, fn in jobs:
+        if not want[key]:
+            continue
+        try:
+            res = fn() or []
+        except Exception as e:  # un modulo no tumba los demas
+            out["errors"][key] = f"{type(e).__name__}: {e}"
+            continue
+        if key == "decompile":
+            lines = []
+            for m in res:
+                if not isinstance(m, dict):
+                    lines.append(str(m))
+                    continue
+                head = " -> ".join(str(m.get(k)) for k in
+                                   ("clase", "metodo", "rel") if m.get(k))
+                body = m.get("lines") or m.get("pseudocodigo") or m.get("code")
+                if isinstance(body, list):
+                    body = "\n".join(str(x) for x in body)
+                if body is None:
+                    body = _json.dumps(m, ensure_ascii=False)[:400]
+                lines.append((head or "?") + "\n" + str(body))
+            out[key] = lines
+        else:
+            out[key] = [_fila(f) if isinstance(f, dict) else str(f) for f in res]
+        out["total"] += len(out[key])
+    # FILTRACIONES arriba: critica/alta de cualquier modulo
+    for key in ("bin", "re"):
+        for line in out.get(key) or []:
+            low = line.lower()
+            if "critica" in low or "alta" in low or "crítica" in low:
+                out["leaks"].append(line)
+    return jsonify(out)
+
+
+@app.post("/api/reverse_upload")
+def api_reverse_upload():
+    """REVERSE-WEB (v0.62.4): recibe el APK/binario subido desde el
+    navegador y lo guarda en /tmp/codexrc_reverse para analizarlo."""
+    import re as _re
+    f = request.files.get("file")
+    if f is None or not f.filename:
+        return jsonify({"error": "falta 'file'"}), 400
+    base = os.path.basename(f.filename)
+    if not _re.match(r"^[\w.\- ()\[\]]+$", base):
+        base = "upload_" + uuid.uuid4().hex[:8] + os.path.splitext(base)[1]
+    dest_dir = os.path.join("/tmp", "codexrc_reverse")
+    os.makedirs(dest_dir, exist_ok=True)
+    dest = os.path.join(dest_dir, base)
+    f.save(dest)
+    return jsonify({"path": dest, "size": os.path.getsize(dest), "name": base})
 
 
 @app.post("/api/bin")

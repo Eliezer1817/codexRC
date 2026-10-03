@@ -596,3 +596,30 @@ Validado en vivo con Chromium headless viewport 390x844:
 navegacion real a hunter/arsenal OK, backdrop cierra, scrollTop
 0 al reabrir, 0 spans duplicados, card CVE ausente, esquinas base
 identicas rgb(29,42,34) en escáner y hunter.
+
+## v0.62.4 — REVERSE-WEB: ingeniería inversa desde la web
+
+Presentacion unicamente; los modulos RE no cambian.
+
+- Los 3 modulos de ingenieria inversa (BIN-AUDIT, RE-ENGINE,
+  DECOMPILE) existian solo por CLI/API: la web no tenia forma de
+  subir un APK. Ahora el escáner tiene una seccion "Ingeniería
+  inversa" en el menu lateral: elegir archivo (input file del
+  navegador) o escribir la ruta del telefono, checkboxes por
+  modulo (bin/re/decompile + modo --all para apps ofuscadas),
+  y una card de resultados a lo ancho: FILTRACIONES arriba en
+  rojo (sev critica/alta de cualquier modulo), luego las filas
+  de cada modulo y el pseudocodigo de DECOMPILE en bloques.
+- Backend: POST /api/reverse_run (corre los modulos pedidos
+  sobre un path, aislamiento de fallos por modulo, normaliza
+  hallazgos a lineas legibles) y POST /api/reverse_upload
+  (recibe el archivo del navegador, sanea el nombre, guarda
+  en /tmp/codexrc_reverse y devuelve el path).
+- UX: al analizar, el drawer se cierra para que la card de
+  resultados quede a la vista; en PC el sidebar siempre visible.
+
+Validado en vivo con Chromium headless (390x844 y 1400x900):
+subida de zip con secret AKIA + endpoint staging -> detectado,
+seccion FILTRACIONES renderizada, /bin/sh real -> 3 hallazgos
+con imports ELF, drawer cierra tras analizar, seccion visible
+en PC sin abrir menu.
