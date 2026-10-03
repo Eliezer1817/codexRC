@@ -38,6 +38,11 @@ import os
 import hashlib
 import re
 import sys
+
+try:
+    from . import semantic_core
+except ImportError:  # ejecucion directa: python3 core/evidence.py <root>
+    import semantic_core
 from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -320,12 +325,18 @@ def _juez(chain: Dict[str, Any]) -> Dict[str, Any]:
     defensa_fuerte = [r for r in chain["defensa"] if r["fuerza"] == "fuerte"]
     dyn = chain.get("dynamic", {})
     repro = bool(dyn.get("reproducido"))
+    integridad = chain.get("file", {}).get("integrity",
+                                            semantic_core.INTEGRITY_OK)
     if defensa_fuerte:
         verdicto = "DESCARTADO"
     elif len(fiscal) == 4 and repro:
         verdicto = "CONFIRMED"
     elif len(fiscal) == 4:
         verdicto = "DEMOSTRADO-ESTATICO"
+        if semantic_core.blocks_demostrado(integridad):
+            # INTEGRITY: evidencia de archivo equivocado o ambiguo nunca
+            # alcanza veredicto alto (invariante RC-000127)
+            verdicto = "PROBABLE"
     elif len(fiscal) >= 3:
         verdicto = "PROBABLE"
     else:
@@ -363,35 +374,21 @@ def build_chain(root: str, finding: Dict[str, Any],
                 analyzers: Optional[List[str]] = None) -> Dict[str, Any]:
     """Cadena de evidencia completa para UN finding."""
     rel = finding["file"]
-    path = os.path.join(root, rel)
-    if not os.path.isfile(path):
-        # match por ruta relativa EXACTA primero (evita confundir archivos
-        # homonimos como Wpil/Error.php vs Wpil/Table/Error.php); fallback
-        # a basename solo si no hay ninguna coincidencia exacta, y ahi se
-        # toma la PRIMERA (antes el bug tomaba la ULTIMA del os.walk)
-        candidato_basename = None
-        for d, _sd, fs in os.walk(root):
-            for f in fs:
-                full = os.path.join(d, f)
-                if os.path.relpath(full, root).replace("\\", "/") == rel.replace("\\", "/"):
-                    path = full
-                    candidato_basename = None
-                    break
-                if candidato_basename is None and f == os.path.basename(rel):
-                    candidato_basename = full
-            else:
-                continue
-            break
-        else:
-            if candidato_basename:
-                path = candidato_basename
-    lines = _read(path)
+    # SEMANTIC CORE (v0.58.0): identidad canonica + testigo de hash.
+    # El basename NO es identidad: resolucion ambigua o hash no coincidente
+    # = INTEGRITY, y bloquea el veredicto alto en el JUEZ.
+    fid = semantic_core.resolve(root, rel)
+    path = fid["path"] if fid["integrity"] != semantic_core.INTEGRITY_FAILURE \
+        else os.path.join(root, rel)
+    lines = _read(path) if os.path.isfile(path) else []
     funcs = _functions(lines)
     line = int(finding.get("line", 0))
     tvars = [v.strip() for v in re.split(r",\s*", finding.get("flow", "")) if v.strip()]
     gates = gates or {"handlers": []}
     chain: Dict[str, Any] = {
         "finding": finding,
+        "file": {"file_id": fid["file_id"], "content_hash": fid["hash"],
+                 "integrity": fid["integrity"]},
         "source": _source_evidence(lines),
         "flow": {"vars": tvars or ["(directo)"],
                  "saltos": "intra-archivo (nivel 1)"},

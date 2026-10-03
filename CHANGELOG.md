@@ -1,3 +1,27 @@
+## v0.58.0 — SEMANTIC CORE (nivel 0): identidad canonica + integridad
+
+Inicio del Semantic Core (recomendacion experta: el motor pasa de
+decidir por proximidad textual a decidir por propiedad del programa).
+
+- core/semantic_core.py: FileId = root canonico + ruta relativa
+  normalizada. El basename NO es identidad:
+  - match por ruta exacta -> INTEGRITY OK (hash sha256-16 de testigo)
+  - match solo por basename con UNA coincidencia -> AMBIGUO
+  - basename con varias coincidencias (Wpil/Error.php vs
+    Wpil/Table/Error.php) -> INTEGRITY FAILURE: NO se elige ninguno
+    (antes el bug tomaba el ultimo del os.walk)
+- EVIDENCE-CHAIN: build_chain resuelve via semantic_core y expone
+  chain.file {file_id, content_hash, integrity}; el JUEZ bloquea
+  DEMOSTRADO-ESTATICO si integrity != OK (invariante RC-000127:
+  evidencia de archivo equivocado nunca alcanza veredicto alto).
+- Cache de indice por root (200 resoluciones: 0.10s).
+- Regresion: 10/10 PASS con el nuevo modulo integrado.
+- Lab: caso Wpil duplicado resuelto por FAILURE (no elige ninguno),
+  hash equivocado -> INTEGRITY FAILURE, veredicto alto bloqueado.
+
+Proxima fase: CFG intra-funcion + dominancia (gate_dominates_sink)
+para RC-000132 y cierre de raiz de RC-000136.
+
 ## v0.57.10 — RC-000136: gate adyacente mata el loose-cmp
 
 - _GATE_ADJ generalizado (sin hardcodear funciones de plugin):
