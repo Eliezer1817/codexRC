@@ -780,6 +780,25 @@ def gate_dominates_sink(g: CFG, gate_rx: re.Pattern, sink_line: int) -> bool:
                for g2 in gates)
 
 
+def downstream_sens_count(g: CFG, cmp_line: int,
+                          sens_rx: re.Pattern = _SENSITIVE_RE) -> int:
+    """Cuantos sinks sensibles dependen de la comparacion (dominados
+    por su cond). 0 = la comparacion no produce efecto sensible
+    ninguno dentro de la funcion (router de display/datos)."""
+    cmpn = line_node(g, cmp_line)
+    if cmpn is None:
+        return -1
+    dom = g.dominators()
+    # sinks escapados (esc_html/esc_attr/wp_kses) no son efecto
+    # sensible: son salida de display segura (FP notices revisionary)
+    _ESCAPED = re.compile(r"esc_html|esc_attr|wp_kses|sanitize_", re.I)
+    sens = [i for i in nodes_matching(g, sens_rx)
+            if i not in (g.entry, g.exit) and g.kind[i] == "stmt"
+            and not _ESCAPED.search(g.text[i] or "")]
+    return sum(1 for s2 in sens
+               if s2 != cmpn and g.dominates(cmpn, s2, dom))
+
+
 def all_protected(g: CFG, gate_rx: re.Pattern,
                   sens_rx: re.Pattern) -> Optional[bool]:
     """TODOS los sinks sensibles estan dominados por algun gate?
@@ -816,6 +835,12 @@ def cmp_router(g: CFG, cmp_line: int, gate_rx: re.Pattern = _GATE_CAP_RE,
     if not gates:
         return False
     dom = g.dominators()
+    # RC-000139: comparacion dominada POR un gate = corre solo tras
+    # pasar la autenticacion. Un control de acceso corre ANTES de los
+    # gates; una comparacion dentro de region gateada es logica
+    # interna/router (FP jsst canaddfile x28).
+    if any(gg != cmpn and g.dominates(gg, cmpn, dom) for gg in gates):
+        return True
     sens = [i for i in nodes_matching(g, sens_rx)
             if i not in (g.entry, g.exit) and g.kind[i] == "stmt"]
     downstream = [s2 for s2 in sens if s2 != cmpn

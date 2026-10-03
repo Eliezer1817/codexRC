@@ -303,7 +303,8 @@ class PatternMatcher:
         r"|_can_access\b|manage_options|\bis_admin\s*\("
         r"|wp_verify_nonce|check_ajax_referer|check_admin_referer", re.I)
     _CMP_CRED = re.compile(
-        r"password|passwd|user_pass|secret|api_?key", re.I)
+        r"password|passwd|user_pass|secret|api_?key|token|session|"
+        r"\bauth\b|\blogin\b|\buser\b|role|\bcap", re.I)
 
     # ---- RC-000136: gate adyacente mata el loose-cmp ----
     # Si en +-1 linea de la comparacion senalada hay un capability check
@@ -349,6 +350,14 @@ class PatternMatcher:
                         else self._CMP_GATE_ANY
                     if _cfg.cmp_router(g, flagged, gate_rx,
                                        _cfg._SENSITIVE_RE):
+                        return False
+                    # RC-000140: comparacion SIN efecto sensible y
+                    # SIN operando de credencial = router de
+                    # display/datos (FP revisionary notices). Las
+                    # credenciales (6875) quedan siempre vivas.
+                    if not self._CMP_CRED.search(snip_raw) \
+                            and _cfg.downstream_sens_count(
+                                g, flagged) == 0:
                         return False
             except Exception:
                 pass  # CFG fallo: cae a las ventanas (fallback)

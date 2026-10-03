@@ -1,3 +1,21 @@
+## v0.58.3 — Triage de los 29 cerrado: 0 candidatos, 2 clases semanticas nuevas
+
+- RC-000139 (cmp_router): comparacion dominada POR un gate = corre
+  solo tras autenticar = logica interna, no control de acceso.
+  js-support-ticket 28 -> 0 (canaddfile x28: form_request router
+  dentro de rama nonce-verificada, copiado en 28 controllers).
+- RC-000140: comparacion sin sinks dependientes + operando no
+  credencial = router de display. Sinks escapados (esc_html/esc_attr/
+  wp_kses/sanitize_) no cuentan como efecto sensible. revisionary
+  admin notices 1 -> 0 (el "contexto AUTH" venia del texto HTML del
+  aviso, no del codigo).
+- Credenciales (password/token/session/...) quedan SIEMPRE fuera de
+  estas reglas: 6875 sigue vivo.
+- Triage congelado en hechos/triage_loosecmp_v0583.json: 29 -> 0
+  candidatos reales. La cola vuelve a cero y SSA-lite arranca con el
+  corpus limpio.
+- Regresion 12/12 PASS.
+
 ## v0.58.2 — SEMANTIC CORE: RC-000132 resuelto en el patron BAC
 
 - cfg.py: all_protected(gate_rx, sens_rx) — True/False/None: ¿todos
