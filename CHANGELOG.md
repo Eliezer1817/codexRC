@@ -1,3 +1,24 @@
+## v0.57.9 — RC-000135: loose-cmp exige contexto de AUTORIZACION
+
+- El patron loose-auth-cmp ya no dispara con cualquier == sobre input:
+  exige tokens AUTH en el snippet de la comparacion senalada (+-80
+  chars) o contexto +-5 lineas.
+  - tokens fuertes (password/passwd/user_pass/nonce/capability/
+    current_user_can/login/role/privilege/cookie/manage_options):
+    valen en snippet O contexto.
+  - tokens debiles (auth/token/secret): solo en el snippet, con
+    lookbehind anti-'author' (queries de posts usan author).
+  - comentarios despojados: 'nonce was verified' en un comentario
+    no autoriza nada.
+  - snippet tomado de la LINEA SENALADA, no del primer == del cuerpo
+    (FP jsst-hooks: checkbox == 1 dentro de funcion de registro).
+- Lab: caso real 6875 (== sobre password) SIGUE VIVO; filtros de
+  term_id/checkbox/code!='' MUEREN.
+- Medicion sobre el N1∩VDP: 23/29 loose-cmp mueren solos. 6 vivos,
+  todos la misma clase ($_GET['auth']==$ntInfo['lcode'] en SNAP:
+  router de flujo OAuth, admin-gateado por nxs_snap_user_can_access
+  en la misma linea).
+
 ## v0.57.8 — TRIAJE de los 2 sobrevivientes no-loose-cmp: ambos MUERTOS
 
 - simple-floating-menu (BAC 1177/1214): MUERTO. Cero hooks nopriv/REST

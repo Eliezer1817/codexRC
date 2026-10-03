@@ -220,6 +220,11 @@ class PatternMatcher:
         if pat["id"] == "bac-ajax-nopriv" and not re.search(
                 pat["signals"][0]["pat"], body):
             return
+        # RC-000135: comparacion floja SIN contexto de autorizacion =
+        # filtro de datos/settings no-auth -> FP (term_id != 0, code != '')
+        if pat["id"] == "loose-auth-cmp" and not self._loose_auth_context(
+                src, fname, line0, body):
+            return
         for sig in pat["signals"]:
             m = re.search(sig["pat"], body)
             if m:
@@ -266,6 +271,48 @@ class PatternMatcher:
                         x["cve_ref"]) for x in self.findings}:
             self.findings.append(f)
 
+
+    # ---- RC-000135: loose-cmp debe tocar AUTORIZACION, no filtros ----
+    # Tokens AUTH: la comparacion floja (o su contexto +-5 lineas) debe
+    # mencionar algo de auth/authz para valer como hallazgo critico.
+    # tokens fuertes: valen en los OPERANDOS o en el contexto +-5 lineas
+    _AUTH_STRONG = re.compile(
+        r"password|passwd|user_pass|pass_hash|\bpwd\b|nonce|"
+        r"capability|current_user_can|user_can\s*\(|"
+        r"is_user_logged_in|\blogin\b|\brole\b|privilege|"
+        r"\bcookie\b|manage_options|edit_others|manage_woocommerce")
+    # tokens debiles (auth/token/secret abundan en flujos oauth y en
+    # "author" de queries): solo cuentan en los OPERANDOS de la
+    # comparacion misma
+    _AUTH_OPERAND = re.compile(
+        r"\bauth(?!or)|\btoken\b|secret")
+
+    @staticmethod
+    def _nocomments(txt: str) -> str:
+        txt = re.sub(r"/\*.*?\*/", " ", txt, flags=re.S)
+        return re.sub(r"//[^\n]*", " ", txt)
+
+    def _loose_auth_context(self, src: str, fname: str, line0: int,
+                            body: str) -> bool:
+        # snippet: 80 chars alrededor del == SENALADO (no el primero del
+        # cuerpo). Funciones grandes de registro tienen == de checkbox
+        # lejos del password: solo la linea senalada decide.
+        m = re.search(r"[!=]=(?!=)", body)
+        if m:
+            snip = self._nocomments(
+                body[max(0, m.start() - 80):m.end() + 80])
+            if self._AUTH_STRONG.search(snip):
+                return True
+            if self._AUTH_OPERAND.search(snip):
+                return True
+            # contexto: 5 lineas alrededor de la COMPARACION senalada
+            flagged = line0 + body.count("\n", 0, m.start())
+            lines = src.split("\n")
+            lo = max(0, flagged - 1 - 5)
+            hi = min(len(lines), flagged - 1 + 6)
+            ctx = self._nocomments("\n".join(lines[lo:hi]))
+            return bool(self._AUTH_STRONG.search(ctx))
+        return False
 
     # ---- RC-000131: nopriv intencional con gate interno ----
     _GATES = re.compile(
