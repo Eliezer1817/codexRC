@@ -1,7 +1,8 @@
 # CodexRC — Historial completo de falsos positivos, bugs del motor y lecciones
 
-**Versión del documento:** 1.0 (03/10/2026)
-**Motor:** CodexRC / UNIVERSAL-ENGINE v0.57.10
+**Versión del documento:** 1.1 (03/10/2026)
+**Motor:** CodexRC / UNIVERSAL-ENGINE v0.58.0
+**Actualización 1.1:** tras revisión experta se inició el SEMANTIC CORE (v0.58.0, nivel 0: identidad canónica + integridad). Decisión arquitectónica adoptada: si un FP nuevo se puede expresar como propiedad del CFG/data-flow/types, NO se crea una nueva regla RC de texto; se mejora el Semantic Core (jerarquía de 4 niveles: textual → estructural → semántico → interprocedural; una señal de nivel inferior nunca contradice una prueba de nivel superior). Próximos niveles en construcción: CFG intra-función + dominancia (gate_dominates_sink) para RC-000132 y cierre de raíz de RC-000136.
 **Autor:** elaborado por el agente de IA del operador (identidad del operador omitida por política)
 **Propósito:** presentar a expertos por área el historial real de falsos positivos y defectos del motor, con la causa raíz de cada uno, el fix aplicado y preguntas abiertas. Cada área es autocontenida: se puede enviar a un experto solo su sección.
 
@@ -81,8 +82,9 @@ El detector de patrones combina señales estructurales débiles ponderadas (hook
 ### BUG-3.1 · Resolución de ruta por basename (RC-000127) — bug CRÍTICO real del motor
 - **Qué pasó:** dos archivos del mismo plugin compartían basename (`Wpil/Error.php` vs `Wpil/Table/Error.php`). El fallback de resolución de ruta en `build_chain` no rompía el loop externo de `os.walk`, así que el motor analizaba el archivo EQUIVOCADO: el ÚLTIMO visitado, no el correcto.
 - **Impacto:** cualquier hallazgo en un archivo con basename duplicado podía llevar evidencia de otro archivo. Cuantificación del alcance en corridas previas: no determinado. Caso testigo real: link-whisper SQLi pasó de falso positivo "DEMOSTRADO-ESTATICO" a correctamente CERRADO tras el fix.
-- **Fix (v0.49.1):** match por ruta relativa exacta primero; el basename quedó como último recurso.
-- **Pregunta al experto:** en un walker sobre árboles de archivos, ¿qué invariantes de integridad referencia→contenido recomiendan (hash de contenido como testigo, índice de rutas normalizadas)?
+- **Fix inicial (v0.49.1):** match por ruta relativa exacta primero; el basename quedó como último recurso.
+- **Fix definitivo (v0.58.0, SEMANTIC CORE nivel 0):** el basename dejó de ser identidad. Identidad canónica FileId = root + ruta relativa normalizada + hash de contenido (sha256-16) como testigo. Dos archivos con basename compartido → INTEGRITY FAILURE: NO se elige ninguno. El JUEZ bloquea DEMOSTRADO-ESTATICO si integrity != OK: la evidencia de un archivo equivocado nunca alcanza veredicto alto. El bug se convirtió en invariante verificable, no en fallback.
+- ~~Pregunta al experto~~ → **RESUELTA por revisión experta (02/10/2026):** se adoptó exactamente la identidad canónica FileId → ContentHash → contenido analizado, con INTEGRITY FAILURE como respuesta a cualquier desajuste.
 
 ### Diseño del área (para opinión general)
 - Cada hallazgo recibe cadena SOURCE/FLOW/AUTH/SANITIZATION/SINK/CORRELATION.
@@ -169,7 +171,7 @@ El detector de patrones combina señales estructurales débiles ponderadas (hook
 1. **RegistrationMagic `validate_ipn` (paypal.php:193):** 0-day real, DEMOSTRADO-ESTATICO por la cadena completa, salto `validate_ipn→callback→paypal_ipn` nopriv sin autenticación. Redescubierto por el patrón de CVE-MATCH SIN firma del fallo, y confirmado por EVIDENCE-CHAIN. Después de 10 clases de FP cerradas, el caso sigue vivo.
 2. **CVE-2023-6875 lab (Post SMTP family):** `==` flojo sobre password, sin gate adyacente, sin tokens de comentario. Sigue detectado tras TODAS las guardas (135, 136). Es el test de no-regresión de la familia loose-cmp.
 
-**Métrica de madurez del corpus:** 10 clases de FP codificadas (RC-000127 a RC-000136). Última familia cerrada (loose-cmp N1∩VDP): 29 hallazgos → 0 vivos, 23 muertos por RC-000135 y 6 por RC-000136, 0 muertos a mano en la última pasada.
+**Métrica de madurez del corpus:** 10 clases de FP codificadas (RC-000127 a RC-000136). Última familia cerrada (loose-cmp N1∩VDP): 29 hallazgos → 0 vivos, 23 muertos por RC-000135 y 6 por RC-000136, 0 muertos a mano en la última pasada. Las ventanas de texto (±1, ±5, ±80) se declaran pre-filtros transitorios: serán reemplazadas por dominancia real del CFG a medida que avance el Semantic Core.
 
 ---
 
