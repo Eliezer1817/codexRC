@@ -132,6 +132,13 @@ class XSSHunter:
                    label: str = "") -> Optional[Dict[str, Any]]:
         mark = self._mark()
         r = self._probe(url, param, mark, method, base_data)
+        # v0.62.8 FP-FILTER: reflejo en pagina de BLOQUEO (403/429/503,
+        # Cloudflare eco la URL en su HTML de bloqueo) no es reflejo del sitio
+        # (leccion greenlightdispensary 03/10: 16 FPs MEDIA por eco de WAF).
+        if r is not None and getattr(r, "status_code", 0) in (403, 429, 503):
+            self.log(f"[xss] {method} {urlparse(url).path}?{param}= · reflejo "
+                     f"DESCARTADO: pagina de bloqueo WAF (estado {r.status_code})")
+            return None
         if r is None or mark not in (r.text or ""):
             self.log(f"[xss] {method} {urlparse(url).path}?{param}= · sin reflexion")
             return None

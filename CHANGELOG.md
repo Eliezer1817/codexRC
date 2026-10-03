@@ -1,3 +1,21 @@
+## v0.62.8 — FP-FILTER de reflejo en pagina de bloqueo WAF
+
+Leccion greenlightdispensary (03/10): el Arsenal reporto 16
+"XSS REFLEJADO MEDIA" que eran puro eco de la URL en el HTML de
+bloqueo de Cloudflare (estados 403/429). El WAF eco la URL
+completa (con el payload) en su pagina de "Access denied", y el
+motor contaba eso como reflexion del sitio.
+
+- Arsenal (frontend/arsenal.html): confirmo() descarta el
+  reflejo si el estado es 403/429/503; log explicito
+  "reflejo descartado: pagina de bloqueo WAF".
+- core/hunter_xss.py (test_param, camino clasico): reflejo en
+  403/429/503 = DESCARTADO con log.
+- core/async_lane.py (SLIPSTREAM): mismo filtro; ademas
+  _probe devuelve el OBJETO respuesta, asi el WafGuard.observe
+  vuelve a ver status/headers (antes recibia solo .text y no
+  detectaba NINGUN bloqueo en el carril async).
+
 ## v0.62.2 — capa UI/UX del pipeline y la navegacion
 
 Presentacion unicamente; sin cambios en UNIVERSAL-ENGINE,

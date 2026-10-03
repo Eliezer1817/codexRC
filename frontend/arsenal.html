@@ -357,6 +357,10 @@
         const ok = d.status_code < 400 && d.elapsed_ms > 3000 && d.elapsed_ms > base + 4000;
         return ok ? "solid" : null;
       }
+      // v0.62.8 FP-FILTER: reflejo en pagina de BLOQUEO (403/429/503) es el
+      // eco de la URL en el HTML del WAF, no reflejo del sitio (leccion
+      // greenlightdispensary 03/10: 16 hallazgos MEDIA eran puro eco WAF).
+      if (d.status_code === 403 || d.status_code === 429 || d.status_code === 503) return null;
       // reflejo NO es confirmacion: Next.js/RSC devuelve eco ESCAPADO del parametro
       // (lecciones v0.53.5 XenPaid y vellius). Se marca para verificar en navegador.
       return d.reflejado ? "reflejado" : null;
@@ -542,6 +546,8 @@
               errConsec = 0;
               const head = pintaRes(d, sel);
               if (d.elapsed_ms > 3000) lento++;
+              if (d.reflejado && (d.status_code === 403 || d.status_code === 429 || d.status_code === 503))
+                out += "   ⏭ reflejo descartado: pagina de bloqueo WAF (estado " + d.status_code + "), eco de la URL, no reflejo real\n";
               if (d.reflejado) refl++;
               const c = confirmo(sel, d, baseline);
               luzPayload(sel, c === "solid" ? "hit" : c === "reflejado" ? "testing" : "done");

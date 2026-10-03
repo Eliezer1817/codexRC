@@ -59,17 +59,28 @@ class AsyncLane:
                             return None
                         await asyncio.sleep(left)
                 mark = h._mark()
-                r = await self._probe(client, url, param, mark)
-                if r is None or mark not in (r or ""):
+                resp = await self._probe(client, url, param, mark)
+                # v0.62.8 FP-FILTER: reflejo servido en pagina de BLOQUEO
+                # (403/429/503, tipico Cloudflare) es eco de la URL en el HTML
+                # del WAF, no reflejo del sitio. Leccion greenlightdispensary
+                # 03/10: 16 hallazgos MEDIA eran puro eco de pagina de error.
+                if resp is not None and getattr(resp, "status_code", 0) in (403, 429, 503):
+                    h.log(f"[xss] GET {urlparse(url).path}?{param}= · reflejo DESCARTADO: "
+                          f"pagina de bloqueo WAF (estado {resp.status_code})")
+                    return None
+                if resp is None or mark not in (resp.text or ""):
                     h.log(f"[xss] GET {urlparse(url).path}?{param}= · sin reflexion")
                     return None
+                r = resp.text
                 ctx = h._context(r, mark)
 
                 mark2 = h._mark()
                 r2 = await self._probe(client, url, param, mark2 + "'\"><")
                 raw = {"'": False, '"': False, ">": False, "<": False}
+                if getattr(r2, "status_code", 0) in (403, 429, 503):
+                    r2 = None
                 if r2 is not None:
-                    j = r2.find(mark2)
+                    j = r2.text.find(mark2)
                     if j >= 0:
                         tail = r2[j + len(mark2): j + len(mark2) + 4]
                         raw = {"'": tail.startswith("'"), '"': tail[1:2] == '"',
@@ -102,8 +113,10 @@ class AsyncLane:
         target = urlunparse(parts._replace(query=urlencode(q)))
         r = await client.get(target)
         if self.guard is not None:
+            # v0.62.8: observe recibe el OBJETO respuesta (status/headers),
+            # antes recibia solo .text y el WafGuard no veia ningun bloqueo.
             self.guard.observe(url, r)
-        return r.text
+        return r
 
     # ---------- orquestacion ----------
     def run(self, targets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
