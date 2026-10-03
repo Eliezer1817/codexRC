@@ -1,3 +1,21 @@
+## v0.57.6 — TRIAJE BAC N1: pods y ad-inserter, ambos MUERTOS
+
+TRIAJE MANUAL (protocolo BAC: handler -> gate -> impacto):
+- pods 3.3.9.2 (PodsAdmin.php:62, $2.600 VDP): MUERTO. nopriv_pods_admin es
+  intencional (forms front-end publicos). Gate interno completo: whitelist
+  de metodos, nonce pods-method, pods_is_admin para priv, y process_form
+  con nonce NUEVO en 3.3.9.2 vinculado a (pod, id, fields, uri, uid) que
+  solo se acuna al renderizar un form ya autorizado. No retargeteable.
+- ad-inserter 2.8.19 ($2.600 VDP): MUERTO como BAC. nopriv_ai_ajax solo
+  expone features publicas (iframe de bloques de ads, ads.txt publico);
+  ramas sensibles gated por REMOTE_DEBUGGING default OFF; el write real
+  (adsense-client-id) esta en ai_ajax_backend con nonce + manage_options.
+  Nota informativa: remote-ads-txt expone ABSPATH/paths a nopriv
+  (divulgacion de rutas, severidad baja, tipicamente no pagable).
+
+REGRESS: RC-000131, RC-000132 (clase: nopriv intencional con gate interno,
+disparada por el HOOK sin mirar el cuerpo del handler).
+
 ## v0.57.5 — TRIAJE SQLI N1: 11/11 FALSOS POSITIVOS, 3 CLASES DE FP ELIMINADAS
 
 TRIAJE MANUAL (backlog wide, SQLi en plugins con VDP pagable):
