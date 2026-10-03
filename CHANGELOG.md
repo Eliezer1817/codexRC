@@ -646,3 +646,24 @@ hechos en su propio workspace. Sin tocar el motor ni la arquitectura.
 Validado en vivo: IA nueva con CODEXRC_HOME propio arranca con cola
 llena (2120) sin heredar nuestro avance; shard 0/2 + 1/2 = 1071 +
 1049 = 2120 exactos sin solaparse; sin variable, cola 0 como siempre.
+
+## v0.62.6 — VDP-FRESH WATCHER: caza automática cada 6 horas
+
+- Nuevo core/vdp_watcher.py: detecta pagables (710 con bounty) que
+  sacaron version nueva desde la ultima auditoria y los manda SOLO a
+  DIFF-HUNT. Determinista, Python puro, sin LLM: lo despierta un
+  workflow del agente cada 6 horas y el agente solo triaga al final.
+  Flags: --check (listar sin cazar), --limit N (prueba rapida),
+  --sleep (pausa vs la API de wp.org).
+- La memoria de "version auditada" (_auditadas) lee TODOS los
+  resultados historicos del workspace de estado (wide_hunt_results*
+  y watcher_diff*), respetando CODEXRC_HOME (multi-IA).
+- La caza manual de los 8 pagables parcheados de hoy queda
+  registrada como hechos/watcher_diff_20261003_manual.json para que
+  el watcher no los repita.
+- El parche fresco = mejor ventana para cazar parches incompletos:
+  con esto dejamos de depender de acordarse de mirar.
+
+Validado: --limit 12 sobre pagables reales (0 movidos, esquema de
+salida correcto); JSON de diff_hunt compatible con la memoria de
+versiones.
