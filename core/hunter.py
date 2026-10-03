@@ -1,5 +1,5 @@
 """
-codexRC - Hunter (FACHADA, v0.57.2)
+codexRC - Hunter (FACHADA, v0.57.5)
 El modulo original de 96KB se partio en submodulos por responsabilidad:
   core/hunter_base.py   constantes + helpers compartidos
   core/hunter_spider.py Spider (mapeo)

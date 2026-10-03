@@ -1,0 +1,1559 @@
+[
+ {
+  "slug": "ad-inserter",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "ad-inserter.php",
+  "line": 4801,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "unlimited-elements-for-elementor",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "provider/provider_params_processor.class.php",
+  "line": 2586,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "unlimited-elements-for-elementor",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "provider/provider_params_processor.class.php",
+  "line": 5401,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "unlimited-elements-for-elementor",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "provider/provider_params_processor.class.php",
+  "line": 5734,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "pods",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/PodsAdmin.php",
+  "line": 62,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "anywhere-elementor",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/classes/query-master.php",
+  "line": 215,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "anywhere-elementor",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/classes/query-master.php",
+  "line": 431,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "anywhere-elementor",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/classes/query-master.php",
+  "line": 498,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "anywhere-elementor",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/classes/query-master.php",
+  "line": 655,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "link-whisper",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "core/Wpil/Dashboard.php",
+  "line": 10,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "easy-hide-login",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-hide-login.php",
+  "line": 300,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "NextScripts_SNAP.php",
+  "line": 201,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "NextScripts_SNAP.php",
+  "line": 208,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/5p.php",
+  "line": 14,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/bg.php",
+  "line": 26,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/fb.php",
+  "line": 415,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/fl.php",
+  "line": 26,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/li.php",
+  "line": 48,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/li.php",
+  "line": 383,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/md.php",
+  "line": 14,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/pk.php",
+  "line": 28,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/sc.php",
+  "line": 26,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/tr.php",
+  "line": 30,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/tw.php",
+  "line": 266,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/wb.php",
+  "line": 14,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc-cl/xi.php",
+  "line": 22,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_class_mgmt.php",
+  "line": 91,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_functions_fv.php",
+  "line": 121,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_functions_fv.php",
+  "line": 1058,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_functions_fv.php",
+  "line": 1175,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_functions_fv.php",
+  "line": 1322,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_ntlist_class.php",
+  "line": 346,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_snap_class.php",
+  "line": 971,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "social-networks-auto-poster-facebook-twitter-g",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "inc/nxs_snap_class.php",
+  "line": 995,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "revisionary",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-list-table_rvy.php",
+  "line": 408,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "revisionary",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-list-table_rvy.php",
+  "line": 814,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "simple-floating-menu",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-simple-floating-menu.php",
+  "line": 1177,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "simple-floating-menu",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-simple-floating-menu.php",
+  "line": 1214,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wc-multivendor-membership",
+  "type": "PATRON: Verificacion de pago degradable (IPN downgrade)",
+  "gate": "SIN-HANDLER",
+  "file": "controllers/wcfmvm-controller-memberships-payment.php",
+  "line": 57,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "form-vibes",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "inc/modules/notices/module.php",
+  "line": 258,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 305,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 706,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 721,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 732,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 739,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 746,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/ticket/model.php",
+  "line": 859,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "js-support-ticket",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/jsst-hooks.php",
+  "line": 175,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "updraftplus",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-onboarding.php",
+  "line": 102,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "post-types-order",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "include/class.cpto.php",
+  "line": 112,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "templately",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "modules/elementor-integration/Platform/Elementor.php",
+  "line": 192,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "templately",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "modules/full-site-import/FullSiteImport.php",
+  "line": 138,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "mailchimp-for-woocommerce",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-mailchimp-woocommerce-service.php",
+  "line": 1050,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "ultimate-member",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/admin/core/class-admin-dragdrop.php",
+  "line": 36,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "ultimate-member",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/admin/core/class-admin-settings.php",
+  "line": 79,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wps-limit-login",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/plugin.php",
+  "line": 686,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-content-copy-protector",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "CANDIDATO-BAC",
+  "file": "activity.php",
+  "line": 1206,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "https-redirection",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ehssl-init-time-tasks.php",
+  "line": 31,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "https-redirection",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ehssl-installation.php",
+  "line": 16,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "temporary-login-without-password",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-wp-temporary-login-without-password-admin.php",
+  "line": 459,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "maxbuttons",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/controllers/listController.php",
+  "line": 38,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "mystickyelements",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "mystickyelements-admin.php",
+  "line": 456,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "mystickyelements",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "mystickyelements-admin.php",
+  "line": 722,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "mystickyelements",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "mystickyelements.php",
+  "line": 2823,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "really-simple-csv-importer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "rs-csv-importer.php",
+  "line": 222,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "uncanny-automator",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "src/global-functions.php",
+  "line": 390,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "uncanny-automator",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "src/global-functions.php",
+  "line": 428,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "woo-extra-product-options",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-thwepof-admin-settings-advanced.php",
+  "line": 373,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "float-menu",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "classes/Admin/ImporterExporter.php",
+  "line": 190,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "pirate-forms",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-pirateforms-public.php",
+  "line": 564,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "woo-variation-gallery",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-woo-variation-gallery-backend.php",
+  "line": 100,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "cornerstone",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class.content_utilities.php",
+  "line": 649,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "cornerstone",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class.media.php",
+  "line": 228,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "hide-admin-bar-based-on-user-roles",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-hide-admin-bar-based-on-user-roles-admin.php",
+  "line": 80,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "hide-admin-bar-based-on-user-roles",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-hide-admin-bar-based-on-user-roles-admin.php",
+  "line": 104,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "jetpack-backup",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "jetpack_vendor/automattic/jetpack-connection/src/sso/class-sso.php",
+  "line": 1015,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "jetpack-backup",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "jetpack_vendor/automattic/jetpack-connection/src/sso/class-sso.php",
+  "line": 1017,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "automattic-for-agencies-client",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "jetpack_vendor/automattic/jetpack-connection/src/sso/class-sso.php",
+  "line": 1015,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "automattic-for-agencies-client",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "jetpack_vendor/automattic/jetpack-connection/src/sso/class-sso.php",
+  "line": 1017,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "wp-ultimate-csv-importer",
+  "type": "PATRON: Subida de archivos sin validacion de tipo",
+  "gate": "SIN-HANDLER",
+  "file": "uploadModules/DesktopUpload.php",
+  "line": 97,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "betterlinks",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "includes/Helper.php",
+  "line": 396,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "directorist",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/classes/class-add-listing.php",
+  "line": 55,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "kaya-qr-code-generator",
+  "type": "OBJECT INJECTION",
+  "gate": "SIN-HANDLER",
+  "file": "lib/class.crud_qrcode_generator.php",
+  "line": 319,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "fv-wordpress-flowplayer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "models/flowplayer.php",
+  "line": 1333,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "fv-wordpress-flowplayer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "controller/settings.php",
+  "line": 25,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wb-custom-product-tabs-for-woocommerce",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-wb-custom-product-tabs-for-woocommerce-admin.php",
+  "line": 291,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "logo-slider-wp",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-logo-slider-wp-admin.php",
+  "line": 404,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "logo-slider-wp",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-logo-slider-wp-admin.php",
+  "line": 450,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "logo-slider-wp",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-logo-slider-wp-admin.php",
+  "line": 535,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "logo-slider-wp",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "admin/modules/demo-content/class-logo-slider-wp-demo-content.php",
+  "line": 489,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "sugar-calendar-lite",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/common/Features/EventTicketing/includes/admin/settings.php",
+  "line": 1016,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "gmap-embed",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/Traits/MapCRUD.php",
+  "line": 597,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "cf7-grid-layout",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-cf7-grid-layout-public.php",
+  "line": 704,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "cf7-grid-layout",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-cf7-grid-layout-public.php",
+  "line": 720,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "wp-memory-usage",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/threshold-alerts.php",
+  "line": 202,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-file-upload",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "lib/wfu_processfiles.php",
+  "line": 69,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "templatespare",
+  "type": "PATRON: Subida de archivos sin validacion de tipo",
+  "gate": "SIN-HANDLER",
+  "file": "includes/layouts/layout-endpoints.php",
+  "line": 266,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "booking-package",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "index.php",
+  "line": 231,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "seo-automated-link-building",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "src/LinksList.php",
+  "line": 92,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/cdn-rewrite.php",
+  "line": 479,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/cdn-rewrite.php",
+  "line": 1104,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/cdn-rewrite.php",
+  "line": 8028,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/cdn-rewrite.php",
+  "line": 9968,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/rewriteLogic.php",
+  "line": 944,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/rewriteLogic.php",
+  "line": 1074,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/rewriteLogic.php",
+  "line": 1762,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "addons/cdn/rewriteLogic.php",
+  "line": 4547,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 233,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 476,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 3242,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 4193,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 4671,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 9201,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/ajax.class.php",
+  "line": 11063,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/crit_corpus.class.php",
+  "line": 575,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/crit_corpus.class.php",
+  "line": 1077,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/enqueues.class.php",
+  "line": 107,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/enqueues.class.php",
+  "line": 515,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/enqueues.class.php",
+  "line": 897,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/enqueues.class.php",
+  "line": 1065,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/media_library_live.class.php",
+  "line": 25,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "defines.php",
+  "line": 1475,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-compress-core.php",
+  "line": 1546,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-compress-core.php",
+  "line": 1688,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-compress-core.php",
+  "line": 2331,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-compress-core.php",
+  "line": 3444,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-compress-image-optimizer",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "wp-compress-core.php",
+  "line": 4352,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "sensei-lms",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-sensei-course.php",
+  "line": 1015,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "sensei-lms",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-sensei-course.php",
+  "line": 3279,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "sensei-lms",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-sensei-frontend.php",
+  "line": 1720,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "auto-install-free-ssl",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "FreeSSLAuto/src/Admin/HomeOptions.php",
+  "line": 83,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "auto-install-free-ssl",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "FreeSSLAuto/src/Admin/HomeOptions.php",
+  "line": 915,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "auto-install-free-ssl",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "FreeSSLAuto/src/Admin/HomeOptions.php",
+  "line": 923,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "auto-install-free-ssl",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "auto-install-free-ssl.php",
+  "line": 294,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-fullcalendar",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "wp-fullcalendar.php",
+  "line": 44,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-fullcalendar",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "wp-fullcalendar.php",
+  "line": 51,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "metasync",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-metasync-admin-pages.php",
+  "line": 911,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "metasync",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-metasync-debug-manager.php",
+  "line": 75,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "metasync",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "otto/Otto_html_class.php",
+  "line": 3449,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "metasync",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-metasync-seo-output.php",
+  "line": 176,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "yaycurrency",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "vendor-prefixed/src/License/EDD_SL_Plugin_Updater.php",
+  "line": 368,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "myagileprivacy",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "frontend/my-agile-privacy-frontend.php",
+  "line": 961,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "myagileprivacy",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "frontend/my-agile-privacy-frontend.php",
+  "line": 1313,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "myagileprivacy",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "frontend/my-agile-privacy-frontend.php",
+  "line": 110,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "cf7-redirect-thank-you-page",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/modules/payments/cpt.php",
+  "line": 316,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "cf7-redirect-thank-you-page",
+  "type": "PATRON: Verificacion de pago degradable (IPN downgrade)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/modules/payments/paypal_handler.php",
+  "line": 79,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "tablesome",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/actions.php",
+  "line": 643,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "tablesome",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/actions.php",
+  "line": 962,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/dashboard.php",
+  "line": 1104,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/categories.php",
+  "line": 122,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/categories.php",
+  "line": 130,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/categories.php",
+  "line": 134,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/pdfm-tags.php",
+  "line": 120,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/pdfm-tags.php",
+  "line": 124,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "bsk-pdf-manager",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "classes/dashboard/dashboard.php",
+  "line": 273,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "gantry5",
+  "type": "PATRON: Subida de archivos sin validacion de tipo",
+  "gate": "SIN-HANDLER",
+  "file": "src/classes/Gantry/Admin/Controller/Json/Filepicker.php",
+  "line": 442,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "democracy-poll",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/Admin/Admin_Page_Edit_Poll.php",
+  "line": 280,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "democracy-poll",
+  "type": "SQLI (base de datos)",
+  "gate": "SIN-HANDLER",
+  "file": "classes/Admin/Admin_Page_Edit_Poll.php",
+  "line": 284,
+  "severity": "critica",
+  "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)"
+ },
+ {
+  "slug": "makewebbetter-hubspot-for-woocommerce",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-hubwoo-public.php",
+  "line": 152,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "makewebbetter-hubspot-for-woocommerce",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-hubwoo-public.php",
+  "line": 254,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "makewebbetter-hubspot-for-woocommerce",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-hubwoo-public.php",
+  "line": 290,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "buymeacoffee",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "admin/class-buy-me-a-coffee-admin.php",
+  "line": 352,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "travelpayouts",
+  "type": "PATRON: BAC AJAX sin autenticacion",
+  "gate": "SIN-HANDLER",
+  "file": "redux-core/inc/classes/class-travelpayouts-admin-notices.php",
+  "line": 181,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 38,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 77,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 120,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 170,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 286,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "clean-login",
+  "type": "PATRON: Rol/capacidad escrita desde request (PrivEsc)",
+  "gate": "SIN-HANDLER",
+  "file": "clean-login.php",
+  "line": 355,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "media-search-enhanced",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "public/class-media-search-enhanced.php",
+  "line": 144,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "checkout-upsell-and-order-bumps",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "app/Controllers/Admin/Page.php",
+  "line": 135,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "checkout-upsell-and-order-bumps",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "app/Modules/Campaigns/FBT.php",
+  "line": 344,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ },
+ {
+  "slug": "wp-rest-api-log",
+  "type": "PATRON: Comparacion floja en control de acceso (type juggling)",
+  "gate": "SIN-HANDLER",
+  "file": "includes/class-wp-rest-api-log.php",
+  "line": 44,
+  "severity": "critica",
+  "verdict": "patron abstracto de fallo historico detectado (sin firma fija)"
+ }
+]

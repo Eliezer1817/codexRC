@@ -73,6 +73,8 @@ SINKS: List[Dict[str, Any]] = [
      r"(?:wp_remote_(?:get|post|request)\s*\(|curl_exec\s*\(|fsockopen\s*\()"},
 ]
 
+_FUNC_DECL = re.compile(r"^\s*(?:public|protected|private|static|final)?"
+                        r"\s*function\s+[A-Za-z_]\w*\s*\(")
 _ASSIGN = re.compile(r"^\s*(?:global\s+[^;]+;\s*)?"
                      r"(\$[A-Za-z_]\w*)\s*(?:\[[^\]]*\])?\s*=(?!=)")
 _VAR = re.compile(r"\$[A-Za-z_]\w*")
@@ -81,6 +83,8 @@ _FOREACH = re.compile(r"foreach\s*\(\s*(" + "|".join(SOURCES) +
                      r"(\$[A-Za-z_]\w*))?\s*\)")
 _PREPARE_SAFE = re.compile(
     r"->prepare\s*\(\s*['\"][^'\"]*%[dsf]['\"]")
+# dentro del formato de prepare solo se tolera la tabla: $wpdb->prefix
+_PREFIX_EXPR = re.compile(r"\$\w+->(?:base_)?prefix")
 
 
 def _rhs_of(line: str) -> str:
@@ -115,10 +119,23 @@ class TaintTracer:
         rel = os.path.relpath(path)
         tainted: set = set()
         origin: Dict[str, str] = {}
+        prepared: set = set()   # vars que pasaron por prepare multilinea
         findings: List[Dict[str, Any]] = []
 
         # extract() y register_globals: taint global del archivo
         src_all = "\n".join(lines)
+        # WP-WRAPPER GUARD: $x = new WP_Query/WP_Term_Query/WP_User_Query...
+        # son clases de CORE que sanitizan internamente: ->query()/get_results()
+        # sobre ellas NO es SQL crudo. Registra el FP mas comun del motor
+        # (v0.57.5: 19 de 39 SQLi del backlog eran esta familia).
+        self._wp_wrappers = set(
+            m.group(1) for m in re.finditer(
+                r"(\$\w+)\s*=\s*new\s+WP_(?:Query|Term_Query|User_Query|"
+                r"Comment_Query|Site_Query|Network_Query)\s*\(", src_all))
+        # global $wp_query: el main query de core, mismo criterio (FP v0.57.5,
+        # caso revisionary class-list-table_rvy.php:408)
+        if re.search(r"\bglobal\s+[^;\n]*\$wp_query\b", src_all):
+            self._wp_wrappers.add("$wp_query")
         if re.search(r"\bextract\s*\(\s*\$_(?:GET|POST|REQUEST)", src_all):
             findings.append(self._f(rel, 0, "EXTRACT de input superglobal",
                                     "critica", "$_GET/$_POST",
@@ -128,6 +145,14 @@ class TaintTracer:
         for _ in range(6):                       # punto fijo
             changed = False
             for no, line in enumerate(lines, 1):
+                # SCOPE: cada function con NOMBRE es un scope PHP nuevo.
+                # Sin esto una var local ($jsst_query usado como texto de
+                # busqueda en otra funcion) contamina todo el archivo
+                # (FP js-support-ticket: 20 sinks por colision de nombres).
+                # Las closures sin nombre NO resetean (viven en el scope
+                # exterior, patron add_action del lab y de WP real).
+                if _FUNC_DECL.match(line):
+                    tainted.clear(); prepared.clear(); origin.clear()
                 # foreach($_GET as $k => $v)
                 for m in _FOREACH.finditer(line):
                     for g in (m.group(2), m.group(3)):
@@ -139,33 +164,64 @@ class TaintTracer:
                 if a:
                     var, rhs = a.group(1), _rhs_of(line)
                     was = var in tainted
+                    # 1b) prepare MULTILINEA autorreferencial:
+                    #     $q = $wpdb->prepare($q, $args) — el formato ES la
+                    #     propia var (placeholders %s/%d puestos por el dev)
+                    #     y los datos van en $args. Limpia el taint.
+                    #     (FP v0.57.5: js-support-ticket model.php, 20 sinks)
+                    mprep = re.search(
+                        r"^\s*(\$\w+)\s*=\s*\S+->prepare\s*\(\s*\1\s*,", line)
+                    if mprep and was:
+                        # formato = placeholders del dev, datos en $args:
+                        # limpia y NO propagar desde $args (ya escapados).
+                        # La var queda marcada PREPARADA: sobrevive a
+                        # acumulaciones .= posteriores (FP js-support-ticket).
+                        # NOTA FN aceptada (nivel 1): formato con input crudo
+                        # DENTRO del string + args aparte (raro) no se detecta
+                        # aqui; lo cubre SINK-SCAN/Semgrep.
+                        tainted.discard(var); changed = True
+                        prepared.add(var)
                     # 1) prepare con placeholders y taint SOLO en valores:
                     #    el primer argumento (formato) no debe tener vars
-                    prep = re.search(r"->prepare\s*\(([^,]*),", line)
-                    if prep and _PREPARE_SAFE.search(line) and \
-                            not _VAR.findall(prep.group(1)):
-                        if was:                      # prepare limpia el valor
-                            tainted.discard(var); changed = True
-                    elif re.search(r"implode\s*\(\s*['\"]?[^)]*array_fill", rhs):
-                        # $placeholders = implode(',', array_fill(0, n, '%d'))
-                        # construye placeholders internos, no taint del usuario
-                        if was:
-                            tainted.discard(var); changed = True
-                    # 2) sanitizador puro: corta el taint (nunca lo crea)
-                    elif _sanitized_only(rhs, tainted):
-                        if was:
-                            tainted.discard(var); changed = True
-                    # 3) fuente cruda en el RHS
-                    elif _SRC_RE.search(rhs):
-                        if not was:
-                            tainted.add(var); origin[var] = "superglobal"
-                            changed = True
-                    # 4) propagacion desde vars ya tainteadas
-                    elif any(v in tainted for v in _VAR.findall(rhs)):
-                        if not was:
-                            tainted.add(var)
-                            origin[var] = "propagacion"
-                            changed = True
+                    if not mprep:
+                      prep = re.search(r"->prepare\s*\(([^,]*),", line)
+                      # vars permitidas en el FORMATO: solo ->prefix (tabla
+                      # WP, no puede ir como placeholder) (FP js-support-ticket
+                      # L3305: prepare("... " . $wpdb->prefix . "... %s", $x))
+                      fmt_vars = (_VAR.findall(_PREFIX_EXPR.sub("", prep.group(1)))
+                                  if prep else None)
+                      # placeholder visible en CUALQUIER literal del format
+                      # (concatenado con ->prefix rompe _PREPARE_SAFE, que
+                      # solo miraba el primer literal citado)
+                      fmt_ok = prep and re.search(r"%[dsf]", prep.group(1))
+                      if prep and fmt_ok and not fmt_vars:
+                          if was:                      # prepare limpia el valor
+                              tainted.discard(var); changed = True
+                      elif re.search(r"implode\s*\(\s*['\"]?[^)]*array_fill", rhs):
+                          # $placeholders = implode(',', array_fill(0, n, '%d'))
+                          # construye placeholders internos, no taint del usuario
+                          if was:
+                              tainted.discard(var); changed = True
+                      # 2) sanitizador puro: corta el taint (nunca lo crea)
+                      elif _sanitized_only(rhs, tainted):
+                          if was:
+                              tainted.discard(var); changed = True
+                      # 3) fuente cruda en el RHS: invalida prepared
+                      elif _SRC_RE.search(rhs):
+                          prepared.discard(var)
+                          if not was:
+                              tainted.add(var); origin[var] = "superglobal"
+                              changed = True
+                      # 4) propagacion: solo si alguna var tainteada NO
+                      #    este en prepared (concatenar SQL ya escapado es
+                      #    el patron sano de wpdb->prepare)
+                      elif any(v in tainted and v not in prepared
+                               for v in _VAR.findall(rhs)):
+                          prepared.discard(var)
+                          if not was:
+                              tainted.add(var)
+                              origin[var] = "propagacion"
+                              changed = True
                 # sinks
                 for f in self._sink_hits(line, no, rel, tainted, origin):
                     key = (f["file"], f["line"], f["type"])
@@ -187,6 +243,11 @@ class TaintTracer:
             # prepare en la misma linea con placeholders = sink seguro
             if "->prepare(" in line and _PREPARE_SAFE.search(line):
                 continue
+            # receiver construido como wrapper WP en este archivo = no sink
+            if sink["type"].startswith("SQLI"):
+                recv = re.match(r"\s*(\$\w+)->", zone)
+                if recv and recv.group(1) in getattr(self, "_wp_wrappers", ()):
+                    continue
             hit = [v for v in _VAR.findall(zone) if v in tainted
                    and v not in ("$wpdb", "$this")]
             if not hit:

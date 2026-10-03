@@ -1,3 +1,28 @@
+## v0.57.5 — TRIAJE SQLI N1: 11/11 FALSOS POSITIVOS, 3 CLASES DE FP ELIMINADAS
+
+TRIAJE MANUAL (backlog wide, SQLi en plugins con VDP pagable):
+- unlimited-elements (3/3), js-support-ticket (7/7), revisionary (1/1):
+  TODOS MUERTOS. Ningun SQLi explotable. Ningun reporte.
+
+MOTOR (core/taint_trace.py) — 3 clases de FP erradicadas:
+- WP-WRAPPER GUARD: ->query()/get_results() sobre WP_Query/WP_Term_Query/
+  WP_User_Query/WP_Comment_Query/WP_Site_Query/WP_Network_Query (new o
+  global $wp_query) ya no es sink SQLI: core sanitiza internamente.
+- PREPARE MULTILINEA: $q = $wpdb->prepare($q, $args) limpia el taint y
+  marca la var PREPARADA (sobrevive a acumulaciones .= posteriores).
+  Formato con $wpdb->prefix tolerado; placeholder visible en cualquier
+  literal del format, no solo el primero.
+- SCOPE POR FUNCION: cada function con nombre resetea el taint (semantica
+  PHP real); antes una var local no-SQL en otra funcion contaminaba todo
+  el archivo. Las closures sin nombre NO resetean (patron add_action).
+
+VALIDACION: unlimited-elements 0 SQLI (antes 3 criticas), revisionary 0
+(antes 1), js-support-ticket 0 (antes 20), lab 4/4 (vulnerable sigue
+disparando, saneado/wrapper no, $wpdb crudo no se pierde).
+NOTA FN aceptada: formato de prepare con input crudo DENTRO del string
++ args aparte (raro) no lo ve taint nivel 1; lo cubre SINK-SCAN/Semgrep.
+REGRESS: RC-000128, RC-000129, RC-000130 con repros minimos.
+
 ## v0.57.4 — AUDITORIA DE SEGURIDAD DEL PROPIO PROYECTO
 
 AUDITADO (sin cambios necesarios):
