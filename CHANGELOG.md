@@ -1,3 +1,33 @@
+## v0.66.0 — AUTHZ-PROOF capa 5: FP-MEMORIA semantica (RC-000152)
+
+"El falso positivo se paga una sola vez, nunca mas." fp_autoclose
+cubria reglas FIJAS; la capa 5 agrega aprendizaje: cuando un
+hallazgo es refutado (por el OPERADOR en el triaje, o por la
+DEFENSA con prueba en DIFF-HUNT), su HUELLA ESTRUCTURAL queda
+guardada y cualquier hallazgo identico se auto-cierra.
+
+Huella semantica (core/fp_memory.py): type, veredicto de gates,
+nopriv, rol exigido, caps, nonce, sensible, owner_check, sinks de
+objeto, marcadores del nombre de accion (notice/review/media...)
+y del codigo alrededor (prepare/cast/escape/menu_page/settings).
+SIN nombres de archivo ni plugin: dos hallazgos con la misma
+huella son la misma familia aunque vivan en plugins distintos.
+
+- Matching EXACTO anti-ruido: una huella solo cierra identicos.
+- Dedupe: la misma huella no se aprende dos veces.
+- Memoria en .codexrc/intelligence/fp_memory.jsonl dentro del
+  repo: se propaga por git, cada instancia que hace pull hereda
+  lo que las demas ya pagaron en triaje.
+- diff_hunt cierra por memoria ANTES de correr la cadena de
+  evidencia (ahorra abogados) y auto-aprende de los DESCARTADO
+  probados por la DEFENSA.
+- CLI: --stats / --list.
+
+Validacion: repro aprender->cerrar con plugin B estructuralmente
+identico (distinto nombre/clase/archivo) cerrado FP-MEMORIA,
+hallazgo distinto NO cerrado, dedupe OK (corpus RC-000152,
+regresion 23/23 PASS, memoria aislada en el test).
+
 ## v0.65.0 — AUTHZ-PROOF capa 2: OBJECT-OWNER, IDOR estatico (RC-000151)
 
 El hueco admitido del BAC: GATES-AUDIT no miraba de QUIEN es el

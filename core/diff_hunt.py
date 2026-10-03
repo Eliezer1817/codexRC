@@ -305,12 +305,33 @@ def scan(slug: str, workdir: str) -> Dict[str, Any]:
         vivos.append(h)
     fp_annotate(vivos, new_root)
     vivos = [h for h in vivos if not h.get("_fp")]
+    # v0.66.0 capa 5: memoria semantica — la huella de un FP ya
+    # refutado cierra los identicos estructurales sin triaje
+    try:
+        from core import fp_memory
+        fp_memory.annotate_all(vivos, new_root, gates)
+        vivos = [h for h in vivos if not h.get("_fp")]
+    except Exception:
+        pass
     # v0.47.0: cadena de evidencia + abogados (fiscal/defensa/juez)
     try:
         from core.evidence import annotate as evidence_annotate
         evidence_annotate(new_root, vivos, gates,
                           analyzers=["TAINT-TRACE", "GATES-AUDIT",
                                      "FP-AUTO-CLOSE", "DIFF-HUNT"])
+    except Exception:
+        pass
+    # v0.66.0 capa 5: la refutacion PROBADA de la DEFENSA se
+    # aprende (huella) para no volver a pagar ese triaje
+    try:
+        from core import fp_memory
+        for h in vivos:
+            if h.get("_verdict") == "DESCARTADO":
+                fp_memory.learn(h, new_root, gates, refuted_by="DEFENSA",
+                                reason=str(h.get("_refutacion",
+                                          h.get("_verdict", ""))[:200] or
+                                          "refutado por DEFENSA"),
+                                plugin=slug)
     except Exception:
         pass
     order_v = {"CONFIRMED": 0, "DEMOSTRADO-ESTATICO": 1, "PROBABLE": 2,

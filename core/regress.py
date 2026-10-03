@@ -181,6 +181,42 @@ def seed_rc_000151() -> None:
         })
 
 
+
+def seed_rc_000152() -> None:
+    """RC-000152 (v0.66.0): FP-MEMORIA (AUTHZ-PROOF capa 5). Cada FP
+    refutado deja huella estructural; los identigos se auto-cierran
+    en cualquier plugin posterior. El FP se paga una sola vez."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000152" not in cases:
+        _write_case({
+            "id": "RC-000152",
+            "module": "FP-MEMORIA (AUTHZ-PROOF capa 5)",
+            "problem": "cada falso positivo de la misma familia se "
+                       "re-triaba a mano lote tras lote (ej: menus "
+                       "loader + nonce, metas publicas por diseno): "
+                       "el mismo tiempo se pagaba una y otra vez en "
+                       "plugins distintos con la misma estructura",
+            "first_seen": "v0.44.0 (fp_autoclose cubria solo reglas "
+                          "fijas, sin aprendizaje)",
+            "fixed_in": "v0.66.0 (huella semantica: type/gate/rol/"
+                        "nonce/owner/sinks/action_markers/code_markers; "
+                        "matching EXACTO anti-ruido; memoria en repo "
+                        "propagada por git; auto-aprendizaje desde "
+                        "refutaciones PROBADAS de la DEFENSA)",
+            "repro": {"plugins": "A (refutado por OPERADOR) y B "
+                                 "(identico estructural, distinto "
+                                 "nombre/archivo/clase)",
+                      "expect": "B auto-cerrado FP-MEMORIA; hallazgo "
+                                "de tipo distinto NO cerrado; aprender "
+                                "dos veces NO duplica"},
+            "case_real": "validado en sandbox con memoria aislada; "
+                         "diff_hunt cierra por memoria ANTES de "
+                         "evidencia (ahorra triaje) y aprende de "
+                         "DESCARTADO",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -192,6 +228,7 @@ def run() -> int:
     seed_rc_000149()
     seed_rc_000150()
     seed_rc_000151()
+    seed_rc_000152()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -326,6 +363,58 @@ class RC151 {
                 ok = all(got.get(k) == v for k, v in exp.items()) and len(got) == 4
                 print(f"[{c['id']}] idor estatico {len(got)}/4 -> "
                       f"{'PASS' if ok else 'FAIL ' + str(got)}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000152":
+            import tempfile
+            from core import fp_memory
+            from core.gates_audit import scan_path
+            plug_a = """<?php
+class Rc152a {
+    public function __construct() {
+        add_action('wp_ajax_rc152a_leak', array($this, 'leak'));
+    }
+    public function leak() {
+        $post_id = $_POST['post_id'];
+        echo get_post_meta($post_id, 'meta_public', true);
+    }
+}
+"""
+            plug_b = """<?php
+class Completamente_Otro_Nombre {
+    public function __construct() {
+        add_action('wp_ajax_rc152b_diferente', array($this, 'leak'));
+    }
+    public function leak() {
+        $post_id = $_POST['post_id'];
+        echo get_post_meta($post_id, 'meta_public', true);
+    }
+}
+"""
+            with tempfile.TemporaryDirectory() as tmp:
+                fp_memory.MEM_FILE = os.path.join(tmp, "mem.jsonl")
+                ra = os.path.join(tmp, "a"); os.makedirs(ra)
+                rb = os.path.join(tmp, "b"); os.makedirs(rb)
+                open(os.path.join(ra, "leaky.php"), "w").write(plug_a)
+                open(os.path.join(rb, "otro.php"), "w").write(plug_b)
+                ga = scan_path(ra)
+                hA = {"type": "bac", "file": "leaky.php", "line": 8}
+                fid = fp_memory.learn(hA, ra, ga, refuted_by="OPERADOR",
+                                      reason="meta publico", plugin="a")
+                gb = scan_path(rb)
+                hB = {"type": "bac", "file": "otro.php", "line": 8}
+                hC = {"type": "xss", "file": "otro.php", "line": 8}
+                b = fp_memory.annotate_all([dict(hB)], rb, gb)[0]
+                cc = fp_memory.annotate_all([dict(hC)], rb, gb)[0]
+                ded = fp_memory.learn(hA, ra, ga, refuted_by="OPERADOR",
+                                      reason="re", plugin="a")
+                ok = (fid is not None and
+                      str(b.get("_fp", "")).startswith("FP-MEMORIA:") and
+                      cc.get("_fp") is None and ded is None)
+                print(f"[{c['id']}] aprender->cerrar={bool(b.get('_fp'))} "
+                      f"distinto_abierto={cc.get('_fp') is None} "
+                      f"dedupe={ded is None} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
                 if not ok:
                     fails += 1
         if c["id"] == "RC-000127":
