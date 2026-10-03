@@ -1,3 +1,24 @@
+## v0.61.0 — Corpus fresco: VDP-FRESH + prioridad mid-band
+
+PALANCA 1 (corpus fresco automatico):
+- core/vdp_fresh.py: snapshots del mapa VDP (GOLDEN LIST) y diff
+  semanal -> vdp_nuevos.json. Detecta ALTAS (VDP recien agregado:
+  blanco sin competencia, se caza ya), BOUNTY-NUEVOS (sube
+  prioridad) y BAJAS (dejar de cazar).
+- hunt_wide.py --vdp-nuevos: las altas+ounty entran a la cola sin
+  filtro de 90 dias ni corpus (incluso slugs fuera de >=5k) y se
+  ordenan al tope con etiqueta NUEVO-VDP.
+
+PALANCA 2 (mid-band 5k-50k):
+- Orden de cola: (1) VDP-FRESH, (2) pagables, (3) banda 5k-50k
+  (medianos: menos blindaje y competencia que los top), (4) resto
+  por installs. Configurable --band, visible en --dry-run.
+- --dry-run: imprime la cola ordenada sin cazar.
+
+Razon: DIFF-HUNT mostro que el codigo nuevo de los TOP sale
+endurecido; los medianos y los VDP recien agregados son donde la
+ventana de ser primeros sigue abierta. Regresion 16/16.
+
 ## v0.60.0 — SSA consume la evidencia: FISCAL exige prueba def-use
 
 - ssa.py: def_use_proof() — prueba estructurada {proof, value,

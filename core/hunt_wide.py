@@ -79,6 +79,15 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--solo-pagables", action="store_true")
+    ap.add_argument("--vdp-nuevos", default=os.path.join(
+        ROOT, "vdp_nuevos.json"),
+        help="VDP-FRESH: altas+ bounty nuevos, prioridad maxima "
+             "(sin filtro de 90 dias ni corpus)")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="imprime la cola ordenada y sale sin cazar")
+    ap.add_argument("--band", default="5000-50000",
+        help="rango de installs priorizado (medianos: menos "
+             "competencia que los top)")
     ap.add_argument("--out", default=os.path.join(ROOT, "hechos",
                                                   "wide_hunt_results.json"))
     args = ap.parse_args()
@@ -88,6 +97,37 @@ def main() -> None:
     done = _load_done()
     frescos = _frescos(corpus, args.dias)
     cola = [p for p in frescos if p["slug"] not in done]
+
+    # VDP-FRESH (v0.61.0): altas de la semana + bounty nuevos entran
+    # SIN filtro de frescura (un VDP recien agregado se caza ya,
+    # actualizado o no) y aunque no esten en el corpus >=5k
+    por_slug = {p["slug"]: p for p in cola}
+    if os.path.isfile(args.vdp_nuevos):
+        try:
+            nf = json.load(open(args.vdp_nuevos))
+            frescos_slugs = {p["slug"] for p in frescos}
+            nuevos = [s for s in list(nf.get("altas", {}))
+                      + list(nf.get("bounty_nuevos", {}))
+                      if s not in done]
+            extra = []
+            for s in nuevos:
+                if s in por_slug:
+                    p = por_slug[s]
+                    p["_vdp_fresh"] = True
+                    continue  # ya en cola, solo se promociona
+                d = nf.get("altas", {}).get(s) \
+                    or nf.get("bounty_nuevos", {}).get(s) or {}
+                extra.append({"slug": s, "name": d.get("name", s),
+                              "installs": d.get("installs") or 0,
+                              "last_updated": "",
+                              "_fresco": True, "_vdp_fresh": True})
+            for p in cola:
+                if p["slug"] in nuevos:
+                    p["_vdp_fresh"] = True
+            cola.extend([e for e in extra if e["slug"] not in por_slug])
+        except Exception as e:
+            print(f"(vdp_nuevos ignorado: {e})")
+
     for p in cola:
         p["paga"] = bool(vdp.get(p["slug"], {}).get("bounty"))
         p["vdp"] = p["slug"] in vdp
@@ -95,8 +135,35 @@ def main() -> None:
         cola = [p for p in cola if p["paga"]]
     if args.limit:
         cola = cola[:args.limit]
-    cola.sort(key=lambda x: (not x["paga"], -x["installs"]))
+    # PRIORIDAD (v0.61.0): VDP-FRESH arriba; luego el mid-band
+    # 5k-50k (medianos: menos blindaje y competencia que los top),
+    # luego el resto por installs
+    try:
+        lo, hi = (int(x) for x in args.band.split("-"))
+    except Exception:
+        lo, hi = 5000, 50000
+    def _key(x):
+        mid = lo <= x["installs"] < hi
+        return (not x.get("_vdp_fresh"), not x["paga"],
+                not mid, -x["installs"])
+    cola.sort(key=_key)
     pagables = sum(1 for p in cola if p["paga"])
+    if args.dry_run:
+        mid = 0
+        lo, hi = 5000, 50000
+        try:
+            lo, hi = (int(x) for x in args.band.split("-"))
+        except Exception:
+            pass
+        for i, p in enumerate(cola[:25]):
+            band = "*" if lo <= p["installs"] < hi else " "
+            fresh = "NUEVO-VDP " if p.get("_vdp_fresh") else ""
+            print(f"{i+1:>3}{band} {fresh}{p['slug']:<45}"
+                  f"{p['installs']:>9,} paga={p['paga']}")
+            mid += 1 if lo <= p["installs"] < hi else 0
+        print(f"DRY-RUN: {len(cola)} en cola, {pagables} pagables, "
+              f"{mid} de top-25 en banda {lo}-{hi}")
+        return
     print(f"WIDE-HUNT: {len(cola)} en cola ({pagables} pagables), "
           f"{len(done)} ya auditados, workers={args.workers}")
 

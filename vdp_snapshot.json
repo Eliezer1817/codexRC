@@ -1,0 +1,7794 @@
+{
+ "fecha": "2026-10-03",
+ "total": 1298,
+ "mapa": {
+  "woo-orders-tracking": {
+   "name": "Orders Tracking for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "viseek-easy-custom-search": {
+   "name": "VISeek",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "vima-multi-customer-addresses-for-woo": {
+   "name": "VIMA",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "villatheme-core": {
+   "name": "VillaTheme Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "vargal-additional-variation-gallery-for-woo": {
+   "name": "Vargal",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "tmds-dropshipping-for-temu-and-woo": {
+   "name": "TMDS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "woo-boost-sales": {
+   "name": "Salevo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "product-pre-orders-for-woo": {
+   "name": "Prena",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woo-photo-reviews": {
+   "name": "Photo Reviews for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woo-notification": {
+   "name": "Notivo",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "woo-lucky-wheel": {
+   "name": "SPINZO",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-lucky-wheel": {
+   "name": "Lucky Wheel Giveaway",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "woo-lookbook": {
+   "name": "Lookzy",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "woo-free-shipping-bar": {
+   "name": "Freetop",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woo-virtual-reviews": {
+   "name": "Faview \u2013 Virtual Reviews for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "eu-cookies-bar": {
+   "name": "EU Cookies Bar for WordPress",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "woo-customer-coupons": {
+   "name": "Customer Coupons for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "woo-multi-currency": {
+   "name": "CURCY",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "woo-coupon-box": {
+   "name": "Coupzy",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "sales-countdown-timer": {
+   "name": "Countix Sales Countdown Timer",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "woo-product-builder": {
+   "name": "BuildKit \u2013 Product Builder for WooCommerce \u2013 Custom PC Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "affi-affiliate-marketing-for-woo": {
+   "name": "AFFI \u2013 Affiliate Marketing for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "woo-advanced-product-information": {
+   "name": "Advanced Product Information for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "9map-map-multi-locations": {
+   "name": "9Map",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "wp-content-connect": {
+   "name": "WP Content Connect",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "peters-login-redirect": {
+   "name": "Login WP",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "profilegrid-user-profiles-groups-and-communities": {
+   "name": "ProfileGrid",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "appointment-hour-booking": {
+   "name": "Appointment Hour Booking",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "kwayy-html-sitemap": {
+   "name": "Kwayy HTML Sitemap",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "download-monitor-pro": {
+   "name": "Download Monitor Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "passster-pro": {
+   "name": "Passster Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "filr-pro": {
+   "name": "Filr Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kali-forms-pro": {
+   "name": "Kali Forms Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "qyrr-pro": {
+   "name": "Qyrr",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "rsvp-pro": {
+   "name": "RSVP Pro plugin",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "strong-testimonials-pro": {
+   "name": "Strong Testimonials Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "modula-pro": {
+   "name": "Modula Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "trustedlogin-connector": {
+   "name": "TrustedLogin Connector",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "siteskite": {
+   "name": "SiteSkite",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "nakedcat-vat-number": {
+   "name": "VAT Number and EU VIES Validation for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "foogallery": {
+   "name": "FooGallery",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "7thcircle-woo-antifraud": {
+   "name": "7th Circle Designs Anti-Fraud for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fusion-white-label-branding": {
+   "name": "Avada Custom Branding",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "w3mypq": {
+   "name": "w3myPQ",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "tailored-tools": {
+   "name": "Tailored Tools",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "acf-frontend-form-element": {
+   "name": "Frontend Admin",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "eupago-gateway-for-woocommerce-cofidis-banner": {
+   "name": "Gateway Eupago para WooCommerce \u2013 Add-on Banner Cofidis",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ptwoo-cancel-onhold-woo": {
+   "name": "https://nakedcatplugins.com/product/auto-cancel-woocommerce-on-hold-orders/",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluent-player-pro": {
+   "name": "FluentPlayer Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "popup-maker": {
+   "name": "Popup Maker",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 700000
+  },
+  "fluent-booking-pro": {
+   "name": "FluentBooking Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluent-support-pro": {
+   "name": "Fluent Support Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluent-boards-pro": {
+   "name": "Fluent Boards Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluentcampaign-pro": {
+   "name": "FluentCRM Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluent-affiliate-pro": {
+   "name": "Fluent Affiliate Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluentformpro": {
+   "name": "Fluent Forms Pro Add On Pack",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "blocks-for-civicrm": {
+   "name": "Blocks for CiviCRM",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "disable-meta-box-resizing": {
+   "name": "Disable Meta Box Resizing",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "advanced-custom-fields-font-awesome": {
+   "name": "Advanced Custom Fields: Font Awesome Field",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "webberzone-code-block-highlighting": {
+   "name": "WebberZone Code Block Highlighting",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "mediavine-create": {
+   "name": "Create",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "wpml-translation-check": {
+   "name": "AutoMLP",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "translate-words": {
+   "name": "Linguator AI",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "translatepress-multilingual": {
+   "name": "TranslatePress",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 400000
+  },
+  "profile-builder": {
+   "name": "Profile Builder",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "language-switcher-for-divi-polylang": {
+   "name": "Language Switcher for Polylang",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "paid-member-subscriptions": {
+   "name": "Paid Member Subscriptions",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "acymailing": {
+   "name": "AcyMailing SMTP Newsletter",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "yith-woocommerce-membership-premium": {
+   "name": "YITH WooCommerce Membership Premium",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "runcache": {
+   "name": "RunCache",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "colissimo-shipping-methods-for-woocommerce": {
+   "name": "Colissimo Officiel : M\u00e9thodes de livraison pour WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "acychecker": {
+   "name": "Anti Spam and list cleaner &#8211; AcyChecker",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "nowpayments-for-woocommerce": {
+   "name": "NOWPayments for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "scim-user-provisioning": {
+   "name": "SCIM User Sync/Provisioning",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "user-sync": {
+   "name": "User Sync",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "miniorange-oauth-20-server": {
+   "name": "WP OAuth Server",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "page-and-post-restriction": {
+   "name": "Page Restriction WordPress (WP)",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "miniorange-wp-as-saml-idp": {
+   "name": "Login using WordPress Users ( WP as SAML IDP )",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "prevent-file-access": {
+   "name": "Prevent files / folders access",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "miniorange-login-with-eve-online-google-facebook": {
+   "name": "OAuth Single Sign On \u2013 SSO (OAuth Client)",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "miniorange-saml-20-single-sign-on": {
+   "name": "SAML Single Sign On \u2013 SSO Login",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "login-with-cognito": {
+   "name": "Login with Cognito",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "login-with-yourmembership": {
+   "name": "YourMembership Single Sign On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "miniorange-discord-integration": {
+   "name": "miniOrange Discord Integration",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "headless-single-sign-on": {
+   "name": "Headless Single Sign On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "miniorange-ai-agent": {
+   "name": "miniOrange AI Agent",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "miniorange-login-openid": {
+   "name": "WordPress Social Login and Register",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "firebase-authentication": {
+   "name": "Firebase Authentication",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "trusted-shops-easy-integration-for-woocommerce": {
+   "name": "Trusted Shops Easy Integration for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "eu-order-withdrawal-button-for-woocommerce": {
+   "name": "EU Order Withdrawal Button for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "one-stop-shop-woocommerce": {
+   "name": "One Stop Shop for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "shiptastic-integration-for-ups": {
+   "name": "Shiptastic Integration for UPS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "shiptastic-integration-for-dhl": {
+   "name": "Shiptastic Integration for DHL",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "shiptastic-for-woocommerce": {
+   "name": "Shiptastic for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woocommerce-germanized": {
+   "name": "Germanized for WooCommerce",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "convertkit-membermouse": {
+   "name": "Kit (formerly ConvertKit) for MemberMouse",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "integrate-convertkit-wpforms": {
+   "name": "Kit (formerly ConvertKit) for WPForms",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "convertkit-for-woocommerce": {
+   "name": "Kit (formerly ConvertKit) for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "convertkit": {
+   "name": "Kit (formerly ConvertKit)",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "videowhisper-site-manager": {
+   "name": "VideoWhisper Site Manager for ChatGPT, Claude, Codex",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "ksef-for-flexible-invoices": {
+   "name": "Flexible Invoices for WooCommerce \u2013 KSeF Add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "boxzilla": {
+   "name": "Boxzilla",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "knit-pay-upi": {
+   "name": "Knit Pay UPI",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "koko-analytics": {
+   "name": "Koko Analytics",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "mailchimp-for-wp": {
+   "name": "MC4WP",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "secure-card-gateway-for-epay-paycenter-piraeus-bank": {
+   "name": "Secure Card Gateway for ePay Paycenter (Piraeus Bank)",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "flexible-chat": {
+   "name": "Flexible Chat",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-plugin-update-delay": {
+   "name": "7th Circle Designs Plugin Update Delay",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-dev": {
+   "name": "7th Circle Designs Staging and Development Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-cloudflare-wizard": {
+   "name": "7th Circle Designs Cloudflare Wizard",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "plugin-report": {
+   "name": "Plugin Report",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "perfmatters": {
+   "name": "perfmatters",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "zettle-pos-integration": {
+   "name": "PayPal Point of Sale",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "wsecure": {
+   "name": "wSecure Lite",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "searchpro": {
+   "name": "BerqWP",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "rzp-woocommerce": {
+   "name": "Razorpay Payment Links for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "eventin-divi-addon": {
+   "name": "Eventin Addons for Divi Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "autoship-cloud": {
+   "name": "Autoship Cloud for WooCommerce Subscription Products",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "wp-google-places-review-slider": {
+   "name": "WP Google Review Slider",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "wappointment": {
+   "name": "Wappointment",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "modular-connector": {
+   "name": "Modular DS",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "link-whisper": {
+   "name": "Link Whisper Free",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "booktics": {
+   "name": "Booktics",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "zalomeni": {
+   "name": "Zalomen\u00ed",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "facebook-page-feed-graph-api": {
+   "name": "Mongoose Page Plugin",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "simply-schedule-appointments": {
+   "name": "Simply Schedule Appointments",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "draw-attention": {
+   "name": "Draw Attention",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "rolemaster-suite": {
+   "name": "RoleMaster Suite \u2013 User Role Editor for E-Commerce, Membership admin panel",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "loginfy": {
+   "name": "Loginfy \u2013 Custom Login Page Customizer plugin",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "adminify-activity-logs": {
+   "name": "Adminify Activity Logs",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "admin-bar": {
+   "name": "Admin Bar Editor",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "login-as-customer-or-user": {
+   "name": "Login as User or Customer (User Switching)",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "timetics": {
+   "name": "Timetics",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wp-cafe": {
+   "name": "WPCafe",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "blocksy-companion-pro": {
+   "name": "Blocksy Companion Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "easy-mcp-ai": {
+   "name": "Easy MCP AI for Wordpress",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woo-product-tables": {
+   "name": "Product Table by WBW",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "visual-link-preview": {
+   "name": "Visual Link Preview",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "huxx-connect": {
+   "name": "HuxxConnect",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "branded-social-images": {
+   "name": "Branded Social Images",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "gutena-forms": {
+   "name": "Gutena Forms \u2013 Contact Form, Survey Form, Feedback Form, Booking Form, and Custom Form Builder",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "simply-rets": {
+   "name": "SimplyRETS Real Estate IDX",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "webberzone-link-warnings": {
+   "name": "WebberZone Link Warnings",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "woosquare": {
+   "name": "APIExperts Square for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "bold-page-builder": {
+   "name": "Bold Page Builder",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "woo-product-filter": {
+   "name": "Product Filter by WBW",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "salesmanago": {
+   "name": "SALESmanago & Leadoo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "post-duplicator": {
+   "name": "Post Duplicator",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "kunco": {
+   "name": "Kunco",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "email-essentials": {
+   "name": "Email Essentials",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "acf-extended": {
+   "name": "ACF Extended",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "dekode-fundraising": {
+   "name": "Dekode Fundraising",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "krowd": {
+   "name": "Krowd",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "vizeon": {
+   "name": "Vizeon - Business Consulting",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "enzio": {
+   "name": "Enzio - Responsive Business WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "paroti": {
+   "name": "Paroti",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fioxen": {
+   "name": "Fioxen",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "zilom": {
+   "name": "Zilom",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fusion-core": {
+   "name": "Avada Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "countdown-for-the-events-calendar": {
+   "name": "The Events Calendar Countdown Addon",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "gutena-kit": {
+   "name": "Gutena Kit \u2013 Gutenberg Blocks and Templates",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "gaea": {
+   "name": "Gaea - Environmental WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-discord-invite": {
+   "name": "WP Discord Invite",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "bayarcash-wc": {
+   "name": "Bayarcash WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "modeltheme-framework": {
+   "name": "ModelTheme Framework",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-currency": {
+   "name": "WBW Currency Switcher for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-easy-pay": {
+   "name": "WP EasyPay",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "business-directory-plugin": {
+   "name": "Business Directory",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "zywrap": {
+   "name": "Zywrap",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ai-flash-tune": {
+   "name": "AI Flash Tune",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "another-wordpress-classifieds-plugin": {
+   "name": "AWP Classifieds",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "gianism": {
+   "name": "Gianism",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "media-library-assistant": {
+   "name": "Media LIbrary Assistant",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "creatorlms": {
+   "name": "Creator LMS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "indeed-membership-pro": {
+   "name": "Ultimate Membership Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "grandrestaurant": {
+   "name": "Grand Restaurant",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "photography": {
+   "name": "Photography",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "nelio-popups": {
+   "name": "Nelio Popups",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "nelio-ab-testing": {
+   "name": "Nelio AB Testing",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "rehub-theme": {
+   "name": "Rehub",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "rehub-framework": {
+   "name": "REHub Framework",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "adthrive-ads": {
+   "name": "Raptive Ads",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "kallyas": {
+   "name": "KALLYAS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "surecontact": {
+   "name": "SureContact",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wpcli-vulnerability-scanner": {
+   "name": "WP-CLI Vulnerability Scanner",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "simple-google-news-sitemap": {
+   "name": "Simple Google News Sitemap",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "10up-sitemaps": {
+   "name": "10up Sitemaps",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "elasticpresslabs": {
+   "name": "ElasticPress Labs",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "distributor": {
+   "name": "Distributor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "classifai": {
+   "name": "ClassifAI",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "custom-related-posts": {
+   "name": "Custom Related Posts",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "kalender-digital": {
+   "name": "Kalender.digital",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "sell-downloads": {
+   "name": "Sell Downloads",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "fusion-builder": {
+   "name": "Fusion Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wptelegram-widget": {
+   "name": "WP Telegram Widget and Join Link",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "maximum-products-per-user-for-woocommerce": {
+   "name": "Maximum Products per User for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "woo-producttables-pro": {
+   "name": "WBW Product Table PRO",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "webd-woocommerce-advanced-reporting-statistics": {
+   "name": "Advanced WooCommerce Product Sales Reporting",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "support-ticket-system-for-woocommerce": {
+   "name": "Helpdesk Support Ticket System for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "brizy-pro": {
+   "name": "Brizy Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "digital-signature-contact-form-7-addon": {
+   "name": "Contact Forms 7 Digital Signature Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "wp-forms-signature-contract-add-on": {
+   "name": "WP Forms Signature Contract Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "e-signature-rtl-right-to-left": {
+   "name": "WP ESIGNATURE RTL (Right to Left)",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "woocommerce-digital-signature": {
+   "name": "Signature Add-On for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "forms-signature-formidable-online-contract-automation": {
+   "name": "Formidable Forms Signature Online Contract Automation",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "forms-digital-signature-forminator-add-on": {
+   "name": "Electronic Signature Add-on for Forminator",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "signature-fluent-contract-forms-add-on": {
+   "name": "Electronic Signature Add-on for Fluent Forms",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "edd-digital-signature-add-on": {
+   "name": "Easy Digital Downloads Digital Signature",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "ninja-signature-contract-forms-add-on": {
+   "name": "Ninja Forms Signature Contract Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "master-addons": {
+   "name": "Master Addons for Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "tasty-recipes-lite": {
+   "name": "Tasty Recipes Lite",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "hydra-booking": {
+   "name": "Hydra Booking",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "gravity-signature-forms-add-on": {
+   "name": "Signature Add-On for Gravity Forms",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "ultra-addons-for-wpforms": {
+   "name": "Ultra Addons for WPForms",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "simple-points-and-rewards": {
+   "name": "Simple Points and Rewards",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "new-user-approve": {
+   "name": "New User Approve",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "szechenyi-2020-logo": {
+   "name": "Sz\u00e9chenyi 2020 Logo",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "nakedcat-archive-order-notes-woo": {
+   "name": "Archive Order Notes for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "vikrestaurants": {
+   "name": "VikRestaurants",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "contact-form-to-email": {
+   "name": "Contact Form Email",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "avada": {
+   "name": "Avada",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "foyer": {
+   "name": "Foyer",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "peppol-plugged": {
+   "name": "Peppol Plugged",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "happy-elementor-addons": {
+   "name": "Happy Addons for Elementor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 400000
+  },
+  "sophi": {
+   "name": "Sophi",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "safe-redirect-manager": {
+   "name": "Safe Redirect Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "safe-svg": {
+   "name": "Safe SVG",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "simple-local-avatars": {
+   "name": "Simple Local Avatars",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "simple-page-ordering": {
+   "name": "Simple Page Ordering",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "simple-podcasting": {
+   "name": "Simple Podcasting",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "convert-to-blocks": {
+   "name": "Convert to Blocks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "debug-bar-for-sophi": {
+   "name": "Debug Bar for Sophi",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "eight-day-week-print-workflow": {
+   "name": "Eight Day Week Print Workflow",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "debug-bar-elasticpress": {
+   "name": "ElasticPress Debugging Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "embed-block-figma": {
+   "name": "Embed Block for Figma",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "insecure-content-warning": {
+   "name": "Insecure Content Warning",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "insert-special-characters": {
+   "name": "Insert Special Characters",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "windows-azure-storage": {
+   "name": "Microsoft Azure Storage for WordPress",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wp-newrelic": {
+   "name": "New Relic Reporting for WordPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "publisher-media-kit": {
+   "name": "Publisher Media Kit",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "restricted-site-access": {
+   "name": "Restricted Site Access",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "retro-winamp-block": {
+   "name": "Retro Winamp Block",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "ad-refresh-control": {
+   "name": "Ad Refresh Control",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "ads-txt": {
+   "name": "Ads.txt Manager",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "autoshare-for-twitter": {
+   "name": "Autoshare for Twitter",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "block-catalog": {
+   "name": "Block Catalog",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "maps-block-apple": {
+   "name": "Block for Apple Maps",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "brightcove-video-connect": {
+   "name": "Brightcove Video Connect",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "cp-multi-view-calendar": {
+   "name": "CP Multi View Event Calendar ",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "weforms": {
+   "name": "weForms",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "contact-form-7-dynamic-text-extension": {
+   "name": "Contact Form 7 \u2013 Dynamic Text Extension",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "eventprime-event-calendar-management": {
+   "name": "EventPrime",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "astra-widgets": {
+   "name": "Astra Widgets",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "taina": {
+   "name": "Tain\u00e1",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "7thcircle-plugin-update-monitor": {
+   "name": "7th Circle Designs Plugin Update Monitor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "eaven": {
+   "name": "Eaven",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "alpaca": {
+   "name": "Alpaca",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "lemon-limes": {
+   "name": "Lemon & Limes",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "patiotime": {
+   "name": "PatioTime",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "upi-qr-code-payment-for-woocommerce": {
+   "name": "UPI QR Code Payment Gateway for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-ajaxify-comments": {
+   "name": "Ajaxify Comments",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "highlight-and-share": {
+   "name": "Highlight and Share",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "connect-polylang-elementor": {
+   "name": "Connect Polylang for Elementor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "nativechurch": {
+   "name": "NativeChurch",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "w3-total-cache": {
+   "name": "W3 Total Cache",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 900000
+  },
+  "knit-pay": {
+   "name": "Knit Pay",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "cp-polls": {
+   "name": "CP Polls",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "grandtour": {
+   "name": "Grand Tour",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-thank-you-page-customizer": {
+   "name": "Thank You Page Customizer for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "sigmize": {
+   "name": "Sigmize",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "photo-block": {
+   "name": "Photo Block",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-email-capture": {
+   "name": "WP Email Capture",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "text-to-audio": {
+   "name": "Text To Speech TTS Accessibility",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "quick-contact-form": {
+   "name": "Quick Contact Form",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "simple-draft-list": {
+   "name": "Draft List",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "import-markdown": {
+   "name": "Import Markdown",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "reoon-email-verifier": {
+   "name": "Reoon Email Verifier",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "nakedcat-guest-to-user-woo": {
+   "name": "Create User Account from WooCommerce Guest Order",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "trx_addons": {
+   "name": "ThemeREX Addons",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "stratusx": {
+   "name": "App, SaaS & Software Startup Tech Theme - Stratus",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "quickcal": {
+   "name": "QuickCal - Appointment Booking Calendar for WordPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "eatery": {
+   "name": "Eatery - Responsive Restaurant WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "pursuitx": {
+   "name": "Pursuit - A Flexible App & Cloud Software Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "uplands": {
+   "name": "Uplands - Golf Course WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "entrepreneurx": {
+   "name": "Entrepreneur - Booking for Small Businesses WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "embark": {
+   "name": "Tour Booking & Travel WordPress Theme - Embark",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "asgaros-forum": {
+   "name": "Asgaros Forum",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "car-rental-manager": {
+   "name": "Car Rental Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "booking-and-rental-manager-for-woocommerce": {
+   "name": "Booking and Rental Manager",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "tour-booking-manager": {
+   "name": "WpTravelly",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "advanced-partial-payment-or-deposit-for-woocommerce": {
+   "name": "Deposits and Partial Payments for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "service-booking-manager": {
+   "name": "WpBookingly",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "bus-ticket-booking-with-seat-reservation": {
+   "name": "Bus Ticket Booking with Seat Reservation",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "ecab-taxi-booking-manager": {
+   "name": "Taxi Booking Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "h5p": {
+   "name": "H5P",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "organize-series": {
+   "name": "PublishPress Series",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "publishpress": {
+   "name": "PublishPress Planner: Organize and Schedule Your WordPress Content",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "payment-multibanco-for-fluent-cart-via-ifthenpay": {
+   "name": "Payment Multibanco for FluentCart via ifthenpay",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "nelio-content": {
+   "name": "Nelio Content",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "wpstream": {
+   "name": "WpStream",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "wprentals": {
+   "name": "WP Rentals",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-recipe-maker": {
+   "name": "WP Recipe Maker",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "syntaxhighlighter-evolved-sass-brush": {
+   "name": "SyntaxHighlighter Evolved: SASS Brush",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "campaign-archive-block-for-mailchimp": {
+   "name": "Campaign Archive Block for Mailchimp",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "advanced-gutenberg": {
+   "name": "Gutenberg Blocks",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "post-expirator": {
+   "name": "Post Expirator",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "theatre": {
+   "name": "Theater for WordPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "ivyforms": {
+   "name": "IvyForms",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "booking-system-trafft": {
+   "name": "Booking System Trafft",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "polylang": {
+   "name": "Polylang",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 800000
+  },
+  "wpdatatables": {
+   "name": "wpDataTables",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "et-core-plugin": {
+   "name": "XStore Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-social-reviews": {
+   "name": "WP Social Ninja",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "fluent-booking": {
+   "name": "Fluent Booking",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "fluent-support": {
+   "name": "Fluent Support",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "fluent-boards": {
+   "name": "FluentBoards",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "fluent-community": {
+   "name": "FluentCommunity",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "filr-protection": {
+   "name": "Filr",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "rsvp": {
+   "name": "RSVP and Event Management",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "simple-restrict": {
+   "name": "Simple Restrict",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "strong-testimonials": {
+   "name": "Strong Testimonials",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "wider-admin-menu": {
+   "name": "Wider Admin Menu",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "modula-foo-migrator": {
+   "name": "Migrate away from FooGallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "modula-nextgen-migrator": {
+   "name": "Migrate away from NextGEN Gallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "modula-photoblocks-gallery-migrator": {
+   "name": "Migrate away from Photoblocks Gallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "modula-best-grid-gallery": {
+   "name": "Modula Image Gallery",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "content-protector": {
+   "name": "Passster",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "remove-footer-credit": {
+   "name": "Remove Footer Credit",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "revive-so": {
+   "name": "Revive.so",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "photoblocks-grid-gallery": {
+   "name": "Gallery PhotoBlocks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "htaccess-file-editor": {
+   "name": "Htaccess File Editor",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "final-tiles-grid-gallery-lite": {
+   "name": "Image Photo Gallery Final Tiles Grid",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "imageseo": {
+   "name": "Optimize images ALT Text (alt tag) & names for SEO using AI",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "strong-testimonials-migrate-from-easy-testimonials": {
+   "name": "Migrate away from Easy Testimonials",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "modula-envira-migrator": {
+   "name": "Migrate away from Envira Gallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "modula-final-tiles-migrator": {
+   "name": "Migrate away from Final Tiles",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "disable-floc": {
+   "name": "Disable Topics API",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "download-monitor-learndash-integration": {
+   "name": "Download Monitor & LearnDash integration",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "download-monitor-paid-membership-pro-integration": {
+   "name": "Download Monitor & Paid Membership Pro integration",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "download-monitor-restrict-content-integration": {
+   "name": "Download Monitor & Restrict Content integration",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "download-monitor-cors": {
+   "name": "Download Monitor - CORS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "download-monitor-migrate-download-counts": {
+   "name": "Download Monitor - Migrate download counts",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "download-monitor-integration-for-woocommerce": {
+   "name": "Download Monitor integration for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "cpo-content-types": {
+   "name": "CPO Content Types",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "elementra": {
+   "name": "Elementra",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-user-frontend": {
+   "name": "WP User Frontend",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "gutenbee": {
+   "name": "GutenBee",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "podlove-web-player": {
+   "name": "Podlove Web Player",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "podlove-podcasting-plugin-for-wordpress": {
+   "name": "Podlove Podcast Publisher",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "histudy": {
+   "name": "Education WordPress Theme | HiStudy",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "website-accessibility": {
+   "name": "Sigmally Website Accessibility",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "smart-admin-assistant": {
+   "name": "Smart Admin Assistant",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "dark-reader": {
+   "name": "Dark Reader",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "spin-wheel": {
+   "name": "Spin Wheel",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "pixel-gallery": {
+   "name": "Pixel Gallery Addons for Elementor",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "ultimate-post-kit": {
+   "name": "Ultimate Post Kit",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "bdthemes-prime-slider-lite": {
+   "name": "Prime Slider \u2013 Addons For Elementor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "easy-invoice": {
+   "name": "Easy Invoice",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "bdthemes-element-pack-lite": {
+   "name": "Element Pack Elementor Addons",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "ultimate-store-kit": {
+   "name": "Ultimate Store Kit Elementor Addons",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "pixfort-core": {
+   "name": "pixfort Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "podlove-subscribe-button": {
+   "name": "Podlove Subscribe button",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "zoloblocks": {
+   "name": "ZoloBlocks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "b2bking-wholesale-for-woocommerce": {
+   "name": "B2BKing",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-store-locator": {
+   "name": "WP Store Locator",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "memberful-wp": {
+   "name": "Memberful - Membership Plugin",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "yop-poll": {
+   "name": "YOP Poll",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "marketking-multivendor-marketplace-for-woocommerce": {
+   "name": "MarketKing",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "ditty-news-ticker": {
+   "name": "Ditty",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "open-user-map": {
+   "name": "Open User Map",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "coschedule-by-todaymade": {
+   "name": "CoSchedule",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "wpkoi-templates-for-elementor": {
+   "name": "WPKoi Templates for Elementor",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "ti-woocommerce-wishlist": {
+   "name": "TI WooCommerce Wishlist",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "participants-database": {
+   "name": "Participants Database",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "vidplex": {
+   "name": "Vidplex",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "grevo": {
+   "name": "Grevo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ooohboi-steroids-for-elementor": {
+   "name": "OoohBoi Steroids for Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "sticky-header-effects-for-elementor": {
+   "name": "Sticky Header Effects for Elementor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "termageddon-usercentrics": {
+   "name": "Termageddon: Cookie Consent & Privacy Compliance",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "gutenify": {
+   "name": "Gutenify",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "karzo": {
+   "name": "Karzo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-vehicle-parts-finder-ymm": {
+   "name": "WooCommerce Vehicle Parts Finder - Year/Make/Model/Engine/Category/Keyword",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "essentials": {
+   "name": "Essentials | Multipurpose WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "terms-popup-on-user-login": {
+   "name": "Terms Popup On User Login",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "revive-to-sky": {
+   "name": "Revive to Sky",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "wpcomplete": {
+   "name": "WPComplete",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "license-manager-for-woocommerce": {
+   "name": "License Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "woocommerce-restaurant-ordering": {
+   "name": "WooCommerce Restaurant Ordering",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-multiple-email-recipients": {
+   "name": "Woocommerce Multiple Email Recipients",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-vehicle-parts-finder": {
+   "name": "WooCommerce Vehicle Parts Finder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ppv-live-webcams": {
+   "name": "Paid Videochat Turnkey Site",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "mobile-app-for-woocommerce": {
+   "name": "Mobile App for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "picture-gallery": {
+   "name": "Picture Gallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "paid-membership": {
+   "name": "MicroPayments",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "site-suggest": {
+   "name": "Site Suggest",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "xcare": {
+   "name": "Xcare",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "revisionary": {
+   "name": "PublishPress Revisions",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "capability-manager-enhanced": {
+   "name": "PublishPress Capabilities",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "press-permit-core": {
+   "name": "PublishPress Permissions",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "publishpress-statuses": {
+   "name": "PublishPress Statuses - Custom Post Status and Workflow",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "publishpress-authors": {
+   "name": "PublishPress Authors",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "shayanweb-admin-fontchanger": {
+   "name": "ShayanWeb Admin FontChanger",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "assistant": {
+   "name": "WordPress Assistant",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "greenify": {
+   "name": "Greenify",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "leblix": {
+   "name": "Leblix",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gravity-otp-verification": {
+   "name": "Gravity Forms \u2013 OTP Verification (SMS/EMAIL)",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "powerpress": {
+   "name": "PowerPress Podcasting",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "better-post-filter-widgets-for-elementor": {
+   "name": "Better Post & Filter Widgets for Elementor",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "ebay-feeds-for-wordpress": {
+   "name": "WP eBay Product Feeds",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "mask-form-elementor": {
+   "name": "Input Mask Elementor Form Fields",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "form-masks-for-elementor": {
+   "name": "Form Input Masks For Elementor Forms",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "flexible-wishlist": {
+   "name": "Flexible Wishlist for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "shopmagic-for-woocommerce": {
+   "name": "ShopMagic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "shopmagic-for-twilio": {
+   "name": "Free Twilio SMS integration for WooCommerce by ShopMagic",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "gpsr-for-woocommerce": {
+   "name": "GPSR for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "flexible-invoices-gtu": {
+   "name": "GTU dla Faktur WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "shopmagic-abandoned-carts": {
+   "name": "Recover Abandoned Carts for WooCommerce by ShopMagic",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "shopmagic-for-contact-form-7": {
+   "name": "ShopMagic for Contact Form 7 and WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "shopmagic-for-google-sheets": {
+   "name": "ShopMagic for Google Sheets",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "flexible-checkout-fields": {
+   "name": "Flexible Checkout Fields for WooCommerce",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "flexible-cookies": {
+   "name": "Flexible Cookies",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "flexible-ean-for-woocommerce": {
+   "name": "Flexible EAN for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "flexible-coupons": {
+   "name": "Flexible PDF Coupons",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "flexible-invoices": {
+   "name": "Flexible PDF Invoices for WooCommerce &amp; WordPress",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "flexible-product-fields": {
+   "name": "Flexible Product Fields (WooCommerce Product Addons)",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "flexible-quantity-measurement-price-calculator-for-woocommerce": {
+   "name": "Flexible Quantity \u2013 Measurement Price Calculator for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "flexible-refund-and-return-order-for-woocommerce": {
+   "name": "Flexible Refund and Return Order for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "flexible-subscriptions": {
+   "name": "Flexible Subscriptions",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "pay-wp": {
+   "name": "Autopay dla WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "checkout-fields-for-blocks": {
+   "name": "Checkout Fields for Blocks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "custom-price-for-woocommerce": {
+   "name": "Custom Price for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "dropshipping-xml-for-woocommerce": {
+   "name": "Dropshipping XML for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "video-share-vod": {
+   "name": "Video Share VOD",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "country-code-field-for-elementor-form": {
+   "name": "Country Code For Elementor Form Telephone Field",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "search-filter": {
+   "name": "Search & Filter",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "acknowledgify": {
+   "name": "Acknowledgify",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "ziston": {
+   "name": "Ziston",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "indutri": {
+   "name": "Indutri",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "publishpress-checklists": {
+   "name": "PublishPress Checklists",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woocommerce-fortnox-integration": {
+   "name": "WooCommerce Fortnox Integration",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "language-fallback": {
+   "name": "Language Fallback",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "unique-title-checker": {
+   "name": "Unique Title Checker",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "zionbuilder": {
+   "name": "ZionBuilder",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "taboola-pixel": {
+   "name": "Taboola Pixel",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "protect-login": {
+   "name": "Protect Login",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "javo-directory": {
+   "name": "Javo Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "hello-world": {
+   "name": "Hello World",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "7thcircle-recipe-manager": {
+   "name": "7th Circle Designs Recipe Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kipso": {
+   "name": "Kipso",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "potisen": {
+   "name": "Potisen",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "global-dns": {
+   "name": "Global DNS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ultimate-integration-for-telegram": {
+   "name": "Ultimate Integration for Telegram",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "snn-brx-child-theme": {
+   "name": "snn-brx",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "send-app": {
+   "name": "Send \u2013 Email Marketing Automation & newsletters for WordPress & WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ameliabooking": {
+   "name": "Amelia",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "snitch": {
+   "name": "Snitch",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "blacklist-updater": {
+   "name": "Block List Updater",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "antivirus": {
+   "name": "AntiVirus",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "statify": {
+   "name": "Statify",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "contact-form-7-honeypot": {
+   "name": "CF7 Apps",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "change-wp-admin-login": {
+   "name": "All In One Login",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "7thcircle-woo-enhancement": {
+   "name": "7th Circle Designs Enhancement Suite for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-woo-coming-soon": {
+   "name": "7th Circle Designs Coming Soon Products for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-woo": {
+   "name": "7th Circle Designs Performance Suite for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-testimonials": {
+   "name": "7th Circle Designs Testimonials",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-team-members": {
+   "name": "7th Circle Designs Team Members",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-media-licenses": {
+   "name": "7th Circle Designs Media License Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-html-sitemap": {
+   "name": "7th Circle Designs HTML Sitemap Generator",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-faq": {
+   "name": "7th Circle Designs FAQ Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-css-slider": {
+   "name": "7th Circle Designs CSS Image Slider",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "7thcircle-clientbrand": {
+   "name": "7th Circle Designs Branding Toolkit",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "vite-coupon": {
+   "name": "Vite Coupon",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "xinterio": {
+   "name": "Xinterio",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "spiraclethemes-site-library": {
+   "name": "Spiraclethemes Site Library",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "ownerrez": {
+   "name": "OwnerRez API",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "block-editor-templates": {
+   "name": "Block Editor Templates",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "ova-events-manager": {
+   "name": "Ovatheme Events Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "antispam-bee": {
+   "name": "Antispam Bee",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 700000
+  },
+  "logify-wp": {
+   "name": "Logify WP",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "advanced-woo-search": {
+   "name": "Advanced Woo Search",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "slick-engagement": {
+   "name": "Slickstream",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "virtue-toolkit": {
+   "name": "Virtue/Ascend/Pinnacle Toolkit",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "kadence-pro": {
+   "name": "Kadence Pro Plugin - Premium addon for the Kadence Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kadence-woocommerce-email-designer": {
+   "name": "Kadence WooCommerce Email Designer",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "kadence-starter-templates": {
+   "name": "Starter Templates by Kadence WP",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "kadence": {
+   "name": "Kadence",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "kadence-blocks": {
+   "name": "Gutenberg Blocks by Kadence Blocks",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "7thcircle-legal-pages-manager": {
+   "name": "7th Circle Designs Legal Pages Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "live-carts-for-woocommerce": {
+   "name": "Live Carts for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "photoberry-studio": {
+   "name": "PhotoBerry Studio",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "themarketer": {
+   "name": "theMarketer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "wp-youtube-live": {
+   "name": "WP YouTube Live",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-w3all-phpbb-integration": {
+   "name": "WP w3all phpBB",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "tax-exemption-woo": {
+   "name": "Tax Exemption for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "easy-tables": {
+   "name": "Easy Tables",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "templatera": {
+   "name": "Templatera",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "classic-addons-wpbakery-page-builder-addons": {
+   "name": "Classic Addons \u2013 WPBakery Page Builder",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "dms-wp-maintenance-mate-pro": {
+   "name": "WP Maintenance Mate Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "real-estate-manager-pro": {
+   "name": "Real Estate Manager Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-seopress": {
+   "name": "SEOPress",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "recaptcha-woo": {
+   "name": "reCAPTCHA for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "ip-based-login": {
+   "name": "IP Based Login",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "automatic-product-categories-for-woocommerce": {
+   "name": "Automatic Product Categories for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "tealium": {
+   "name": "Tealium",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "mailhawk": {
+   "name": "WordPress SMTP Service, Email Delivery Solved! \u2014 MailHawk",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "lang-attribute-blocks": {
+   "name": "Language Attribute for Container Blocks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "wpshapere-lite": {
+   "name": "WPShapere - WordPress admin theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "planet-pay-payment": {
+   "name": "Planet Pay payments",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "contentstudio": {
+   "name": "Contentstudio",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "wordlift": {
+   "name": "WordLift",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "css-javascript-toolbox": {
+   "name": "CSS & JavaScript Toolbox",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "simple-business-directory-pro": {
+   "name": "Simple Business Directory Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "qc-simple-link-directory": {
+   "name": "Simple Link Directory",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "seofy": {
+   "name": "Seofy - Digital & Marketing WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "halpes": {
+   "name": "Halpes",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "lestin": {
+   "name": "Lestin - Directory Listing WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "qizon": {
+   "name": "Qizon - Crowdfunding & Charity WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "aports": {
+   "name": "Aports - Single Property WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gowilds": {
+   "name": "Gowilds - Travel & Tour Booking WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "modins": {
+   "name": "Modins - Insurance & Finance WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "orgarium": {
+   "name": "Orgarium - Agriculture & Organic Farm WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "sominx": {
+   "name": "Sominx - Creative Business Agency WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "conult": {
+   "name": "Conult - Consulting Business WordPress Themes",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fude": {
+   "name": "TheFude - Crowdfunding & Charity WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "tevily": {
+   "name": "Tevily - Travel & Tour Booking WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "boliin": {
+   "name": "Boliin - Resort & Hotel Booking WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "pisole": {
+   "name": "Pisole - Digital Creative Agency WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "constix": {
+   "name": "Constix - Construction Factory & Industrial WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "welowe": {
+   "name": "welowe",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "oxpitan": {
+   "name": "Oxpitan",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "project-huddle": {
+   "name": "SureFeedback",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "surerank": {
+   "name": "SureRank",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "presto-player-pro": {
+   "name": "Presto Player Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "sureforms-pro": {
+   "name": "SureForms Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "astra-portfolio": {
+   "name": "WP Portfolio",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "presto-player": {
+   "name": "Presto Player",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "variation-swatches-woo": {
+   "name": "Variation Swatches for WooCommerce",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "suremails": {
+   "name": "SureMail",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "suredash-pro": {
+   "name": "SureDash Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "suredash": {
+   "name": "SureDash",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-tao": {
+   "name": "Track, Analyze & Optimize by WP Tao",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "kiamo": {
+   "name": "Kiamo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "cmsmasters-content-composer": {
+   "name": "CMSMasters Content Composer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ebook-store": {
+   "name": "Ebook Store",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "wps-team": {
+   "name": "Team Members",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "astra-sites": {
+   "name": "Starter Templates",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "astra-pro-sites": {
+   "name": "Premium Starter Templates",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ultimate-addons-for-gutenberg": {
+   "name": "Spectra",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "spectra-pro": {
+   "name": "Spectra Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "header-footer-elementor": {
+   "name": "Ultimate Addons for Elementor - Lite",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 2000000
+  },
+  "ultimate-elementor": {
+   "name": "Ultimate Addons for Elementor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ultimate-addons-for-beaver-builder-lite": {
+   "name": "Ultimate Addons for Beaver Builder \u2013 Lite",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "bb-ultimate-addon": {
+   "name": "Ultimate Addons for Beaver Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-schema-pro": {
+   "name": "Schema Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "convertpro": {
+   "name": "Convert Pro",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "convertplug": {
+   "name": "ConvertPlus",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ultimate_vc_addons": {
+   "name": "Ultimate Addons for WPBakery Page Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "cartflows-pro": {
+   "name": "CartFlows Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "cartflows": {
+   "name": "CartFlows",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "woo-cart-abandonment-recovery": {
+   "name": "WooCommerce Cart Abandonment Recovery",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "projecthuddle-child-site": {
+   "name": "SureFeedback Client Site",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "surecart": {
+   "name": "SureCart",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "suretriggers": {
+   "name": "OttoKit",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "suremembers": {
+   "name": "SureMembers",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "sureforms": {
+   "name": "SureForms",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "astra-addon": {
+   "name": "Astra Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "simple-payment": {
+   "name": "Simple Payment",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "wp-health": {
+   "name": "WP Umbrella",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "classiera": {
+   "name": "Classiera",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "betube": {
+   "name": "BeTube - Video WordPress Theme",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "quick-event-manager": {
+   "name": "Quick Event Manager",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "tracking-code-manager": {
+   "name": "Tracking Code Manager",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "mapsvg": {
+   "name": "MapSVG",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "brizy": {
+   "name": "Brizy",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "wp-rest-cache": {
+   "name": "WP REST Cache",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "supportboard": {
+   "name": "Support Board",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gadwc": {
+   "name": "Google Automated Discounts for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "rentsyst": {
+   "name": "Rentsyst",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "advanced-settings": {
+   "name": "Advanced Settings",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "tastyc": {
+   "name": "Tastyc",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "cozystay": {
+   "name": "CozyStay",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "bookify": {
+   "name": "Bookify",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "tinysalt": {
+   "name": "TinySalt",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "intelly-related-posts": {
+   "name": "Inline Related Posts",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "sprout-invoices": {
+   "name": "Client Invoicing by Sprout Invoices",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "mapsvg-lite-interactive-vector-maps": {
+   "name": "MapSVG",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "broadstreet": {
+   "name": "Broadstreet Ads",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "user-registration": {
+   "name": "User Registration",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "blockart-blocks": {
+   "name": "BlockArt Blocks",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "magazine-blocks": {
+   "name": "Magazine Blocks",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "learning-management-system": {
+   "name": "Masteriyo - LMS",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "frames-plugin": {
+   "name": "Frames",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "automaticcss-plugin": {
+   "name": "Automatic.css",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "taxonomy-extender": {
+   "name": "Taxonomy Extender For Categories and Tags",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "elasticprobe": {
+   "name": "ElasticProbe",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-flipclock": {
+   "name": "WP Flipclock",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "connector-civicrm-mcrestface": {
+   "name": "Connector to CiviCRM with CiviMcRestFace",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "gravitywp-merge-tags": {
+   "name": "GravityWP - Merge Tags",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "formenhancer": {
+   "name": "Form Enhancer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "file-manager-advanced": {
+   "name": "Advanced File Manager",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "clickwhale": {
+   "name": "ClickWhale",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "mage-eventpress": {
+   "name": "WpEvently",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "smart-smtp": {
+   "name": "SmartSMTP",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "videowhisper-live-streaming-integration": {
+   "name": "Broadcast Live Video",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "social-bridge": {
+   "name": "Social Bridge",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "hash-form-builder": {
+   "name": "Hash Form",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "help-scout": {
+   "name": "Help Scout",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "sprout-clients": {
+   "name": "Sprout Clients",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "launch-with-words": {
+   "name": "Launch With Words",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "spark-gf-failed-submissions": {
+   "name": "Spark GF Failed Submissions",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "astra": {
+   "name": "Astra WordPress Theme",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "simple-comment-editing": {
+   "name": "Comment Edit Core \u2013 Simple Comment Editing",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wp-plugin-info-card": {
+   "name": "WP Plugin Info Card",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "query-wrangler": {
+   "name": "Query Wrangler",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "flip-boxes": {
+   "name": "Cool Flipbox \u2013 Shortcode & Gutenberg Block",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "simple-matomo-tracking-code": {
+   "name": "Simple Matomo Tracking Code",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "webtexttool": {
+   "name": "Textmetrics",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "privy-crm-integration": {
+   "name": "Privyr CRM Integration",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "pojo-accessibility": {
+   "name": "Ally",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "elementor-beta": {
+   "name": "Elementor Beta (Developer Edition)",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "linker": {
+   "name": "Linker",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "motors-car-dealership-classified-listings": {
+   "name": "Motors",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "list-last-changes": {
+   "name": "List Last Changes",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "advanced-woo-labels": {
+   "name": "Advanced Woo Labels",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "omnisend-for-surecart-add-on": {
+   "name": "Omnisend for SureCart",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "totalprocessing-card-payments": {
+   "name": "Nomupay Payment Processing Gateway",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gtm-kit": {
+   "name": "GTM Kit",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "etch": {
+   "name": "Etch",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "timeline-module-for-divi": {
+   "name": "Timeline Module for Divi",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "sign-up-sheets-pro": {
+   "name": "Sign-up Sheets Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "elementor-pro": {
+   "name": "Elementor Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "rootblox": {
+   "name": "Rootblox",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "phone-validator-and-formatter": {
+   "name": "Phone Validator and Formatter for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kybernaut-mailstep": {
+   "name": "Kybernaut Mailstep",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kybernaut-messenger": {
+   "name": "Kybernaut Messenger",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "comment-free-zone": {
+   "name": "Comment-free zone",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "melapress-role-editor": {
+   "name": "Melapress Role Editor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "extensions-for-elementor-form": {
+   "name": "Cool Formkit Lite",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "automatic-translations-for-polylang": {
+   "name": "AI Translation for Polylang",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "simple-google-icalendar-widget": {
+   "name": "Simple Google Calendar Outlook Events Block Widget",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wordpress-plugin": {
+   "name": "JetProductTables",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "sms-alert": {
+   "name": "SMS Alert Order Notifications",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "hello-elementor": {
+   "name": "Hello Elementor",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "hello-biz": {
+   "name": "Hello Biz",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "hello-plus": {
+   "name": "Hello Plus",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "push-notification-for-post-and-buddypress": {
+   "name": "Push Notification for Post and BuddyPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "syntatis-feature-flipper": {
+   "name": "Feature Flipper",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "upcasted-s3-offload": {
+   "name": "AWS S3 for WordPress Plugin \u2013 Upcasted",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "media-player-addons-for-elementor": {
+   "name": "Media Player Addons for Elementor \u2013 Media Player widget for WP",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "3d-image-gallery": {
+   "name": "Image Gallery block \u2013 Create and display photo gallery/photo album.",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "3d-viewer-block": {
+   "name": "3D Viewer Block \u2013 Display interactive 3D models on WP",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "advance-custom-html": {
+   "name": "Advance Custom HTML",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "b-timeline": {
+   "name": "B Timeline \u2013 Create And Display Timeline Contents",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "before-after-image-compare": {
+   "name": "Before After Image Comparison \u2013 Image comparison for WP",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "stepped-content": {
+   "name": "Stepped Content \u2013 Seamlessly organize your information into interactive steps",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "tabbed-contents": {
+   "name": "Tabbed Contents Block",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "text-typing": {
+   "name": "Typing Text \u2013 Give your texts many typing effects",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "video-gallery-block": {
+   "name": "Video Gallery Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "popular-products-block": {
+   "name": "Popular Products Block for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "parallax-section": {
+   "name": "Parallax Section block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "panorama-block": {
+   "name": "Panorama Block \u2013 Lightweight 360 degree panorama viewer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "html5-video-player": {
+   "name": "Flash & HTML5 Video",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "icon-list-block": {
+   "name": "Icon List Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "icons-font-loader": {
+   "name": "Icons Font Loader",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "lightbox-block": {
+   "name": "LightBox Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "embed-lottie-player": {
+   "name": "Lottie Player block - Implement Lottie animations.",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "panorama": {
+   "name": "Panorama Viewer \u2013 360 Degree Image + Video Viewer",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "pdf-poster": {
+   "name": "PDF Poster",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "embed-soundcloud-block": {
+   "name": "SoundCloud block - Fully Customizable SoundCloud Player",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "streamcast": {
+   "name": "StreamCast",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "super-video-player": {
+   "name": "Super Video Player",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "team-section": {
+   "name": "Team Section Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "yt-player": {
+   "name": "YT Player",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "3d-viewer": {
+   "name": "3D viewer \u2013 Embed 3D Models",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "advanced-post-block": {
+   "name": "Advanced Post Block - Post Grid for WordPress block editor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "b-blocks": {
+   "name": "B Blocks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "b-slider": {
+   "name": "B Slider",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "block-for-mailchimp": {
+   "name": "MailChimp Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "button-block": {
+   "name": "Button Block",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "content-slider-block": {
+   "name": "Content Slider Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "countdown-time": {
+   "name": "Countdown Timer",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "counters-block": {
+   "name": "Counters Block",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "document-emberdder": {
+   "name": "Document Embedder",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "embed-office-viewer": {
+   "name": "Document Viewer for Office",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "b-tiktok-feed": {
+   "name": "Tiktok Feed",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "eventer": {
+   "name": "Eventer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "kalium": {
+   "name": "Kalium",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "ad-inserter-pro": {
+   "name": "Ad Inserter Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "easy-youtube-gallery": {
+   "name": "Easy YouTube Gallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "edge-images": {
+   "name": "Edge Images",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "dms-landscape-tiers": {
+   "name": "Landscape Tiers",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "bellevuex": {
+   "name": "Bellevue",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "a4-barcode-generator": {
+   "name": "Print Barcode Labels for your WooCommerce products/orders",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "embedding-barcodes-into-product-pages-and-orders": {
+   "name": "Barcode Generator for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "upc-ean-barcode-generator": {
+   "name": "UPC/EAN/GTIN Code Generator",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "quiqowl": {
+   "name": "QuiqOwl",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "smart-manager-for-wp-e-commerce": {
+   "name": "Smart Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woocommerce-stock-manager": {
+   "name": "Stock Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "cryptocurrency-widgets-for-elementor": {
+   "name": "Cryptocurrency Widgets For Elementor",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "smart-wishlist-for-more-convert": {
+   "name": "MC Woocommerce Wishlist",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "iteras": {
+   "name": "ITERAS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "tuxedo-big-file-uploads": {
+   "name": "Big File Uploads",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "infinite-uploads": {
+   "name": "Infinite Uploads",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "wpmastertoolkit": {
+   "name": "WPMasterToolKit",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "slim-seo": {
+   "name": "Slim SEO",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "falcon": {
+   "name": "Falcon \u2013 WordPress Optimizations & Tweaks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "meta-box": {
+   "name": "Meta Box \u2013 WordPress Custom Fields Framework",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "event-post": {
+   "name": "Event post",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "accounting-for-woocommerce": {
+   "name": "Accounting for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "hide-categories-products-woocommerce": {
+   "name": "Hide Categories and Products for Woocommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "picu": {
+   "name": "picu",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "mycred": {
+   "name": "myCred",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-admin-audit": {
+   "name": "WP Admin Audit",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "netgsm": {
+   "name": "Netgsm",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "ptwoo-block-gist": {
+   "name": "GitHub Gist Embed Block for WordPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "events-calendar-modules-for-divi": {
+   "name": "Events Calendar Modules for Divi",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wpbulky-wp-bulk-edit-post-types": {
+   "name": "WPBulky",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "bopo-woo-product-bundle-builder": {
+   "name": "Bopo \u2013 WooCommerce Product Bundle Builder",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "pofily-woo-product-filters": {
+   "name": "Pofily \u2013 WooCommerce Product Filters",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "catna-woo-name-your-price-and-offers": {
+   "name": "Catna \u2013 Woo Name Your Price and Offers",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "bulky-bulk-edit-products-for-woo": {
+   "name": "Bulky \u2013 Bulk Edit Products for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "product-size-chart-for-woo": {
+   "name": "Product Size Chart For WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "product-variations-swatches-for-woocommerce": {
+   "name": "Product Variations Swatches for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "email-template-customizer-for-woo": {
+   "name": "Email Template Customizer for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "woo-alidropship": {
+   "name": "ALD \u2013 Dropshipping and Fulfillment for AliExpress and WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "woo-coupon-reminder": {
+   "name": "Coreem \u2013 Coupon Reminder for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "checkout-upsell-funnel-for-woo": {
+   "name": "Checkout Upsell Funnel for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "woo-suggestion-engine": {
+   "name": "Suggestion Engine for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "woo-abandoned-cart-recovery": {
+   "name": "Abandoned Cart Recovery for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woo-cart-all-in-one": {
+   "name": "Cart All In One For WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "import-shopify-to-woocommerce": {
+   "name": "S2W \u2013 Import Shopify to WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "epow-custom-product-options-for-woocommerce": {
+   "name": "EPOW \u2013 Custom Product Options for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "fewc-extra-checkout-fields-for-woocommerce": {
+   "name": "FEWC \u2013 Extra Checkout Fields For WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "9mail-wp-email-templates-designer": {
+   "name": "9MAIL",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "chinads-dropshipping-taobao-woocommerce": {
+   "name": "ChinaDS \u2013 Tmall-Taobao Dropshipping for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "epoi-wp-points-and-rewards": {
+   "name": "EPOI \u2013 WP Points and Rewards",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "exmage-wp-image-links": {
+   "name": "EXMAGE",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "compe-woo-compare-products": {
+   "name": "COMPE",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "webpos-point-of-sale-for-woocommerce": {
+   "name": "WebPOS \u2013 Point of Sale for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "redis-woo-dynamic-pricing-and-discounts": {
+   "name": "REDIS \u2013 WooCommerce Dynamic Pricing and Discounts",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "w2s-migrate-woo-to-shopify": {
+   "name": "W2S \u2013 Migrate WooCommerce to Shopify",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "jagif-woo-free-gift": {
+   "name": "Jagif \u2013 WooCommerce Free Gift",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "handmade-dropshipping-for-etsy-and-woo": {
+   "name": "HANDMADE \u2013 Dropshipping for Etsy and WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 50
+  },
+  "depart-deposit-and-part-payment-for-woo": {
+   "name": "DEPART",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "rees-real-estate-for-woo": {
+   "name": "REES \u2013 Real Estate for Woo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 70
+  },
+  "subre-product-subscription-for-woo": {
+   "name": "SUBRE \u2013 Product Subscription for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "clear-autoptimize-cache-automatically": {
+   "name": "Clear Autoptimize Cache Automatically",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "gift4u-gift-cards-all-in-one-for-woo": {
+   "name": "GIFT4U",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "happy-helpdesk-support-ticket-system": {
+   "name": "HAPPY",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "computer-repair-shop": {
+   "name": "RepairBuddy",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "romethemeform": {
+   "name": "RomethemeForm For Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "surbma-magyar-woocommerce": {
+   "name": "HuCommerce | Magyar WooCommerce kieg\u9cfa?ek",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "table-for-divi": {
+   "name": "Table for Divi",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wp-mailster": {
+   "name": "WP Mailster",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "rometheme-for-elementor": {
+   "name": "RTMKit",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "bakkbone-florist-companion": {
+   "name": "FloristPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "site-mailer": {
+   "name": "Site Mailer",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "user-toolkit": {
+   "name": "User Toolkit",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "a1post-bg-shipping-for-woocommerce": {
+   "name": "A1POST.BG Shipping for Woo",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "latex2html": {
+   "name": "LaTeX2HTML",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "wpmozo-addons-lite-for-elementor": {
+   "name": "WPMozo Addons Lite for Elementor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "wp-google-maps": {
+   "name": "WP Go Maps",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "king-addons": {
+   "name": "King Addons for Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "js-support-ticket": {
+   "name": "JS Help Desk",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "wp-job-portal": {
+   "name": "WP Job Portal",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "majestic-support": {
+   "name": "Majestic Support",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "geeky-bot": {
+   "name": "GeekyBot",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "hestia-nginx-cache": {
+   "name": "Hestia Nginx Cache",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "advanced-coupon-restrictions-for-woocommerce": {
+   "name": "Advanced Coupon Restrictions for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "eduadmin-booking": {
+   "name": "EduAdmin Booking",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "webp-converter-for-media": {
+   "name": "Converter for Media",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "multisite-auto-language-switcher": {
+   "name": "Multisite Auto Language Switcher",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "super-product-filter": {
+   "name": "Super Product Filter",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "hash-elements": {
+   "name": "Hash Elements",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "hash-form": {
+   "name": "Hash Form",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "hashthemes-demo-importer": {
+   "name": "HashThemes Demo Importer",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "smart-blocks": {
+   "name": "Smart Blocks",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "easy-elementor-addons": {
+   "name": "Easy Elementor Addons",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "mini-ajax-woo-cart": {
+   "name": "Mini Ajax Cart for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "simple-floating-menu": {
+   "name": "Simple Floating Menu",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "ad-inserter": {
+   "name": "Ad Inserter",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "breeze": {
+   "name": "Breeze",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "checkview": {
+   "name": "CheckView Automated Testing",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "equal-height-columns": {
+   "name": "Equal Height Columns",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "dashboard-notes": {
+   "name": "Dashboard Notes",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "widget-alias": {
+   "name": "Widget Alias",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "custom-post-type-parents": {
+   "name": "Custom Post Type Parents",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "conditional-fields-for-elementor-form": {
+   "name": "Conditional Fields for Elementor Form \u2013 Display Conditions",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "qi-blocks": {
+   "name": "Qi Blocks",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "qode-essential-addons": {
+   "name": "Qode Essential Addons",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "qi-addons-for-elementor": {
+   "name": "Qi Addons For Elementor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "image-optimization": {
+   "name": "Image Optimizer by Elementor",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "block-builder": {
+   "name": "Elementor Blocks for Gutenberg",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "temporary-login": {
+   "name": "Temporary Login",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "aryo-activity-log": {
+   "name": "Activity Log",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "premium-blocks-for-gutenberg": {
+   "name": "Premium Blocks \u2013 Gutenberg Blocks for WordPress",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "omnisend-for-lifterlms-add-on": {
+   "name": "Omnisend for LifterLMS Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "omnisend-for-paid-memberships-pro-add-on": {
+   "name": "Omnisend for Paid Memberships Pro Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "coneblog-widgets": {
+   "name": "ConeBlog \u2013 WordPress Blog Widgets",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wc-frontend-manager": {
+   "name": "WCFM \u2013 Frontend Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "wc-multivendor-marketplace": {
+   "name": "WCFM Marketplace",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wc-multivendor-membership": {
+   "name": "WCFM Membership",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "black-widgets": {
+   "name": "Black Widgets For Elementor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "ht-mega-for-elementor": {
+   "name": "HT Mega",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "geo-mashup": {
+   "name": " Geo Mashup",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "sky-elementor-addons": {
+   "name": "Sky Addons for Elementor",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "the-post-grid": {
+   "name": "The Post Grid",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "classified-listing": {
+   "name": "Classified Listing",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "shopbuilder": {
+   "name": "ShopBuilder \u2013 Elementor WooCommerce Builder Addons",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "tlp-team": {
+   "name": "Team",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "review-schema": {
+   "name": "Review Schema",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woo-product-variation-swatches": {
+   "name": "Variation Swatches for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woo-product-variation-gallery": {
+   "name": "Variation Images Gallery for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "lastudio-element-kit": {
+   "name": "LA-Studio Element Kit for Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "all-in-one-wp-migration": {
+   "name": "All-in-One WP Migration",
+   "vendor": null,
+   "bounty": "$14,400",
+   "installs": 5000000
+  },
+  "cozy-addons": {
+   "name": "Cozy Blocks",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "all-bootstrap-blocks": {
+   "name": "All Bootstrap Blocks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "give": {
+   "name": "GiveWP",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "wp-sms": {
+   "name": "WP SMS",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "wp-slimstat": {
+   "name": "Slimstat Analytics",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "wp-statistics": {
+   "name": "WP Statistics",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "ultimate-invoice": {
+   "name": "PeproDev Ultimate Invoice",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "mediavine-control-panel": {
+   "name": "Mediavine Control Panel",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "yith-woocommerce-popup": {
+   "name": "YITH WooCommerce Popup",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "yith-woocommerce-product-bundles": {
+   "name": "YITH WooCommerce Product Bundles",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "yith-paypal-express-checkout-for-woocommerce": {
+   "name": "YITH PayPal Express Checkout for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "yith-maintenance-mode": {
+   "name": "YITH Maintenance Mode",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "yith-custom-login": {
+   "name": "YITH Custom Login",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "wpextended": {
+   "name": "The Ultimate WordPress Toolkit \u2013 WP Extended",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "wp-jobsearch": {
+   "name": "JobSearch",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "motors-vin-decoder": {
+   "name": "Motors VIN Decoder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "wpappninja": {
+   "name": "WPMobile.App",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "speedycache": {
+   "name": "SpeedyCache",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "bookit": {
+   "name": "BookIt",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "yith-woocommerce-subscription": {
+   "name": "YITH WooCommerce Subscription",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "yith-woocommerce-affiliates": {
+   "name": "YITH WooCommerce Affiliates",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "yith-woocommerce-frequently-bought-together": {
+   "name": "YITH WooCommerce Frequently Bought Together",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "yith-pre-order-for-woocommerce": {
+   "name": "YITH Pre-Order for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "yith-woocommerce-product-slider-carousel": {
+   "name": "YITH WooCommerce Product Slider Carousel",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "yith-woocommerce-featured-video": {
+   "name": "YITH WooCommerce Featured Video",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woocommerce-pay-for-payment": {
+   "name": "Pay for Payment for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woolab-ic-dic": {
+   "name": "Kybernaut I\u010cO DI\u010c",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "directorypress": {
+   "name": "DirectoryPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "add-anchor-links": {
+   "name": "Add Anchor Links",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "simple-admin-language-change": {
+   "name": "Simple Admin Language Change",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "post-type-archive-mapping": {
+   "name": "Custom Query Blocks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "ai-text-to-speech": {
+   "name": "AI Text to Speech",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "yith-woocommerce-order-tracking": {
+   "name": "YITH WooCommerce Order Tracking",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "yith-color-and-label-variations-for-woocommerce": {
+   "name": "YITH Color and Label Variations for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "yith-infinite-scrolling": {
+   "name": "YITH Infinite Scrolling",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "yith-woocommerce-brands-add-on": {
+   "name": "YITH WooCommerce Brands Add-On",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "yith-woocommerce-gift-cards": {
+   "name": "YITH WooCommerce Gift Cards",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "everest-forms": {
+   "name": "Everest Forms",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "woo-tuner": {
+   "name": "Woo Tuner",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "chatter": {
+   "name": "Chatter",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wah-forms": {
+   "name": "WAH Forms",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "event-tickets": {
+   "name": "Event Tickets",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "the-events-calendar": {
+   "name": "The Events Calendar",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "the-events-calendar-category-colors": {
+   "name": "The Events Calendar: Category Colors",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "image-widget": {
+   "name": "Image Widget",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "advanced-post-manager": {
+   "name": "Advanced Post Manager",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "cf7-message-filter": {
+   "name": "Message Filter for Contact Form 7",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "cf7-sms-extension": {
+   "name": "SMS Extension for Contact Form 7",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "woocommerce-max-quantity": {
+   "name": "Maximum Quantity for WooCommerce Shops",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "super-web-share": {
+   "name": "Super Web Share",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "yith-woocommerce-product-add-ons": {
+   "name": "YITH WooCommerce Product Add-Ons",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "yith-woocommerce-zoom-magnifier": {
+   "name": "YITH WooCommerce Zoom Magnifier",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "yith-woocommerce-badges-management": {
+   "name": "YITH WooCommerce Badge Management",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "powerpack-lite-for-elementor": {
+   "name": "PowerPack Addons for Elementor",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "powerpack-addon-for-beaver-builder": {
+   "name": "PowerPack Lite for Beaver Builder",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "dt-the7": {
+   "name": "The7",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gatographql": {
+   "name": "Gato GraphQL",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "atarim-visual-collaboration": {
+   "name": "Atarim",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "fewer-tags-pro": {
+   "name": "Fewer Tags Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "yoast-comment-hacks": {
+   "name": "Comment Hacks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "clicky": {
+   "name": "Clicky by Yoast",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "fewer-tags": {
+   "name": "Fewer tags",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "pdf-sitemap": {
+   "name": "XML Sitemap for PDFs for Yoast SEO",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "aaa-option-optimizer": {
+   "name": "AAA Option Optimizer",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "progress-planner": {
+   "name": "Progress Planner",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "tainacan": {
+   "name": "Tainacan",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "share-this-image": {
+   "name": "Share This Image",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "xstore": {
+   "name": "XStore",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-discount-manager": {
+   "name": "WooCommerce Discount Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "uichemy": {
+   "name": "UiChemy",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "nexter-extension": {
+   "name": "Nexter Extension",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wdesignkit": {
+   "name": "WDesignkit",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "ag-custom-admin": {
+   "name": "Absolutely Glamorous Custom Admin",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "vod-infomaniak": {
+   "name": "VOD Infomaniak",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "yith-woocommerce-wishlist": {
+   "name": "YITH WooCommerce Wishlist",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 400000
+  },
+  "security-ninja": {
+   "name": "Security Ninja \u2013 Secure Firewall & Secure Malware Scanner",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "first-payment-date-for-woocommerce-subscriptions": {
+   "name": "First payment date for WooCommerce Subscriptions",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "woo-products-restricted-users": {
+   "name": "Products Restricted Users for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "wp-lister-for-ebay": {
+   "name": "WP-Lister Lite for eBay",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wp-lister-for-amazon": {
+   "name": "WP-Lister Lite for Amazon",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "yith-woocommerce-tab-manager": {
+   "name": "YITH WooCommerce Tab Manager",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "yith-woocommerce-ajax-navigation": {
+   "name": "YITH WooCommerce Ajax Product Filter",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "pepro-ultimate-invoice": {
+   "name": "PeproDev Ultimate Invoice",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "pepro-bacs-receipt-upload-for-woocommerce": {
+   "name": "PeproDev WooCommerce Receipt Uploader",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "block-control": {
+   "name": "Block Control",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "embed-privacy": {
+   "name": "Embed Privacy",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "form-block": {
+   "name": "Form Block",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "impressum": {
+   "name": "Impressum",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "yith-woocommerce-ajax-search": {
+   "name": "YITH WooCommerce Ajax Search",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "yith-woocommerce-waiting-list": {
+   "name": "YITH WooCommerce Waiting List",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "wc-vendors": {
+   "name": "WC Vendors Marketplace",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woocommerce-wholesale-prices": {
+   "name": "Wholesale Suite",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "advanced-coupons-for-woocommerce-free": {
+   "name": "Advanced Coupons for WooCommerce Coupons",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "invoice-gateway-for-woocommerce": {
+   "name": "Invoice Gateway for WooCommerce \u2013 Invoice Payment Gateway",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woocommerce-store-toolkit": {
+   "name": "WooCommerce Store Toolkit",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "woocommerce-exporter": {
+   "name": "Store Exporter",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "woo-product-feed-pro": {
+   "name": "Product Feed PRO for WooCommerce",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "yith-woocommerce-catalog-mode": {
+   "name": "YITH WooCommerce Catalog Mode",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "yith-woocommerce-compare": {
+   "name": "YITH WooCommerce Compare",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "yith-woocommerce-quick-view": {
+   "name": "YITH WooCommerce Quick View",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "shortpixel-adaptive-images": {
+   "name": "ShortPixel Adaptive Images",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "cooked": {
+   "name": "Cooked",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "instawp-connect": {
+   "name": "InstaWP Connect",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "blocksy": {
+   "name": "Blocksy",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "blocksy-companion": {
+   "name": "Blocksy Companion",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "all-in-one-facebook-like-widget": {
+   "name": "All-in-one Like Widget",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "name-directory": {
+   "name": "Name Directory",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "navigation-menu-as-dropdown-widget": {
+   "name": "Navigation menu as Dropdown Widget",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "newest-replies-first-in-bbpress": {
+   "name": "Newest replies first in bbPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "unyson": {
+   "name": "Unyson",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "no-right-click-images-plugin": {
+   "name": "No Right Click Images",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "easy-hide-login": {
+   "name": "Easy Hide Login",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "simple-woo-checkout-blocks-cf": {
+   "name": "Simple Custom Fields for WooCommerce Blocks Checkout",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "royal-elementor-addons": {
+   "name": "Royal Elementor Addons",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "ashe-extra": {
+   "name": "Ashe Extra",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "yith-woocommerce-request-a-quote": {
+   "name": "YITH WooCommerce Request A Quote",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "landingi-landing-pages": {
+   "name": "Landingi Landing Pages",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woo-mini-cart-drawer": {
+   "name": "Mini Cart Drawer For WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "resmushit-image-optimizer": {
+   "name": "reSmush.it",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "tourfic": {
+   "name": "Tourfic",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "ultimate-addons-for-contact-form-7": {
+   "name": "Ultimate Addons for Contact Form 7",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "beaf-before-and-after-gallery": {
+   "name": "BEAF",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "instantio": {
+   "name": "Instantio",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "travelfic-toolkit": {
+   "name": "Travelfic Toolkit",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "travelfic": {
+   "name": "Travelfic",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "radio-station": {
+   "name": "Radio Station",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "shared-files": {
+   "name": "Shared Files",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "contact-list": {
+   "name": "Contact List",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-event-solution": {
+   "name": "WP Event Solution",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "helloasso": {
+   "name": "HelloAsso",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "omnisend-connect": {
+   "name": "Email Marketing for WooCommerce by Omnisend",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "omnisend": {
+   "name": "Newsletters, Email Marketing, SMS and Popups by Omnisend",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "omnisend-for-contact-form-7": {
+   "name": "Omnisend for Contact Form 7 Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "omnisend-for-formidable-forms-add-on": {
+   "name": "Omnisend for Formidable Forms Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "omnisend-for-gravity-forms-add-on": {
+   "name": "Omnisend for Gravity Forms Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "omnisend-for-ninja-forms-add-on": {
+   "name": "Omnisend for Ninja Forms Add-On",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "barcode-scanner-lite-pos-to-manage-products-inventory-and-orders": {
+   "name": "Barcode Scanner with Inventory & Order Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "zero-spam": {
+   "name": "Zero Spam",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "fulltext-search": {
+   "name": "WP Fast Total Search",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "fast-custom-social-share-by-codebard": {
+   "name": "Fast Custom Social Share by CodeBard",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "codebard-help-desk": {
+   "name": "CodeBard Help Desk",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "wp-security-audit-log": {
+   "name": "WP Activity Log",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "wp-2fa": {
+   "name": "WP 2FA",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "melapress-login-security": {
+   "name": "MelaPress Login Security",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "admin-notices-manager": {
+   "name": "Admin Notices Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "website-file-changes-monitor": {
+   "name": "Melapress File Monitor",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "wp-accessibility-helper": {
+   "name": "WP Accessibility Helper (WAH)",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-nice-loader": {
+   "name": "WP Nice Loader",
+   "vendor": null,
+   "bounty": null,
+   "installs": 30
+  },
+  "e2pdf": {
+   "name": "e2pdf",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "user-switching": {
+   "name": "User Switching",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "query-monitor": {
+   "name": "Query Monitor",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "wp-crontrol": {
+   "name": "Crontrol",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "off-canvas-sidebars": {
+   "name": "Off-Canvas Sidebars & Menus (Slidebars)",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "content-aware-sidebars": {
+   "name": "Content Aware Sidebars",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "restrict-user-access": {
+   "name": "Restrict User Access \u2013 Membership Plugin with Force",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-event-manager": {
+   "name": "WP Event Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "wp-club-manager": {
+   "name": "WP Club Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "hr-management": {
+   "name": "Crew HRM",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "wp-fusion-lite": {
+   "name": "WP Fusion Lite",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "cf7-styler": {
+   "name": "CF7 WOW Styler",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woo-product-reviews-shortcode": {
+   "name": "Builder for WooCommerce reviews shortcodes \u2013 ReviewShort",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "5-stars-rating-funnel": {
+   "name": "5 Stars Rating Funnel",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "more-better-reviews-for-woocommerce": {
+   "name": "Get Better Reviews for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "dashboard-to-do-list": {
+   "name": "Dashboard To-Do List",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "pricing-table-by-supsystic": {
+   "name": "Pricing Table by Supsystic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "data-tables-generator-by-supsystic": {
+   "name": "Data Tables Generator by Supsystic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "popup-by-supsystic": {
+   "name": "Popup by Supsystic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "gallery-by-supsystic": {
+   "name": "Photo Gallery by Supsystic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "google-maps-easy": {
+   "name": "Easy Google Maps",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "ultimate-maps-by-supsystic": {
+   "name": "Ultimate Maps by Supsystic",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "contact-form-by-supsystic": {
+   "name": "Contact Form by Supsystic",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "contest-gallery": {
+   "name": "Contest Gallery",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "gotmls": {
+   "name": "Anti-Malware Security and Brute-Force Firewall",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "captcha-code-authentication": {
+   "name": "Captcha Code",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "print-my-blog": {
+   "name": "Print My Blog",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "revslider": {
+   "name": "Slider Revolution",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "12-step-meeting-list": {
+   "name": "12 Step Meeting List",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "3d-flipbook-dflip-lite": {
+   "name": "DearFlip",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "shortpixel-critical-css": {
+   "name": "ShortPixel Critical CSS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "calendarista-basic-edition": {
+   "name": "Calendarista Basic Edition",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wp-meta-data-filter-and-taxonomy-filter": {
+   "name": "MDTF",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "posts-table-filterable": {
+   "name": "TableOn",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "currency-switcher": {
+   "name": "WPCS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "taxonomy-chain-menu": {
+   "name": "Taxonomy Chain Menu",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "profit-products-tables-for-woocommerce": {
+   "name": "Active Products Tables for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "woocommerce-currency-switcher": {
+   "name": "FOX",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "woocommerce-products-filter": {
+   "name": "HUSKY",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "webinar-ignition": {
+   "name": "WebinarIgnition",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "wp2leads": {
+   "name": "WP2LEADS",
+   "vendor": null,
+   "bounty": null,
+   "installs": 80
+  },
+  "enable-media-replace": {
+   "name": "Enable Media Replace",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "shortpixel-image-optimiser": {
+   "name": "ShortPixel Image Optimizer",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "login-with-phone-number": {
+   "name": "Login with phone number",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "rabbit-loader": {
+   "name": "RabbitLoader",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "accessibility-new-window-warnings": {
+   "name": "Equalize Digital Accessibility New Window Warnings",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "woocommerce-product-tabs": {
+   "name": "WooCommerce Product Tabs",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "woocommerce-product-tabs-pro": {
+   "name": "WooCommerce Product Tabs Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-quantity-manager": {
+   "name": "WooCommerce Quantity Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "vitepos-lite": {
+   "name": "Vitepos",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "affieasy": {
+   "name": "AffiEasy",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "the-plus-addons-for-elementor-page-builder": {
+   "name": "The Plus Addons for Elementor Page Builder Lite",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "the-plus-addons-for-block-editor": {
+   "name": "Nexter Blocks",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "import-users-from-csv-with-meta": {
+   "name": "Import and export users and customers",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "social-pug": {
+   "name": "Hubbub Lite",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "custom-login": {
+   "name": "Custom Login",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "contact-forms": {
+   "name": "Contact Forms by Cimatti",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "evergreen-content-poster": {
+   "name": "Evergreen Content Poster",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "instagram-widget-by-wpzoom": {
+   "name": "WPZOOM Social Feed Widget & Block",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "wpzoom-forms": {
+   "name": "WPZOOM Forms \u2013 Contact Form Plugin for Gutenberg",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "ajax-search-lite": {
+   "name": "Ajax Search Lite",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "svgator": {
+   "name": "SVGator \u2013 Add Animated SVG Easily",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "doofinder-for-woocommerce": {
+   "name": "Doofinder for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "branda-white-labeling": {
+   "name": "Branda",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "forminator": {
+   "name": "Forminator",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "defender-security": {
+   "name": "Defender Security",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "wp-smushit": {
+   "name": "Smush Image Compression and Optimization",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "hummingbird-performance": {
+   "name": "Hummingbird",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "smartcrawl-seo": {
+   "name": "SmartCrawl",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "broken-link-checker": {
+   "name": "Broken Link Checker",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 500000
+  },
+  "wordpress-popup": {
+   "name": "Hustle",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "beehive-analytics": {
+   "name": "Beehive Analytics \u2013 Google Analytics Dashboard",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "patron-button-and-widgets-by-codebard": {
+   "name": "CodeBard's Patron Button and Widgets for Patreon",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "social-networks-auto-poster-facebook-twitter-g": {
+   "name": "NextScripts",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "patreon-connect": {
+   "name": "Patreon WordPress",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "contact-forms-anti-spam": {
+   "name": "Maspik \u2013 Spam blacklist",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "guest-author": {
+   "name": "Guest Author",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "wp-htaccess-editor": {
+   "name": "Htaccess File Editor - Safely Edit Htaccess File",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "login-lockdown": {
+   "name": "Login Lockdown",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "maintenance": {
+   "name": "Maintenance",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "map-block-gutenberg": {
+   "name": "Map Block for Google Maps",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "minimal-coming-soon-maintenance-mode": {
+   "name": "Minimal Coming Soon & Maintenance Mode \u2013 Coming Soon Page",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "order-export-and-more-for-woocommerce": {
+   "name": "Order Export for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "simple-author-box": {
+   "name": "Simple Author Box",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "sticky-menu-or-anything-on-scroll": {
+   "name": "Sticky Menu, Sticky Header (or anything!) on Scroll",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "woocommerce-easy-table-rate-shipping": {
+   "name": "Table Rate Shipping for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "under-construction-page": {
+   "name": "Under Construction",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "wp-force-ssl": {
+   "name": "WP Force SSL & HTTPS SSL Redirect",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "wp-reset": {
+   "name": "WP Reset",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "advanced-google-recaptcha": {
+   "name": "Advanced Google reCAPTCHA",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "eps-301-redirects": {
+   "name": "301 Redirects",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "301-redirects": {
+   "name": "301 Redirects & 404 Error Log",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "wordpress-database-reset": {
+   "name": "WP Database Reset",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-external-links": {
+   "name": "External Links",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "open-external-links-in-a-new-window": {
+   "name": "External Links in New Window / New Tab",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "anywhere-elementor": {
+   "name": "AnyWhere Elementor",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "addon-elements-for-elementor-page-builder": {
+   "name": "Elementor Addon Elements",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "form-vibes": {
+   "name": "Form Vibes \u2013 Database Manager for Forms",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "ai-engine": {
+   "name": "AI Engine",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 90000
+  },
+  "wc-product-table-lite": {
+   "name": "WooCommerce Product Table Lite",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "litespeed-cache": {
+   "name": "LiteSpeed Cache",
+   "vendor": null,
+   "bounty": "$14,400",
+   "installs": 7000000
+  },
+  "delete-duplicate-posts": {
+   "name": "Delete Duplicate Posts",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "autoclose": {
+   "name": "Auto-Close Comments, Pingbacks and Trackbacks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "better-search": {
+   "name": "Better Search",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "contextual-related-posts": {
+   "name": "Contextual Related Posts",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "knowledgebase": {
+   "name": "Knowledge Base",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "popular-authors": {
+   "name": "Popular Authors",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "top-10": {
+   "name": "Top 10",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "add-to-all": {
+   "name": "WebberZone Snippetz",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "where-did-they-go-from-here": {
+   "name": "WZ Followed Posts - Display what visitors are reading",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "adminify": {
+   "name": "WP Adminify",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "code-snippets": {
+   "name": "Code Snippets",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "clover-online-orders": {
+   "name": "Smart Online Order for Clover",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "ws-form": {
+   "name": "WS Form LITE",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "i-recommend-this": {
+   "name": "I Recommend This",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "lazy-load-for-videos": {
+   "name": "Lazy Load for Videos",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "woo-pdf-invoice-builder": {
+   "name": "WooCommerce PDF Invoice Builder",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "wpbr-linepay-tw": {
+   "name": "Pay with LINE Pay",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "loginpress": {
+   "name": "LoginPress",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "freesoul-deactivate-plugins": {
+   "name": "Freesoul Deactivate Plugins \u2013 Plugin manager and cleanup",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "instagrate-to-wordpress": {
+   "name": "Intagrate Lite",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "hitsteps-visitor-manager": {
+   "name": "Hitsteps Web Analytics",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "kali-forms": {
+   "name": "Kali Forms",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "webba-booking-lite": {
+   "name": "Webba Booking",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woo-dpd-pickup": {
+   "name": "DPD / SEUR / Geopost Pickup and Lockers network for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "mailster": {
+   "name": "Mailster",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "jet-woo-builder": {
+   "name": "JetWooBuilder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-tabs": {
+   "name": "JetTabs",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-tricks": {
+   "name": "JetTricks",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-search": {
+   "name": "JetSearch",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-blog": {
+   "name": "JetBlog",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-appointments-booking": {
+   "name": "JetAppointment",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-blocks": {
+   "name": "JetBlocks For Elementor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-woo-product-gallery": {
+   "name": "JetProductGallery",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-theme-core": {
+   "name": "JetThemeCore",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-booking": {
+   "name": "JetBooking",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-popup": {
+   "name": "JetPopup",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-reviews": {
+   "name": "JetReviews",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-compare-wishlist": {
+   "name": "JetCompareWishlist",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jetformbuilder": {
+   "name": "JetFormBuilder",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "jet-engine": {
+   "name": "JetEngine",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-smart-filters": {
+   "name": "JetSmartFilters",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-elements": {
+   "name": "JetElements For Elementor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "jet-menu": {
+   "name": "JetMenu",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "quiz-master-next": {
+   "name": "Quiz And Survey Master",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "sunshine-photo-cart": {
+   "name": "Sunshine Photo Cart",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "pre-orders-for-woocommerce": {
+   "name": "Pre-Orders for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "wemail": {
+   "name": "weMail",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "elementskit-lite": {
+   "name": "ElementsKit Elementor addons Lite",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "metform": {
+   "name": "Metform",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "shopengine": {
+   "name": "ShopEngine",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "wp-social": {
+   "name": "Wp Social",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "getgenie": {
+   "name": "GetGenie",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "gravity-pdf": {
+   "name": "Gravity PDF",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gravity-forms-pdf-extended": {
+   "name": "Gravity PDF",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "search-analytics": {
+   "name": "WP Search Analytics",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "vendor": {
+   "name": "TrustedLogin Vendor",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "gravityview": {
+   "name": "GravityView",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "post-and-page-builder": {
+   "name": "Post and Page Builder by BoldGrid",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "fullworks-scanner": {
+   "name": "Fullworks Security Scanner",
+   "vendor": null,
+   "bounty": null,
+   "installs": 10
+  },
+  "widget-for-eventbrite-api": {
+   "name": "Display Eventbrite Events",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "quick-paypal-payments": {
+   "name": "Quick Paypal Payments",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "fullworks-anti-spam": {
+   "name": "Anti-Spam by Fullworks : GDPR Compliant Spam Protection",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "simple-google-maps-short-code": {
+   "name": "Simple Shortcode for Google Maps",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "stop-user-enumeration": {
+   "name": "Stop User Enumeration",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "ewww-image-optimizer": {
+   "name": "EWWW Image Optimizer",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "force-regenerate-thumbnails": {
+   "name": "Force Regenerate Thumbnails",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "imsanity": {
+   "name": "Imsanity",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "s3-image-optimizer": {
+   "name": "S3 Image Optimizer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "easy-image-optimizer": {
+   "name": "Easy Image Optimizer",
+   "vendor": null,
+   "bounty": null,
+   "installs": 60
+  },
+  "embedder-for-google-reviews": {
+   "name": "Embedder for Google Reviews",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "holler-box": {
+   "name": "HollerBox",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "bdvs-password-reset": {
+   "name": "Password Reset with Code for WordPress REST API",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "stock-ticker": {
+   "name": "Stock Ticker",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "youtube-channel": {
+   "name": "YouTube Channel",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "head-footer-code": {
+   "name": "Head & Footer Code",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "futurio-extra": {
+   "name": "Futurio Extra",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "enfold": {
+   "name": "Enfold",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wrc-pricing-tables": {
+   "name": "WRC Pricing Tables",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "woo-permalink-manager": {
+   "name": "Premmerce Permalink Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 50000
+  },
+  "premmerce-woocommerce-brands": {
+   "name": "Premmerce Brands for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "premmerce-woocommerce-product-filter": {
+   "name": "Premmerce Product Filter for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "woo-seo-addon": {
+   "name": "Premmerce SEO for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "premmerce-search": {
+   "name": "Premmerce Product Search for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "woo-customers-manager": {
+   "name": "Premmerce WooCommerce Customers Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 700
+  },
+  "premmerce-user-roles": {
+   "name": "Premmerce User Roles",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "premmerce": {
+   "name": "Premmerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "premmerce-redirect-manager": {
+   "name": "Premmerce Redirect Manager",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "premmerce-woocommerce-wholesale-pricing": {
+   "name": "Premmerce Wholesale Pricing for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "premmerce-woocommerce-multi-currency": {
+   "name": "Premmerce Multi-currency for Woocommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "premmerce-woocommerce-wishlist": {
+   "name": "Premmerce Wishlist for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "premmerce-woocommerce-variation-swatches": {
+   "name": "Premmerce Variation Swatches for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "html5-audio-player": {
+   "name": "Html5 Audio Player",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "bnfw": {
+   "name": "Better Notifications for WP",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "cost-calculator-builder": {
+   "name": "Cost Calculator Builder",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "masterstudy-lms-learning-management-system": {
+   "name": "MasterStudy LMS",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "eroom-zoom-meetings-webinar": {
+   "name": "eRoom",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "ulisting": {
+   "name": "uListing",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "taboola": {
+   "name": "Taboola",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-discussion-board": {
+   "name": "WP Discussion Board",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "widget-options": {
+   "name": "Widget Options",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "libsyn-podcasting": {
+   "name": "Libsyn Publisher Hub",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "sign-up-sheets": {
+   "name": "Sign-up Sheets",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "tablepress": {
+   "name": "TablePress",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "pretty-simple-popup-builder": {
+   "name": "Pretty Simple Popup Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "document-library-lite": {
+   "name": "Document Library Lite",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "posts-data-table": {
+   "name": "Posts Table with Search & Sort",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 3000
+  },
+  "woocommerce-product-table": {
+   "name": "WooCommerce Product Table",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-bulk-variations": {
+   "name": "WooCommerce Bulk Variations",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-fast-cart": {
+   "name": "WooCommerce Fast Cart",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-private-store": {
+   "name": "WooCommerce Private Store",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-product-options": {
+   "name": "WooCommerce Product Options",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-product-filters": {
+   "name": "WooCommerce Product Filters",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-protected-categories": {
+   "name": "WooCommerce Protected Categories",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-quick-view-pro": {
+   "name": "WooCommerce Quick View Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-lead-time": {
+   "name": "WooCommerce Lead Time",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-wholesale-pro": {
+   "name": "WooCommerce Wholesale Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "edd-eu-vat": {
+   "name": "Easy Digital Downloads - EU VAT",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "password-protected-categories": {
+   "name": "Password Protected Categories",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "document-library-pro": {
+   "name": "Document Library Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "posts-table-pro": {
+   "name": "Posts Table Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-coupon-usage": {
+   "name": "Coupon Affiliates",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "wpfunnels": {
+   "name": "WPFunnels",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "mail-mint": {
+   "name": "Mail Mint",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "wpvr": {
+   "name": "WP VR",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "best-woocommerce-feed": {
+   "name": "Product Feed Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "premium-addons-for-elementor": {
+   "name": "Premium Addons for Elementor",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 600000
+  },
+  "sirv": {
+   "name": "Sirv",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "wp-dummy-content-generator": {
+   "name": "WP Dummy Content Generator",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "post-smtp": {
+   "name": "Post SMTP",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "visibility-logic-elementor": {
+   "name": "Visibility Logic for Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "stax-buddy-builder": {
+   "name": "BuddyPress Builder for Elementor \u2013 BuddyBuilder",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "cool-timeline": {
+   "name": "Cool Timeline",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "timeline-widget-addon-for-elementor": {
+   "name": "Timeline Widget For Elementor (Elementor Timeline, Vertical & Horizontal Timeline)",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "timeline-block": {
+   "name": "Timeline Block For Gutenberg",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "cryptocurrency-price-ticker-widget": {
+   "name": "Cryptocurrency Widgets \u2013 Price Ticker & Coins List",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "automatic-translator-addon-for-loco-translate": {
+   "name": "Automatic Translate Addon For Loco Translate",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "cryptocurrency-payments-using-metamask-for-woocommerce": {
+   "name": "Pay With MetaMask For WooCommerce \u2013 Cryptocurrency Payment Gateway",
+   "vendor": null,
+   "bounty": null,
+   "installs": 400
+  },
+  "event-page-templates-addon-for-the-events-calendar": {
+   "name": "Event Single Page Templates Addon For The Events Calendar",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "template-events-calendar": {
+   "name": "Events Shortcodes & Templates For The Events Calendar",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "events-widgets-for-elementor-and-the-events-calendar": {
+   "name": "The Events Calendar Widgets For Elementor",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "live-weather-station": {
+   "name": "Weather Station",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "decoupled-preview": {
+   "name": "Decoupled Preview",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "pantheon-advanced-page-cache": {
+   "name": "Pantheon Advanced Page Cache",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "pantheon-hud": {
+   "name": "Pantheon HUD",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "solr-power": {
+   "name": "Solr Search for WordPress",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "wp-redis": {
+   "name": "WP Redis",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 9000
+  },
+  "wp-native-php-sessions": {
+   "name": "WordPress Native PHP Sessions",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "wp-saml-auth": {
+   "name": "WP SAML Auth",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "seriously-simple-transcripts": {
+   "name": "Seriously Simple Transcripts",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "seriously-simple-speakers": {
+   "name": "Seriously Simple Speakers",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "seriously-simple-stats": {
+   "name": "Seriously Simple Stats",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "seriously-simple-podcasting": {
+   "name": "Seriously Simple Podcasting",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "weixin-robot-advanced": {
+   "name": "\u5fae\u4fe1\u673a\u5668\u4eba\u9ad8\u7ea7\u7248",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wpjam-basic": {
+   "name": "WPJAM Basic",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "seo-key": {
+   "name": "SEOKEY",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "simple-cloudflare-turnstile": {
+   "name": "Simple Cloudflare Turnstile",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 200000
+  },
+  "unlimited-elements-for-elementor": {
+   "name": "Unlimited Elements For Elementor (Free Widgets, Addons, Templates)",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 300000
+  },
+  "groundhogg": {
+   "name": "Groundhogg",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "shop-as-client-pro": {
+   "name": "Shop as Client for WooCommerce PRO add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "taxonomy-discounts-woocommerce-pro": {
+   "name": "Taxonomy/Term and Role based Discounts for WooCommerce PRO add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "simple-woocommerce-order-approval": {
+   "name": "Simple WooCommerce Order Approval",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "wc-ifthenpay-pro": {
+   "name": "Multibanco, MBWAY, Credit card and Payshop (IfthenPay) for WooCommerce \u2013 PRO add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-billing-with-invoicexpress-pro": {
+   "name": "Invoicing with InvoiceXpress for WooCommerce \u2013 Pro",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-dpd-portugal": {
+   "name": "DPD Portugal for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "portuguese-postcodes-for-woocommerce": {
+   "name": "Portuguese Postcodes for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "feed-kuantokusta-for-woocommerce-pro": {
+   "name": "Feed KuantoKusta for WooCommerce PRO add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woo-multicaixa-pro": {
+   "name": "Payment Multicaixa (ProxyPay gateway) for WooCommerce PRO add-on",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "download-monitor": {
+   "name": "Download Monitor",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "bulk-editor": {
+   "name": "WOLF",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 4000
+  },
+  "woo-bulk-editor": {
+   "name": "BEAR",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "scripts-n-styles": {
+   "name": "Scripts n Styles",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "portugal-vasp-kios-woocommerce": {
+   "name": "Portugal VASP Expresso Kios network for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 20
+  },
+  "free-shipping-hide-other-methods-woo": {
+   "name": "Free shipping and hide other methods for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "magic-coupon": {
+   "name": "Magic URL Coupon for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "multibanco-ifthen-software-gateway-for-woocommerce": {
+   "name": "Multibanco, MB WAY, Credit card and Payshop (IfthenPay) for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "nif-num-de-contribuinte-portugues-for-woocommerce": {
+   "name": "NIF (Num. de Contribuinte Portugu\u00eas) for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "woo-multicaixa": {
+   "name": "Payment Multicaixa (ProxyPay gateway) for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 90
+  },
+  "product-percentage-coupon-woo": {
+   "name": "Percentage Coupon per Product for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "flat-rate-per-countryregion-for-woocommerce": {
+   "name": "Flat Rate per State/Country/Region for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "feed-kuantokusta-for-woocommerce": {
+   "name": "Feed KuantoKusta for WooCommerce \u2013 Free",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "stock-exporter-for-woocommerce": {
+   "name": "Stock Exporter for WooCommerce",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "heartbeat-control": {
+   "name": "Heartbeat control",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "upload-max-file-size": {
+   "name": "Increase Maximum Upload File Size",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "rocket-lazy-load": {
+   "name": "Rocket Lazy Load",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "rocketcdn-plugin": {
+   "name": "RocketCDN",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "imagify": {
+   "name": "Imagify",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "portugal-ctt-tracking-woocommerce": {
+   "name": "Portugal CTT Tracking for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 500
+  },
+  "portugal-chronopost-pickup-woocommerce": {
+   "name": "Portugal DPD Pickup and Lockers network for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "book-review-library": {
+   "name": "Book Review Library",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "wp-user-manager": {
+   "name": "WP User Manager",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "builderius": {
+   "name": "Builderius",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "fluent-crm": {
+   "name": "Fluent CRM",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "woo-sold-individually-for-variations": {
+   "name": "WooCommerce Sold Individually for Variations",
+   "vendor": null,
+   "bounty": null,
+   "installs": 800
+  },
+  "taxonomy-discounts-woocommerce": {
+   "name": "Taxonomy/Term and Role based Discounts for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 200
+  },
+  "shop-as-client": {
+   "name": "Shop as Client for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 600
+  },
+  "woo-qr-shipping-address-pip": {
+   "name": "Shipping Address QR code for Invoices & Packing lists",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "pt-ao90": {
+   "name": "PT AO90",
+   "vendor": null,
+   "bounty": null,
+   "installs": 40
+  },
+  "product-assembly-cost": {
+   "name": "Product Assembly / Gift Wrap / \u2026 Cost for WooCommerce",
+   "vendor": null,
+   "bounty": null,
+   "installs": 300
+  },
+  "portugal-states-distritos-for-woocommerce": {
+   "name": "Portugal States (Distritos) for WooCommerce",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 5000
+  },
+  "decalog": {
+   "name": "DecaLog",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "tinymce-custom-styles": {
+   "name": "TinyMCE Custom Styles",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "visualcomposer": {
+   "name": "Visual Composer Website Builder",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "woo-billing-with-invoicexpress": {
+   "name": "Invoicing with InvoiceXpress for WooCommerce \u2013 Free",
+   "vendor": null,
+   "bounty": null,
+   "installs": 100
+  },
+  "essential-addons-for-elementor-lite": {
+   "name": "Essential Addons for Elementor",
+   "vendor": null,
+   "bounty": "$7,200",
+   "installs": 1000000
+  },
+  "analogwp-templates": {
+   "name": "Style Kits",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "elasticpress": {
+   "name": "ElasticPress",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 8000
+  },
+  "js_composer": {
+   "name": "WPBakery Page Builder",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "custom-404-pro": {
+   "name": "Custom 404 Pro",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 7000
+  },
+  "elementor": {
+   "name": "Elementor Website Builder",
+   "vendor": null,
+   "bounty": "$14,400",
+   "installs": 10000000
+  },
+  "simply-static": {
+   "name": "Simply Static",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 30000
+  },
+  "wp-rocket": {
+   "name": "WP Rocket",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "simple-embed-code": {
+   "name": "Code Embed",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "mainwp-child": {
+   "name": "MainWP Child",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 700000
+  },
+  "mainwp": {
+   "name": "MainWP",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 20000
+  },
+  "pods": {
+   "name": "Pods",
+   "vendor": null,
+   "bounty": "$2,600",
+   "installs": 100000
+  },
+  "church-admin": {
+   "name": "Church Admin",
+   "vendor": null,
+   "bounty": null,
+   "installs": 900
+  },
+  "zotpress": {
+   "name": "Zotpress",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "fluentform": {
+   "name": "FluentForm",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 700000
+  },
+  "fluent-smtp": {
+   "name": "FluentSMTP",
+   "vendor": null,
+   "bounty": "$4,900",
+   "installs": 700000
+  },
+  "site-reviews": {
+   "name": "Site Reviews",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "progress-bar": {
+   "name": "Progress Bar",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 1000
+  },
+  "a2-optimized-wp": {
+   "name": "A2 Optimized WP",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "content-control": {
+   "name": "Content Control",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "fluent-security": {
+   "name": "FluentAuth \u2013 The Ultimate Authorization & Security Plugin for WordPress",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "patchstack": {
+   "name": "Patchstack \u2013 WordPress & Plugins Security",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 60000
+  },
+  "woodmart-core": {
+   "name": "Woodmart Core",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woodmart": {
+   "name": "WoodMart",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  },
+  "woocommerce-google-adwords-conversion-tracking-tag": {
+   "name": "Pixel Manager for WooCommerce",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 40000
+  },
+  "oopspam-anti-spam": {
+   "name": "OOPSpam Anti-Spam",
+   "vendor": null,
+   "bounty": "$400",
+   "installs": 6000
+  },
+  "qyrr-code": {
+   "name": "Qyrr",
+   "vendor": null,
+   "bounty": "$250",
+   "installs": 2000
+  },
+  "user-menus": {
+   "name": "User Menus \u2013 Nav Menu Visibility",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 80000
+  },
+  "accessibility-checker": {
+   "name": "Accessibility Checker by Equalize Digital",
+   "vendor": null,
+   "bounty": "$600",
+   "installs": 10000
+  },
+  "ninja-tables": {
+   "name": "Ninja Tables",
+   "vendor": null,
+   "bounty": "$1,400",
+   "installs": 70000
+  },
+  "rating-widget": {
+   "name": "Rating Widget",
+   "vendor": null,
+   "bounty": null,
+   "installs": 0
+  }
+ }
+}
