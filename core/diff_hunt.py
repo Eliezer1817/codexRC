@@ -70,12 +70,27 @@ def _unzip(zip_path: str, dest: str) -> bool:
         return False
 
 
+def _zip_url(slug: str, ver: str) -> str:
+    """URL canonica de descarga de una version (usada si la API no
+    devuelve el mapa de URLs)."""
+    return (f"https://downloads.wordpress.org/plugin/"
+            f"{slug}.{ver}.zip")
+
+
 def get_versions(slug: str) -> Optional[Tuple[str, str, str, str]]:
     """(version_nueva, version_anterior, url_nueva, url_anterior)."""
     info = _info(slug)
     if not info:
         return None
-    versions = list(info.get("versions", {}).keys())
+    # la API de wp.org devuelve "versions" como dict {ver: url} o como
+    # lista [ver, ...] (forma cambiada en 2026-10); normalizar ambas
+    vv = info.get("versions") or {}
+    if isinstance(vv, dict):
+        urls = vv
+        versions = list(vv.keys())
+    else:
+        versions = [v for v in vv if isinstance(v, str)]
+        urls = {v: _zip_url(slug, v) for v in versions}
     # la ultima clave suele ser "trunk"; versiones estables reales antes
     stable = [v for v in versions
               if re.match(r"^\d+(\.\d+)*$", v) and v != "trunk"]
@@ -83,18 +98,63 @@ def get_versions(slug: str) -> Optional[Tuple[str, str, str, str]]:
         return None
     stable.sort(key=lambda t: [int(x) for x in t.split(".")])
     new_v, old_v = stable[-1], stable[-2]
-    urls = info.get("versions", {})
     if new_v not in urls or old_v not in urls:
         return None
     return new_v, old_v, urls[new_v], urls[old_v]
 
 
+def _senales_changelog(slug: str) -> list:
+    """Palabras de seguridad del changelog publico (readme trunk).
+    wp.org sello el historial de zips (oct 2026): el readme sigue
+    diciendo QUE parchearon y DONDE; eso guia la caza del parche
+    incompleto."""
+    try:
+        req = urllib.request.Request(
+            f"https://plugins.svn.wordpress.org/{slug}/trunk/readme.txt",
+            headers={"User-Agent": "Mozilla/5.0"})
+        txt = urllib.request.urlopen(req, timeout=15).read().decode(
+            "utf-8", "replace")
+    except Exception:
+        return []
+    i = txt.lower().find("== changelog ==")
+    if i < 0:
+        return []
+    trozo = txt[i:i + 4000]           # ultimas ~4-6 versiones
+    out = []
+    for lin in trozo.split("\n"):
+        lin = lin.strip()
+        if not lin:
+            continue
+        m = re.match(r"^(?:=+\s*)?(?:\d{4}\.\d\d\.\d\d\s*-\s*)?"
+                     r"version\s*([\d.]+)\s*=*$", lin, re.I)
+        if m:
+            out.append({"version": m.group(1), "lineas": []})
+            if len(out) >= 3:          # solo lo mas reciente
+                break
+            continue
+        if out and re.search(r"secur|xss|sql|inject|sanitiz|escap|"
+                            r"nonce|privileg|capabilit|upload|"
+                            r"harden|vulnerab|csrf|auth", lin, re.I):
+            out[-1]["lineas"].append(lin[:140])
+    return [e for e in out if e["lineas"]]
+
+
 def prepare(slug: str, workdir: str) -> Optional[Tuple[str, str, str]]:
-    """Descarga las 2 versiones; devuelve (dir_new, dir_old, v_new)."""
+    """Descarga las 2 versiones; devuelve (dir_new, dir_old, v_new).
+    Si wp.org ya no sirve el historial (oct 2026: zips viejos 404,
+    SVN tags vacios, API sin mapa): fallback FULL-CODE con la version
+    ACTUAL (dir_old=None) -> scan() audita todo el codigo vivo."""
     os.makedirs(workdir, exist_ok=True)
     vers = get_versions(slug)
     if not vers:
-        return None
+        info = _info(slug)
+        if not info or not info.get("download_link"):
+            return None
+        d_new = os.path.join(workdir, f"{slug}_new")
+        zp = os.path.join(workdir, f"{slug}.zip")
+        if not _fetch(info["download_link"], zp) or not _unzip(zp, d_new):
+            return None
+        return d_new, None, info.get("version") or "?"
     new_v, old_v, new_u, old_u = vers
     d_new = os.path.join(workdir, f"{slug}_new")
     d_old = os.path.join(workdir, f"{slug}_old")
@@ -126,7 +186,26 @@ def prepare(slug: str, workdir: str) -> Optional[Tuple[str, str, str]]:
     return rn, ro, new_v
 
 
-def changed_lines(new_root: str, old_root: str) -> Dict[str, Set[int]]:
+def changed_lines(new_root: str,
+                  old_root: Optional[str] = None) -> Dict[str, Set[int]]:
+    """Si old_root es None (sin historial): TODAS las lineas cuentan
+    (modo FULL-CODE: cada hallazgo del codigo vivo pasa el filtro)."""
+    if old_root is None:
+        out: Dict[str, Set[int]] = {}
+        for raiz, _dirs, archivos in os.walk(new_root):
+            for a in archivos:
+                if a.endswith(".php"):
+                    p = os.path.join(raiz, a)
+                    rel = p.split(new_root, 1)[1].lstrip("/").replace(
+                        "\\", "/")
+                    try:
+                        with open(p, encoding="utf-8",
+                                  errors="ignore") as f:
+                            out[rel] = set(range(1, f.read().count(
+                                "\n") + 2))
+                    except Exception:
+                        pass
+        return out
     """{relpath: lineas nuevas} en .php propios (sin vendor/assets)."""
     out: Dict[str, Set[int]] = {}
     for dirpath, _dirs, files in os.walk(new_root):
@@ -170,7 +249,10 @@ def scan(slug: str, workdir: str) -> Dict[str, Any]:
         return rec
     new_root, old_root, new_v = prep
     rec["version"] = new_v
+    rec["modo"] = "DIFF" if old_root else "FULL-CODE"
     rec["status"] = "ok"
+    if old_root is None:
+        rec["senales_changelog"] = _senales_changelog(slug)
 
     nuevas = changed_lines(new_root, old_root)
     rec["archivos_php_nuevos"] = len(nuevas)

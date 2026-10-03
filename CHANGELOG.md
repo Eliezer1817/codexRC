@@ -1,3 +1,21 @@
+## v0.62.0 — DIFF-HUNT v2: la fuente cambio, el motor se adapta
+
+- wp.org sello el historial de plugins (oct 2026): la API ya no
+  sirve el mapa de versiones, los zips viejos dan 404 y los SVN
+  tags estan vacios. El diff entre dos zips murio EN LA FUENTE
+  (RC-000144).
+- get_versions tolerante a dict y list.
+- prepare() fallback FULL-CODE: sin historial -> descarga la
+  version ACTUAL y audita todo el codigo vivo (dir_old=None).
+- _senales_changelog(): el readme publico sigue diciendo QUE
+  parchearon (XSS, SQLi, hardening...) y DONDE; cada corrida
+  adjunta las senales de seguridad de las ultimas 3 versiones
+  para guiar la caza del parche incompleto.
+- Validado en vivo: cola de 29 blancos 29/29 OK en 24s, 37
+  hallazgos crudos, 2 SQLi de swift-performance-lite pasaron a
+  EVIDENCE-CHAIN -> PROBABLE 3/4 (uno con proof COMPLETE pero
+  alcance admin sin resolver, otro INCOMPLETE honesto).
+
 ## v0.61.0 — Corpus fresco: VDP-FRESH + prioridad mid-band
 
 PALANCA 1 (corpus fresco automatico):

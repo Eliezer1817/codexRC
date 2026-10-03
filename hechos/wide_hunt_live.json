@@ -1,0 +1,7040 @@
+{
+ "total": 29,
+ "ok": 29,
+ "fallos": 0,
+ "segundos": 24.0,
+ "hallazgos": [
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 88,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?> nav-tab-active<?php } ?>\">Hello</a>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 88,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 88,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 88,
+     "severidad": "alta",
+     "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?> nav-tab-active<?php } ?>\">Hello</a>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@88"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (88)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "1d390da69d6a7653",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "1d390da69d6a7653"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 89,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET['tab'])){ ?> nav-tab-active<?php } ?>\">Resources</a>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 89,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 89,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 89,
+     "severidad": "alta",
+     "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET['tab'])){ ?> nav-tab-active<?php } ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@89"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (89)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "2179d75cff0db292",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "2179d75cff0db292"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 523,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<p><strong><?php echo count($_POST[\"wyp-customizations\"]); ?> customization deleted.</strong></p>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 523,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 523,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 523,
+     "severidad": "alta",
+     "codigo": "<p><strong><?php echo count($_POST[\"wyp-customizations\"]); ?> customization deleted.</strong></p>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@523"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (523)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "d015e9c94ee69ea0",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "d015e9c94ee69ea0"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 548,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<p><strong><?php echo count($_POST[\"wyp-animations\"]); ?> animation deleted.</strong></p>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 548,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 548,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 548,
+     "severidad": "alta",
+     "codigo": "<p><strong><?php echo count($_POST[\"wyp-animations\"]); ?> animation deleted.</strong></p>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@548"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (548)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "13eaada842efbab6",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "13eaada842efbab6"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 1082,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$value",
+   "code": "<div id=\"wyp-inline-editor-<?php echo $name; ?>\" class='wyp-inline-css'><?php echo $value; ?></div>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$name",
+     "line": 1060,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$name": [
+     {
+      "var": "$name",
+      "line": 1060,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$value": [
+     {
+      "var": "$value",
+      "line": 1068,
+      "kind": "COPY-CLEAN",
+      "note": "<- $value"
+     },
+     {
+      "var": "$value",
+      "line": 1067,
+      "kind": "COPY-CLEAN",
+      "note": "<- $value"
+     },
+     {
+      "var": "$value",
+      "line": 1066,
+      "kind": "COPY-CLEAN",
+      "note": "<- $value"
+     },
+     {
+      "var": "$value",
+      "line": 1065,
+      "kind": "COPY-CLEAN",
+      "note": "<- $value"
+     },
+     {
+      "var": "$value",
+      "line": 1063,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 1082,
+     "severity": "alta",
+     "flow": "$value"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$value"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 1082,
+     "severidad": "alta",
+     "codigo": "<div id=\"wyp-inline-editor-<?php echo $name; ?>\" class='wyp-inline-css'><?php echo $value; ?></div>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$name#85",
+     "lineage": [
+      "$name#85"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$name#85"
+     ],
+     "transformations": [
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $name#85 lineage=1 -> XSS (navegador) (1082)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "00efeb920f948aee",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "00efeb920f948aee"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+   "line": 1186,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$aclink",
+   "code": "<?php echo $aclink; ?><?php echo $activate_btn; ?></a>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$activate_btn",
+     "line": 1145,
+     "kind": "CONST",
+     "note": "sin input"
+    }
+   ],
+   "chain_all": {
+    "$activate_btn": [
+     {
+      "var": "$activate_btn",
+      "line": 1145,
+      "kind": "CONST",
+      "note": "sin input"
+     }
+    ],
+    "$aclink": [
+     {
+      "var": "$aclink",
+      "line": 1146,
+      "kind": "CONCAT-CLEAN",
+      "note": "<- $primaryButton"
+     },
+     {
+      "var": "$primaryButton",
+      "line": 1142,
+      "kind": "CONST",
+      "note": "sin input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "line": 1186,
+     "severity": "alta",
+     "flow": "$aclink"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/admin/settings.php",
+     "content_hash": "559efae79a42f181",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 53,
+       "tipo": "controllable",
+       "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen&tab=resources'); ?>\" class=\"nav-tab<?php if(isset($_GET"
+      },
+      {
+       "linea": 92,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 134,
+       "tipo": "controllable",
+       "codigo": "<?php if(!isset($_GET['tab'])){ ?>"
+      },
+      {
+       "linea": 325,
+       "tipo": "controllable",
+       "codigo": "if(isset($_POST['wyp_json_import_data']) && check_admin_referer('wyp_json_import_data')){"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$aclink"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 1186,
+     "severidad": "alta",
+     "codigo": "<?php echo $aclink; ?><?php echo $activate_btn; ?></a>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$activate_btn#103",
+     "lineage": [
+      "$activate_btn#103"
+     ],
+     "source": null,
+     "unknown_ancestors": [],
+     "transformations": [
+      "CONST"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 53,
+        "tipo": "controllable",
+        "codigo": "if ( is_network_admin() || isset( $_GET['activate-multi'] ) ) {"
+       },
+       {
+        "linea": 88,
+        "tipo": "controllable",
+        "codigo": "<a href=\"<?php echo admin_url('admin.php?page=wyp-welcome-screen'); ?>\" class=\"nav-tab<?php if(!isset($_GET['tab'])){ ?>"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $activate_btn#103 lineage=1 -> XSS (navegador) (1186)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "55a1bcacee694156",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "55a1bcacee694156"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "yellow-pencil-visual-theme-customizer/editor/editor.php",
+   "line": 158,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$frameNew",
+   "code": "<iframe id=\"iframe\" class=\"yellow_pencil_iframe\" data-href=\"<?php echo $frameNew; ?>\" tabindex=\"-1\"></iframe>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$frameNew",
+     "line": 148,
+     "kind": "CONCAT",
+     "note": "<- $frameNew"
+    },
+    {
+     "var": "$frameNew",
+     "line": 147,
+     "kind": "CONCAT",
+     "note": "<- $frameNew"
+    },
+    {
+     "var": "$frameNew",
+     "line": 146,
+     "kind": "CONCAT",
+     "note": "<- $frameNew"
+    },
+    {
+     "var": "$frameNew",
+     "line": 142,
+     "kind": "CONCAT",
+     "note": "<- $frame,$protocol"
+    },
+    {
+     "var": "$protocol",
+     "line": 135,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$frameNew": [
+     {
+      "var": "$frameNew",
+      "line": 148,
+      "kind": "CONCAT",
+      "note": "<- $frameNew"
+     },
+     {
+      "var": "$frameNew",
+      "line": 147,
+      "kind": "CONCAT",
+      "note": "<- $frameNew"
+     },
+     {
+      "var": "$frameNew",
+      "line": 146,
+      "kind": "CONCAT",
+      "note": "<- $frameNew"
+     },
+     {
+      "var": "$frameNew",
+      "line": 142,
+      "kind": "CONCAT",
+      "note": "<- $frame,$protocol"
+     },
+     {
+      "var": "$protocol",
+      "line": 135,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "yellow-pencil-visual-theme-customizer/editor/editor.php",
+     "line": 158,
+     "severity": "alta",
+     "flow": "$frameNew"
+    },
+    "file": {
+     "file_id": "yellow-pencil-visual-theme-customizer/editor/editor.php",
+     "content_hash": "fb0f8d6861077941",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 17,
+       "tipo": "controllable",
+       "codigo": "if(isset($_GET['href'])){"
+      },
+      {
+       "linea": 20,
+       "tipo": "controllable",
+       "codigo": "if($_GET['href'] == \"\"){"
+      },
+      {
+       "linea": 24,
+       "tipo": "controllable",
+       "codigo": "if(isset($_GET['wyp_page_id'])){"
+      },
+      {
+       "linea": 25,
+       "tipo": "controllable",
+       "codigo": "$id = @intval($_GET['wyp_page_id']);"
+      },
+      {
+       "linea": 32,
+       "tipo": "controllable",
+       "codigo": "$current_URL = $protocol.$_SERVER[\"HTTP_HOST\"].$_SERVER[\"REQUEST_URI\"];"
+      },
+      {
+       "linea": 110,
+       "tipo": "controllable",
+       "codigo": "$frameLink = esc_url(wp_strip_all_tags(urldecode($_GET['href'])));"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$frameNew"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 158,
+     "severidad": "alta",
+     "codigo": "<iframe id=\"iframe\" class=\"yellow_pencil_iframe\" data-href=\"<?php echo $frameNew; ?>\" tabindex=\"-1\"></iframe>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$frameNew#33",
+     "lineage": [
+      "$frameNew#33",
+      "$frameNew#32",
+      "$frameNew#31",
+      "$frameNew#30",
+      "$frame#25",
+      "$frame#24",
+      "$id#23",
+      "$mode#21",
+      "$type#22",
+      "$rand#20",
+      "$frameLink#16",
+      "$protocol#26"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$rand#20",
+      "$protocol#26"
+     ],
+     "transformations": [
+      "CONCAT",
+      "CONCAT",
+      "CONCAT",
+      "CONCAT",
+      "COPY",
+      "COPY",
+      "SOURCE",
+      "SOURCE",
+      "SOURCE",
+      "UNKNOWN-FN",
+      "SOURCE",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 17,
+        "tipo": "controllable",
+        "codigo": "if(isset($_GET['href'])){"
+       },
+       {
+        "linea": 20,
+        "tipo": "controllable",
+        "codigo": "if($_GET['href'] == \"\"){"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $frameNew#33 lineage=12 -> XSS (navegador) (158)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "e86c1d44d1fecca2",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "e86c1d44d1fecca2"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "yellow-pencil-visual-theme-customizer",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "xpro-elementor-addons/classes/class-ajax-handler.php",
+   "line": 428,
+   "type": "SSRF (red)",
+   "severity": "media",
+   "flow": "$api_url",
+   "code": "$request = wp_remote_post( $api_url, $api_args );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$api_url",
+     "line": 409,
+     "kind": "CONCAT",
+     "note": "<- $api_key_sufix,$list_id"
+    },
+    {
+     "var": "$list_id",
+     "line": 396,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$request": [
+     {
+      "var": "$request",
+      "line": 428,
+      "kind": "CONCAT",
+      "note": "<- $api_args,$api_url"
+     },
+     {
+      "var": "$api_args",
+      "line": 412,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$api_args": [
+     {
+      "var": "$api_args",
+      "line": 412,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$api_url": [
+     {
+      "var": "$api_url",
+      "line": 409,
+      "kind": "CONCAT",
+      "note": "<- $api_key_sufix,$list_id"
+     },
+     {
+      "var": "$list_id",
+      "line": 396,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "SSRF (red)",
+     "file": "xpro-elementor-addons/classes/class-ajax-handler.php",
+     "line": 428,
+     "severity": "media",
+     "flow": "$api_url"
+    },
+    "file": {
+     "file_id": "xpro-elementor-addons/classes/class-ajax-handler.php",
+     "content_hash": "2be97afc3a306c35",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 70,
+       "tipo": "controllable",
+       "codigo": "$menu_item_id       = $_REQUEST['settings']['menu_id'];"
+      },
+      {
+       "linea": 71,
+       "tipo": "controllable",
+       "codigo": "$menu_item_settings = wp_json_encode( $_REQUEST['settings'], JSON_UNESCAPED_UNICODE );"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "$menu_id = $_REQUEST['menu_id'];"
+      },
+      {
+       "linea": 89,
+       "tipo": "controllable",
+       "codigo": "$is_enabled = $_REQUEST['mega_menu'];"
+      },
+      {
+       "linea": 108,
+       "tipo": "controllable",
+       "codigo": "$menu_item_id = $_REQUEST['menu_id'];"
+      },
+      {
+       "linea": 144,
+       "tipo": "controllable",
+       "codigo": "$content_key = isset( $_REQUEST['key'] )"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$api_url"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_xpro_elementor_mailchimp_form",
+      "archivo": "xpro-elementor-addons/classes/class-ajax-handler.php",
+      "linea_hook": 40,
+      "callback": "mailchimp_subscribe_form_submit",
+      "anonimo": false,
+      "archivo_callback": "xpro-elementor-addons/classes/class-ajax-handler.php",
+      "linea_callback": 380,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SSRF (red)",
+     "linea": 428,
+     "severidad": "media",
+     "codigo": "$request = wp_remote_post( $api_url, $api_args );"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$request#69",
+     "lineage": [
+      "$request#69",
+      "$api_url#67",
+      "$api_key_sufix#63",
+      "$api_key#62",
+      "$list_id#64",
+      "$api_args#68"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$api_args#68"
+     ],
+     "transformations": [
+      "CONCAT",
+      "CONCAT",
+      "COPY",
+      "SOURCE",
+      "SOURCE",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 70,
+        "tipo": "controllable",
+        "codigo": "$menu_item_id       = $_REQUEST['settings']['menu_id'];"
+       },
+       {
+        "linea": 71,
+        "tipo": "controllable",
+        "codigo": "$menu_item_settings = wp_json_encode( $_REQUEST['settings'], JSON_UNESCAPED_UNICODE );"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $request#69 lineage=6 -> SSRF (red) (428)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "c685c31b44609568",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "c685c31b44609568"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "xpro-elementor-addons",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "one-page-express-companion/src/Companion.php",
+   "line": 881,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$shortcode",
+   "code": "echo do_shortcode( $shortcode );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$shortcode",
+     "line": 869,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$shortcode": [
+     {
+      "var": "$shortcode",
+      "line": 869,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "one-page-express-companion/src/Companion.php",
+     "line": 881,
+     "severity": "alta",
+     "flow": "$shortcode"
+    },
+    "file": {
+     "file_id": "one-page-express-companion/src/Companion.php",
+     "content_hash": "4ac2cec05c82b94f",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 402,
+       "tipo": "controllable",
+       "codigo": "$sourceID  = isset( $_REQUEST['from_post'] ) ? absint( $_REQUEST['from_post'] ) : null;"
+      },
+      {
+       "linea": 414,
+       "tipo": "controllable",
+       "codigo": "$sourceTRID = isset( $_REQUEST['trid'] ) ? absint( $_REQUEST['trid'] ) : null;"
+      },
+      {
+       "linea": 599,
+       "tipo": "controllable",
+       "codigo": "$nonce = isset( $_POST['create_home_page_nounce'] ) ? $_POST['create_home_page_nounce'] : '';"
+      },
+      {
+       "linea": 756,
+       "tipo": "controllable",
+       "codigo": "$post_id = intval( $_REQUEST['page'] );"
+      },
+      {
+       "linea": 766,
+       "tipo": "controllable",
+       "codigo": "$title    = isset( $_REQUEST['page_name'] ) ? wp_kses_post( $_REQUEST['page_name'] ) : __( 'Untitled Page - ' . date( 'Y"
+      },
+      {
+       "linea": 869,
+       "tipo": "controllable",
+       "codigo": "$shortcode = isset( $_REQUEST['shortcode'] ) ? wp_kses_post( base64_decode( $_REQUEST['shortcode'] ) ) : false;"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$shortcode"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_cp_shortcode_refresh",
+      "archivo": "one-page-express-companion/src/Companion.php",
+      "linea_hook": 87,
+      "callback": "shortcodeRefresh",
+      "anonimo": false,
+      "archivo_callback": "one-page-express-companion/src/Companion.php",
+      "linea_callback": 858,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 881,
+     "severidad": "alta",
+     "codigo": "echo do_shortcode( $shortcode );"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$shortcode#99",
+     "lineage": [
+      "$shortcode#99"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 402,
+        "tipo": "controllable",
+        "codigo": "$sourceID  = isset( $_REQUEST['from_post'] ) ? absint( $_REQUEST['from_post'] ) : null;"
+       },
+       {
+        "linea": 414,
+        "tipo": "controllable",
+        "codigo": "$sourceTRID = isset( $_REQUEST['trid'] ) ? absint( $_REQUEST['trid'] ) : null;"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $shortcode#99 lineage=1 -> XSS (navegador) (881)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "7290e7a30aff1989",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "7290e7a30aff1989"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "one-page-express-companion",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "webpushr-web-push-notifications/include/webpushr_stats.php",
+   "line": 20,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$status",
+   "code": "<h6 class=\"webpushr_13fw3_m-0\"><img class=\"wpp_warning_icon\" src=\"<?php echo plugins_url(\"images/wpp_warning.png\", __DIR__);?>\"> <?php echo $status['response_array']['subscription_status']['descriptio",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$status",
+     "line": 12,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$status": [
+     {
+      "var": "$status",
+      "line": 12,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "webpushr-web-push-notifications/include/webpushr_stats.php",
+     "line": 20,
+     "severity": "alta",
+     "flow": "$status"
+    },
+    "file": {
+     "file_id": "webpushr-web-push-notifications/include/webpushr_stats.php",
+     "content_hash": "5e783c2efc11a253",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 12,
+       "tipo": "controllable",
+       "codigo": "$status = wpp_api_request('https://api.webpushr.com/v1/notification/status/all/' . (isset($_GET['paged'])?$_GET['paged']"
+      },
+      {
+       "linea": 106,
+       "tipo": "controllable",
+       "codigo": "<?php wpp_pagination(isset($_GET['paged'])?$_GET['paged']:1,ceil($status['response_array']['notifications']['total'] / 1"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$status"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 20,
+     "severidad": "alta",
+     "codigo": "<h6 class=\"webpushr_13fw3_m-0\"><img class=\"wpp_warning_icon\" src=\"<?php echo plugins_url(\"images/wpp_warning.png\", __DIR__);?>\"> <?php echo $status['response_ar"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$status#1",
+     "lineage": [
+      "$status#1"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 12,
+        "tipo": "controllable",
+        "codigo": "$status = wpp_api_request('https://api.webpushr.com/v1/notification/status/all/' . (isset($_GET['paged'])?$_GET['paged']"
+       },
+       {
+        "linea": 106,
+        "tipo": "controllable",
+        "codigo": "<?php wpp_pagination(isset($_GET['paged'])?$_GET['paged']:1,ceil($status['response_array']['notifications']['total'] / 1"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $status#1 lineage=1 -> XSS (navegador) (20)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "c71254e92bc0bdc9",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "c71254e92bc0bdc9"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "webpushr-web-push-notifications",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "webpushr-web-push-notifications/include/webpushr_stats.php",
+   "line": 113,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$status",
+   "code": "<div class=\"col-12\"><?php echo $status['response_array']['description'];?></div>",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$status",
+     "line": 12,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$status": [
+     {
+      "var": "$status",
+      "line": 12,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "webpushr-web-push-notifications/include/webpushr_stats.php",
+     "line": 113,
+     "severity": "alta",
+     "flow": "$status"
+    },
+    "file": {
+     "file_id": "webpushr-web-push-notifications/include/webpushr_stats.php",
+     "content_hash": "5e783c2efc11a253",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 12,
+       "tipo": "controllable",
+       "codigo": "$status = wpp_api_request('https://api.webpushr.com/v1/notification/status/all/' . (isset($_GET['paged'])?$_GET['paged']"
+      },
+      {
+       "linea": 106,
+       "tipo": "controllable",
+       "codigo": "<?php wpp_pagination(isset($_GET['paged'])?$_GET['paged']:1,ceil($status['response_array']['notifications']['total'] / 1"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$status"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 113,
+     "severidad": "alta",
+     "codigo": "<div class=\"col-12\"><?php echo $status['response_array']['description'];?></div>"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$status#1",
+     "lineage": [
+      "$status#1"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 12,
+        "tipo": "controllable",
+        "codigo": "$status = wpp_api_request('https://api.webpushr.com/v1/notification/status/all/' . (isset($_GET['paged'])?$_GET['paged']"
+       },
+       {
+        "linea": 106,
+        "tipo": "controllable",
+        "codigo": "<?php wpp_pagination(isset($_GET['paged'])?$_GET['paged']:1,ceil($status['response_array']['notifications']['total'] / 1"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $status#1 lineage=1 -> XSS (navegador) (113)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "a9f56cff4664f9d3",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "a9f56cff4664f9d3"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "webpushr-web-push-notifications",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "easy-pricing-tables/includes/ept-block.php",
+   "line": 370,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$add_new",
+   "code": "<div class=\"fca-ept-modal\" <?php echo $add_new ? 'style=\"display:block;\"' : '' ?> >",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$add_new",
+     "line": 345,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$add_new": [
+     {
+      "var": "$add_new",
+      "line": 345,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "easy-pricing-tables/includes/ept-block.php",
+     "line": 370,
+     "severity": "alta",
+     "flow": "$add_new"
+    },
+    "file": {
+     "file_id": "easy-pricing-tables/includes/ept-block.php",
+     "content_hash": "fc5bf85d0e480f6c",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 139,
+       "tipo": "controllable",
+       "codigo": "if ( isSet( $_GET['fca_ept_new_block'] ) ){"
+      },
+      {
+       "linea": 140,
+       "tipo": "controllable",
+       "codigo": "$nonce = empty( $_GET['ept_nonce'] ) ? '' : sanitize_text_field( wp_unslash( $_GET['ept_nonce'] ) );"
+      },
+      {
+       "linea": 167,
+       "tipo": "controllable",
+       "codigo": "if ( isSet( $_GET['fca_ept_new_toggle'] ) ){"
+      },
+      {
+       "linea": 168,
+       "tipo": "controllable",
+       "codigo": "$nonce = empty( $_GET['ept_nonce'] ) ? '' : sanitize_text_field( wp_unslash( $_GET['ept_nonce'] ) );"
+      },
+      {
+       "linea": 195,
+       "tipo": "controllable",
+       "codigo": "if ( isSet( $_GET['fca_ept_new_page'] ) ){"
+      },
+      {
+       "linea": 196,
+       "tipo": "controllable",
+       "codigo": "$nonce = empty( $_GET['ept_nonce'] ) ? '' : sanitize_text_field( wp_unslash( $_GET['ept_nonce'] ) );"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$add_new"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 370,
+     "severidad": "alta",
+     "codigo": "<div class=\"fca-ept-modal\" <?php echo $add_new ? 'style=\"display:block;\"' : '' ?> >"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$add_new#28",
+     "lineage": [
+      "$add_new#28"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 139,
+        "tipo": "controllable",
+        "codigo": "if ( isSet( $_GET['fca_ept_new_block'] ) ){"
+       },
+       {
+        "linea": 140,
+        "tipo": "controllable",
+        "codigo": "$nonce = empty( $_GET['ept_nonce'] ) ? '' : sanitize_text_field( wp_unslash( $_GET['ept_nonce'] ) );"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $add_new#28 lineage=1 -> XSS (navegador) (370)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "300b17724d8cea7d",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "300b17724d8cea7d"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "easy-pricing-tables",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+   "line": 98,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "// sfs_debug_msg( \"recaptcha '$g', '$ip' '$resp' - \\r\\n\" . print_r( $_POST, true ) );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 98,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+     "line": 98,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+     "content_hash": "9dea42dc36fc609e",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 26,
+       "tipo": "controllable",
+       "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ?? '' ) ), 'ss_stopspam_block' ) ) {"
+      },
+      {
+       "linea": 29,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_POST[\"_wpcf7\"] ) ) {"
+      },
+      {
+       "linea": 30,
+       "tipo": "controllable",
+       "codigo": "return wp_json_encode( array_map( 'sanitize_text_field', $_POST ) );"
+      },
+      {
+       "linea": 46,
+       "tipo": "controllable",
+       "codigo": "if ( !empty( $_POST ) && array_key_exists( 'kn', $_POST ) ) {"
+      },
+      {
+       "linea": 47,
+       "tipo": "controllable",
+       "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ) ), 'ss_stopspam_block' ) ) {"
+      },
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$ke = isset( $_POST['ke'] ) ? sanitize_email( wp_unslash( $_POST['ke'] ) ) : '';"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "ALCANCE SIN AUTENTICACION",
+     "salto": "process -> be_load -> sfs_handle_ajax_sfs_process",
+     "hook": "wp_ajax_nopriv_sfs_process"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 98,
+     "severidad": "alta",
+     "codigo": "// sfs_debug_msg( \"recaptcha '$g', '$ip' '$resp' - \\r\\n\" . print_r( $_POST, true ) );"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@98"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 26,
+        "tipo": "controllable",
+        "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ?? '' ) ), 'ss_stopspam_block' ) ) {"
+       },
+       {
+        "linea": 29,
+        "tipo": "controllable",
+        "codigo": "if ( isset( $_POST[\"_wpcf7\"] ) ) {"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (98)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: ALCANCE SIN AUTENTICACION, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "f4a9abbb15c47c68",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "f4a9abbb15c47c68"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "stop-spammer-registrations-plugin",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "stop-spammer-registrations-plugin/stop-spammer-registrations-new.php",
+   "line": 694,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "// sfs_debug_msg( \"Checking reg filter login $x ( ss_user_ip ) = \" . $ip . \", method = \" . $_SERVER['REQUEST_METHOD'] . \", request = \" . print_r( $_REQUEST, true ) );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 694,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "stop-spammer-registrations-plugin/stop-spammer-registrations-new.php",
+     "line": 694,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "stop-spammer-registrations-plugin/stop-spammer-registrations-new.php",
+     "content_hash": "3fdd01ebb9f28528",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 69,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_GET['dismiss'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET["
+      },
+      {
+       "linea": 91,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_GET['sswc-dismiss'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $"
+      },
+      {
+       "linea": 139,
+       "tipo": "controllable",
+       "codigo": "if ( !empty( $_POST ) && array_key_exists( 'jetpack_protect_num', $_POST ) ) {"
+      },
+      {
+       "linea": 145,
+       "tipo": "controllable",
+       "codigo": "if ( !empty( $_POST ) && array_key_exists( 'login_pwd', $_POST ) ) {"
+      },
+      {
+       "linea": 192,
+       "tipo": "controllable",
+       "codigo": "// can we check for $_GET registrations?"
+      },
+      {
+       "linea": 193,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_POST ) && !empty( $_POST ) ) {"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {
+      "veredicto_gates": "hook-resuelto"
+     },
+     "entrada": "hook user_register"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 694,
+     "severidad": "alta",
+     "codigo": "// sfs_debug_msg( \"Checking reg filter login $x ( ss_user_ip ) = \" . $ip . \", method = \" . $_SERVER['REQUEST_METHOD'] . \", request = \" . print_r( $_REQUEST, tru"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@694"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 69,
+        "tipo": "controllable",
+        "codigo": "if ( isset( $_GET['dismiss'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET["
+       },
+       {
+        "linea": 91,
+        "tipo": "controllable",
+        "codigo": "if ( isset( $_GET['sswc-dismiss'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (694)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: hook user_register, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "9f1ea6c206455b7e",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "9f1ea6c206455b7e"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "stop-spammer-registrations-plugin",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "stop-spammer-registrations-plugin/includes/stop-spam-utils.php",
+   "line": 107,
+   "type": "LFI / ARCHIVOS",
+   "severity": "alta",
+   "flow": "$sname",
+   "code": "@file_put_contents( SS_PLUGIN_DATA . \"debug.txt\", \"$now: $sname, $msg, $ip \\r\\n\", FILE_APPEND );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$sname",
+     "line": 106,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$ip": [
+     {
+      "var": "$ip",
+      "line": 100,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$sname": [
+     {
+      "var": "$sname",
+      "line": 106,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ],
+    "$now": [
+     {
+      "var": "$now",
+      "line": 104,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "LFI / ARCHIVOS",
+     "file": "stop-spammer-registrations-plugin/includes/stop-spam-utils.php",
+     "line": 107,
+     "severity": "alta",
+     "flow": "$sname"
+    },
+    "file": {
+     "file_id": "stop-spammer-registrations-plugin/includes/stop-spam-utils.php",
+     "content_hash": "ad693265185c9fd4",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 106,
+       "tipo": "controllable",
+       "codigo": "$sname = isset( $_SERVER['REQUEST_URI'] ) && !empty( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERV"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$sname"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "ALCANCE SIN AUTENTICACION",
+     "salto": "sfs_debug_msg -> process -> ss_add_allow -> ss_init -> be_load -> ss_new_user_ip -> ss_user_reg_filter -> sfs_handle_ajax_sfs_process",
+     "hook": "wp_ajax_nopriv_sfs_process"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "LFI / ARCHIVOS",
+     "linea": 107,
+     "severidad": "alta",
+     "codigo": "@file_put_contents( SS_PLUGIN_DATA . \"debug.txt\", \"$now: $sname, $msg, $ip \\r\\n\", FILE_APPEND );"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$ip#16",
+     "lineage": [
+      "$ip#16"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$ip#16"
+     ],
+     "transformations": [
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 106,
+        "tipo": "controllable",
+        "codigo": "$sname = isset( $_SERVER['REQUEST_URI'] ) && !empty( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERV"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $ip#16 lineage=1 -> LFI / ARCHIVOS (107)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: ALCANCE SIN AUTENTICACION, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "616d12c8a13af8ea",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "616d12c8a13af8ea"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "stop-spammer-registrations-plugin",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "stop-spammer-registrations-plugin/modules/chksession.php",
+   "line": 35,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$sname",
+   "code": "// echo \"Testing Session '$sname'<br>\";",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$sname",
+     "line": 33,
+     "kind": "UNKNOWN-VAR",
+     "note": "vars sin version: $_SERVER"
+    }
+   ],
+   "chain_all": {
+    "$sname": [
+     {
+      "var": "$sname",
+      "line": 33,
+      "kind": "UNKNOWN-VAR",
+      "note": "vars sin version: $_SERVER"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "stop-spammer-registrations-plugin/modules/chksession.php",
+     "line": 35,
+     "severity": "alta",
+     "flow": "$sname"
+    },
+    "file": {
+     "file_id": "stop-spammer-registrations-plugin/modules/chksession.php",
+     "content_hash": "7eca41c40f87f70c",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 15,
+       "tipo": "controllable",
+       "codigo": "if ( !isset( $_POST ) || empty( $_POST ) ) { // no post defined"
+      },
+      {
+       "linea": 16,
+       "tipo": "controllable",
+       "codigo": "if ( !isset( $_COOKIE['ss_protection_time'] ) ) { // if previous set do not reset"
+      },
+      {
+       "linea": 25,
+       "tipo": "controllable",
+       "codigo": "$sname = sanitize_url( wp_unslash( $_SERVER[\"REQUEST_URI\"] ) );"
+      },
+      {
+       "linea": 42,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_COOKIE['ss_stop_spammers_time'] ) ) {"
+      },
+      {
+       "linea": 43,
+       "tipo": "controllable",
+       "codigo": "$stime = sanitize_text_field( wp_unslash( $_COOKIE['ss_stop_spammers_time'] ) );"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$sname"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "ALCANCE SIN AUTENTICACION",
+     "salto": "process -> be_load -> sfs_handle_ajax_sfs_process",
+     "hook": "wp_ajax_nopriv_sfs_process"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 35,
+     "severidad": "alta",
+     "codigo": "// echo \"Testing Session '$sname'<br>\";"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$sname#6",
+     "lineage": [
+      "$sname#6"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$sname#6"
+     ],
+     "transformations": [
+      "UNKNOWN-VAR"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 15,
+        "tipo": "controllable",
+        "codigo": "if ( !isset( $_POST ) || empty( $_POST ) ) { // no post defined"
+       },
+       {
+        "linea": 16,
+        "tipo": "controllable",
+        "codigo": "if ( !isset( $_COOKIE['ss_protection_time'] ) ) { // if previous set do not reset"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $sname#6 lineage=1 -> XSS (navegador) (35)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: ALCANCE SIN AUTENTICACION, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "86c161d09d4d6457",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "86c161d09d4d6457"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "stop-spammer-registrations-plugin",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+   "line": 192,
+   "type": "SSRF (red)",
+   "severity": "media",
+   "flow": "$url",
+   "code": "$resultarray = wp_remote_post( $url, $args );",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$url",
+     "line": 191,
+     "kind": "CONST",
+     "note": "sin input"
+    }
+   ],
+   "chain_all": {
+    "$url": [
+     {
+      "var": "$url",
+      "line": 191,
+      "kind": "CONST",
+      "note": "sin input"
+     }
+    ],
+    "$args": [
+     {
+      "var": "$args",
+      "line": 180,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$resultarray": [
+     {
+      "var": "$resultarray",
+      "line": 192,
+      "kind": "COPY-CLEAN",
+      "note": "<- $args,$url"
+     },
+     {
+      "var": "$url",
+      "line": 191,
+      "kind": "CONST",
+      "note": "sin input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SSRF (red)",
+     "file": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+     "line": 192,
+     "severity": "media",
+     "flow": "$url"
+    },
+    "file": {
+     "file_id": "stop-spammer-registrations-plugin/classes/ss_challenge.php",
+     "content_hash": "9dea42dc36fc609e",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 26,
+       "tipo": "controllable",
+       "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ?? '' ) ), 'ss_stopspam_block' ) ) {"
+      },
+      {
+       "linea": 29,
+       "tipo": "controllable",
+       "codigo": "if ( isset( $_POST[\"_wpcf7\"] ) ) {"
+      },
+      {
+       "linea": 30,
+       "tipo": "controllable",
+       "codigo": "return wp_json_encode( array_map( 'sanitize_text_field', $_POST ) );"
+      },
+      {
+       "linea": 46,
+       "tipo": "controllable",
+       "codigo": "if ( !empty( $_POST ) && array_key_exists( 'kn', $_POST ) ) {"
+      },
+      {
+       "linea": 47,
+       "tipo": "controllable",
+       "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ) ), 'ss_stopspam_block' ) ) {"
+      },
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$ke = isset( $_POST['ke'] ) ? sanitize_email( wp_unslash( $_POST['ke'] ) ) : '';"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$url"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "ALCANCE SIN AUTENTICACION",
+     "salto": "process -> be_load -> sfs_handle_ajax_sfs_process",
+     "hook": "wp_ajax_nopriv_sfs_process"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SSRF (red)",
+     "linea": 192,
+     "severidad": "media",
+     "codigo": "$resultarray = wp_remote_post( $url, $args );"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$args#47",
+     "lineage": [
+      "$args#47"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$args#47"
+     ],
+     "transformations": [
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 26,
+        "tipo": "controllable",
+        "codigo": "if ( !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['kn'] ?? '' ) ), 'ss_stopspam_block' ) ) {"
+       },
+       {
+        "linea": 29,
+        "tipo": "controllable",
+        "codigo": "if ( isset( $_POST[\"_wpcf7\"] ) ) {"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $args#47 lineage=1 -> SSRF (red) (192)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: ALCANCE SIN AUTENTICACION, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "d9e21a04f1e8a8a2",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "d9e21a04f1e8a8a2"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "stop-spammer-registrations-plugin",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 162,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_ga_events\" class=\"tab-content<?php echo $active_tab != 'tab_ga_events' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 162,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 162,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_ga_events\" class=\"tab-content<?php echo $active_tab != 'tab_ga_events' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (162)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "7e8bdbfe280551f4",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "7e8bdbfe280551f4"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 249,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_cookie_banner\" class=\"tab-content<?php echo $active_tab != 'tab_cookie_banner' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 249,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 249,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_cookie_banner\" class=\"tab-content<?php echo $active_tab != 'tab_cookie_banner' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (249)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "1a3ade310d96fe60",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "1a3ade310d96fe60"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 343,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_wim\" class=\"tab-content<?php echo $active_tab != 'tab_wim' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 343,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 343,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_wim\" class=\"tab-content<?php echo $active_tab != 'tab_wim' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (343)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "c8b39affb0bf9239",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "c8b39affb0bf9239"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 452,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_cf7\" class=\"tab-content<?php echo $active_tab != 'tab_cf7' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 452,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 452,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_cf7\" class=\"tab-content<?php echo $active_tab != 'tab_cf7' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (452)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "0945e1dc9de18ab7",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "0945e1dc9de18ab7"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 507,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_hf\" class=\"tab-content<?php echo $active_tab != 'tab_hf' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 507,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 507,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_hf\" class=\"tab-content<?php echo $active_tab != 'tab_hf' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (507)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "88d617d63f1afc13",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "88d617d63f1afc13"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+   "line": 552,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$active_tab",
+   "code": "<div id=\"tab_aio_options\" class=\"tab-content<?php echo $active_tab != 'tab_aio_options' ? ' d-none' : ''; ?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$active_tab",
+     "line": 80,
+     "kind": "COPY",
+     "note": "<- $allowed_tabs,$default_tab,$get_tab"
+    },
+    {
+     "var": "$allowed_tabs",
+     "line": 78,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$active_tab": [
+     {
+      "var": "$active_tab",
+      "line": 80,
+      "kind": "COPY",
+      "note": "<- $allowed_tabs,$default_tab,$get_tab"
+     },
+     {
+      "var": "$allowed_tabs",
+      "line": 78,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "line": 552,
+     "severity": "alta",
+     "flow": "$active_tab"
+    },
+    "file": {
+     "file_id": "lw-all-in-one/admin/partials/lw-all-in-one-admin-display.php",
+     "content_hash": "ede36c2b367aa793",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 79,
+       "tipo": "controllable",
+       "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+      },
+      {
+       "linea": 488,
+       "tipo": "controllable",
+       "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+      },
+      {
+       "linea": 501,
+       "tipo": "controllable",
+       "codigo": "<input type=\"number\" id=\"id_contratto\" name=\"<?php echo esc_attr($this->plugin_name); ?>[lw_cf7_fields][id_contratto]\" m"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$active_tab"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 552,
+     "severidad": "alta",
+     "codigo": "<div id=\"tab_aio_options\" class=\"tab-content<?php echo $active_tab != 'tab_aio_options' ? ' d-none' : ''; ?>\">"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$active_tab#43",
+     "lineage": [
+      "$active_tab#43",
+      "$get_tab#42",
+      "$default_tab#40",
+      "$allowed_tabs#41"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$allowed_tabs#41"
+     ],
+     "transformations": [
+      "COPY",
+      "SOURCE",
+      "CONST",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 79,
+        "tipo": "controllable",
+        "codigo": "$get_tab = isset($_GET['tab']) ? esc_attr(sanitize_text_field($_GET['tab'])) : '';"
+       },
+       {
+        "linea": 488,
+        "tipo": "controllable",
+        "codigo": "<select id=\"tipo_contratto\" name=\"<?php echo esc_attr($this->plugin_name);?>[lw_cf7_fields][tipo_contratto]\" <?php if (i"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $active_tab#43 lineage=4 -> XSS (navegador) (552)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "70444a2020d2ab81",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "70444a2020d2ab81"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "lw-all-in-one",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/includes/cache-status/table-nav.php",
+   "line": 2,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replace('~\\?(.*)~','',$_SERVER['REQUEST_URI'] ))?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 2,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/includes/cache-status/table-nav.php",
+     "line": 2,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/includes/cache-status/table-nav.php",
+     "content_hash": "cff94072a4246f97",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 2,
+       "tipo": "controllable",
+       "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replac"
+      },
+      {
+       "linea": 5,
+       "tipo": "controllable",
+       "codigo": "<option value=\"cached\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-status-filte"
+      },
+      {
+       "linea": 6,
+       "tipo": "controllable",
+       "codigo": "<option value=\"not-cached\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-status-f"
+      },
+      {
+       "linea": 7,
+       "tipo": "controllable",
+       "codigo": "<option value=\"not-cacheable\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-statu"
+      },
+      {
+       "linea": 8,
+       "tipo": "controllable",
+       "codigo": "<option value=\"404\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-status-filter']"
+      },
+      {
+       "linea": 9,
+       "tipo": "controllable",
+       "codigo": "<option value=\"redirect\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-status-fil"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 2,
+     "severidad": "alta",
+     "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replace('~\\?(.*)~','',$_SERVER['REQUEST_URI'] "
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@2"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 2,
+        "tipo": "controllable",
+        "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replac"
+       },
+       {
+        "linea": 5,
+        "tipo": "controllable",
+        "codigo": "<option value=\"cached\"<?php echo (isset($_REQUEST['cache-status-filter']) ? ' ' . selected($_REQUEST['cache-status-filte"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (2)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "3450fa4dc1bf03bc",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "3450fa4dc1bf03bc"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/includes/classes/class.ajax.php",
+   "line": 809,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$block",
+   "code": "echo do_shortcode($block->render());",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$block",
+     "line": 808,
+     "kind": "COPY",
+     "note": "<- $block_data"
+    },
+    {
+     "var": "$block_data",
+     "line": 807,
+     "kind": "COPY",
+     "note": "<- $data"
+    },
+    {
+     "var": "$data",
+     "line": 798,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$block": [
+     {
+      "var": "$block",
+      "line": 808,
+      "kind": "COPY",
+      "note": "<- $block_data"
+     },
+     {
+      "var": "$block_data",
+      "line": 807,
+      "kind": "COPY",
+      "note": "<- $data"
+     },
+     {
+      "var": "$data",
+      "line": 798,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/includes/classes/class.ajax.php",
+     "line": 809,
+     "severity": "alta",
+     "flow": "$block"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/includes/classes/class.ajax.php",
+     "content_hash": "893a4e193b7075e2",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+      },
+      {
+       "linea": 87,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "$urls = Swift_Performance_Cache::custom_purge($_REQUEST['rule']);"
+      },
+      {
+       "linea": 127,
+       "tipo": "controllable",
+       "codigo": "parse_str($_REQUEST['data'], $data);"
+      },
+      {
+       "linea": 149,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['url'])){"
+      },
+      {
+       "linea": 153,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::prebuild_cache_hit($_REQUEST['url']);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$block"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_swift_performance_ajaxify",
+      "archivo": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_hook": 35,
+      "callback": "ajaxify",
+      "anonimo": false,
+      "archivo_callback": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_callback": 794,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 809,
+     "severidad": "alta",
+     "codigo": "echo do_shortcode($block->render());"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$block#72",
+     "lineage": [
+      "$block#72",
+      "$block_data#71",
+      "$data#69"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "COPY",
+      "COPY",
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 50,
+        "tipo": "controllable",
+        "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+       },
+       {
+        "linea": 87,
+        "tipo": "controllable",
+        "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $block#72 lineage=3 -> XSS (navegador) (809)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "d3aeec50c53db660",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "d3aeec50c53db660"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/includes/classes/class.ajax.php",
+   "line": 835,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$product",
+   "code": "echo $product->get_price_html();",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$product",
+     "line": 833,
+     "kind": "COPY",
+     "note": "<- $product_id"
+    },
+    {
+     "var": "$product_id",
+     "line": 832,
+     "kind": "COPY",
+     "note": "<- $data"
+    },
+    {
+     "var": "$data",
+     "line": 798,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$product": [
+     {
+      "var": "$product",
+      "line": 833,
+      "kind": "COPY",
+      "note": "<- $product_id"
+     },
+     {
+      "var": "$product_id",
+      "line": 832,
+      "kind": "COPY",
+      "note": "<- $data"
+     },
+     {
+      "var": "$data",
+      "line": 798,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/includes/classes/class.ajax.php",
+     "line": 835,
+     "severity": "alta",
+     "flow": "$product"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/includes/classes/class.ajax.php",
+     "content_hash": "893a4e193b7075e2",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+      },
+      {
+       "linea": 87,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "$urls = Swift_Performance_Cache::custom_purge($_REQUEST['rule']);"
+      },
+      {
+       "linea": 127,
+       "tipo": "controllable",
+       "codigo": "parse_str($_REQUEST['data'], $data);"
+      },
+      {
+       "linea": 149,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['url'])){"
+      },
+      {
+       "linea": 153,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::prebuild_cache_hit($_REQUEST['url']);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$product"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_swift_performance_ajaxify",
+      "archivo": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_hook": 35,
+      "callback": "ajaxify",
+      "anonimo": false,
+      "archivo_callback": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_callback": 794,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 835,
+     "severidad": "alta",
+     "codigo": "echo $product->get_price_html();"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$product#78",
+     "lineage": [
+      "$product#78",
+      "$product_id#77",
+      "$data#69"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "COPY",
+      "COPY",
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 50,
+        "tipo": "controllable",
+        "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+       },
+       {
+        "linea": 87,
+        "tipo": "controllable",
+        "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $product#78 lineage=3 -> XSS (navegador) (835)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "153dcac860840cf4",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "153dcac860840cf4"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/includes/classes/class.ajax.php",
+   "line": 846,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$document, $widget_data",
+   "code": "echo $document->render_element($widget_data);",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$widget_data",
+     "line": 843,
+     "kind": "COPY",
+     "note": "<- $data"
+    },
+    {
+     "var": "$data",
+     "line": 798,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$widget_data": [
+     {
+      "var": "$widget_data",
+      "line": 843,
+      "kind": "COPY",
+      "note": "<- $data"
+     },
+     {
+      "var": "$data",
+      "line": 798,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ],
+    "$document": [
+     {
+      "var": "$document",
+      "line": 844,
+      "kind": "COPY",
+      "note": "<- $data"
+     },
+     {
+      "var": "$data",
+      "line": 798,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/includes/classes/class.ajax.php",
+     "line": 846,
+     "severity": "alta",
+     "flow": "$document, $widget_data"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/includes/classes/class.ajax.php",
+     "content_hash": "893a4e193b7075e2",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+      },
+      {
+       "linea": 87,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "$urls = Swift_Performance_Cache::custom_purge($_REQUEST['rule']);"
+      },
+      {
+       "linea": 127,
+       "tipo": "controllable",
+       "codigo": "parse_str($_REQUEST['data'], $data);"
+      },
+      {
+       "linea": 149,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['url'])){"
+      },
+      {
+       "linea": 153,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::prebuild_cache_hit($_REQUEST['url']);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$document",
+      "$widget_data"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_swift_performance_ajaxify",
+      "archivo": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_hook": 35,
+      "callback": "ajaxify",
+      "anonimo": false,
+      "archivo_callback": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_callback": 794,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 846,
+     "severidad": "alta",
+     "codigo": "echo $document->render_element($widget_data);"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$widget_data#80",
+     "lineage": [
+      "$widget_data#80",
+      "$data#69"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "COPY",
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 50,
+        "tipo": "controllable",
+        "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+       },
+       {
+        "linea": 87,
+        "tipo": "controllable",
+        "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $widget_data#80 lineage=2 -> XSS (navegador) (846)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "8a1f5f4e0e005d8d",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "8a1f5f4e0e005d8d"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/image-optimizer/templates/table-nav.php",
+   "line": 5,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replace('~\\?(.*)~','',$_SERVER['REQUEST_URI'] ))?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 5,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/modules/image-optimizer/templates/table-nav.php",
+     "line": 5,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/image-optimizer/templates/table-nav.php",
+     "content_hash": "3966c425cc86eb2d",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 2,
+       "tipo": "controllable",
+       "codigo": "$search = (isset($_REQUEST['s']) ? $_REQUEST['s'] : '');"
+      },
+      {
+       "linea": 5,
+       "tipo": "controllable",
+       "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replac"
+      },
+      {
+       "linea": 8,
+       "tipo": "controllable",
+       "codigo": "<option value=\"1\"<?php echo (isset($_REQUEST['status-filter']) ? ' ' . selected($_REQUEST['status-filter'], '1', false) "
+      },
+      {
+       "linea": 9,
+       "tipo": "controllable",
+       "codigo": "<option value=\"0\"<?php echo (isset($_REQUEST['status-filter']) ? ' ' . selected($_REQUEST['status-filter'], '0', false) "
+      },
+      {
+       "linea": 10,
+       "tipo": "controllable",
+       "codigo": "<option value=\"2\"<?php echo (isset($_REQUEST['status-filter']) ? ' ' . selected($_REQUEST['status-filter'], '2', false) "
+      },
+      {
+       "linea": 11,
+       "tipo": "controllable",
+       "codigo": "<option value=\"-1\"<?php echo (isset($_REQUEST['status-filter']) ? ' ' . selected($_REQUEST['status-filter'], '-1', false"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 5,
+     "severidad": "alta",
+     "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replace('~\\?(.*)~','',$_SERVER['REQUEST_URI'] "
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@5"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 2,
+        "tipo": "controllable",
+        "codigo": "$search = (isset($_REQUEST['s']) ? $_REQUEST['s'] : '');"
+       },
+       {
+        "linea": 5,
+        "tipo": "controllable",
+        "codigo": "<form class=\"swift-list-table-filter\" action=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . preg_replac"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (5)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "98ddaf9f48ed0830",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "98ddaf9f48ed0830"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/templates/dashboard.php",
+   "line": 102,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 102,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/templates/dashboard.php",
+     "line": 102,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/templates/dashboard.php",
+     "content_hash": "0f496f3d2b504677",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 102,
+       "tipo": "controllable",
+       "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTT"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 102,
+     "severidad": "alta",
+     "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );?>\""
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@102"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 102,
+        "tipo": "controllable",
+        "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTT"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (102)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "e2b3afbf9a189229",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "e2b3afbf9a189229"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/templates/whitelabel/dashboard.php",
+   "line": 119,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "superglobal directo",
+   "code": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );?>\">",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 119,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/templates/whitelabel/dashboard.php",
+     "line": 119,
+     "severity": "alta",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/templates/whitelabel/dashboard.php",
+     "content_hash": "a589e5b74b8c4d82",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 119,
+       "tipo": "controllable",
+       "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTT"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "carga en toda peticion"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 119,
+     "severidad": "alta",
+     "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );?>\""
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@119"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 119,
+        "tipo": "controllable",
+        "codigo": "<input type=\"hidden\" id=\"swift-performance-warmup-table-url\" value=\"<?php echo set_url_scheme( 'http://' . $_SERVER['HTT"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> XSS (navegador) (119)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: carga en toda peticion, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "DEMOSTRADO-ESTATICO",
+     "puntos_fiscal": "4/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "357e56304b412dc9",
+    "verdict_history": [
+     {
+      "verdicto": "DEMOSTRADO-ESTATICO",
+      "motivo": "fiscal 4/4, defensa 0 fuerte(s)",
+      "evidence_hash": "357e56304b412dc9"
+     }
+    ]
+   },
+   "_verdict": "DEMOSTRADO-ESTATICO",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+   "line": 345,
+   "type": "SQLI (base de datos)",
+   "severity": "critica",
+   "flow": "$id",
+   "code": "Swift_Performance::mysql_query('UPDATE ' . SWIFT_PERFORMANCE_TABLE_PREFIX . 'warmup SET type = \"error\" WHERE id=\"' . $id . '\" AND type=\"\" LIMIT 1');",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$id",
+     "line": 344,
+     "kind": "CONCAT",
+     "note": "<- $path"
+    },
+    {
+     "var": "$path",
+     "line": 343,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$id": [
+     {
+      "var": "$id",
+      "line": 344,
+      "kind": "CONCAT",
+      "note": "<- $path"
+     },
+     {
+      "var": "$path",
+      "line": 343,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SQLI (base de datos)",
+     "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "line": 345,
+     "severity": "critica",
+     "flow": "$id"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "content_hash": "38e7388a918974c8",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 52,
+       "tipo": "controllable",
+       "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+      },
+      {
+       "linea": 322,
+       "tipo": "controllable",
+       "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      },
+      {
+       "linea": 327,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::log('Skip optimizing.' . $reasons . ' URL:' . $_SERVER['REQUEST_URI'] . ', Request:' . serialize($_RE"
+      },
+      {
+       "linea": 335,
+       "tipo": "controllable",
+       "codigo": "$this->current_path\t= ltrim(trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)),'/');"
+      },
+      {
+       "linea": 339,
+       "tipo": "controllable",
+       "codigo": "$info = 'Status code:' . http_response_code() . ', URL:' . $_SERVER['REQUEST_URI'] . ', POST:' . serialize($_POST) . ', "
+      },
+      {
+       "linea": 343,
+       "tipo": "controllable",
+       "codigo": "$path\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$id"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SQLI (base de datos)",
+     "linea": 345,
+     "severidad": "critica",
+     "codigo": "Swift_Performance::mysql_query('UPDATE ' . SWIFT_PERFORMANCE_TABLE_PREFIX . 'warmup SET type = \"error\" WHERE id=\"' . $id . '\" AND type=\"\" LIMIT 1');"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "$id#25",
+     "lineage": [
+      "$id#25",
+      "$path#24"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "CONCAT",
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 52,
+        "tipo": "controllable",
+        "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+       },
+       {
+        "linea": 322,
+        "tipo": "controllable",
+        "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA $id#25 lineage=2 -> SQLI (base de datos) (345)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "788067d59e3b02c7",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "788067d59e3b02c7"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/cache/cache.php",
+   "line": 1083,
+   "type": "SQLI (base de datos)",
+   "severity": "critica",
+   "flow": "$id",
+   "code": "Swift_Performance::mysql_query(\"UPDATE \" . SWIFT_PERFORMANCE_TABLE_PREFIX . \"warmup SET timestamp = 0, type = '' WHERE id = '{$id}' LIMIT 1\");",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$id",
+     "line": 1082,
+     "kind": "COPY-CLEAN",
+     "note": "<- $bb_permalink"
+    },
+    {
+     "var": "$bb_permalink",
+     "line": 1058,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$id": [
+     {
+      "var": "$id",
+      "line": 1082,
+      "kind": "COPY-CLEAN",
+      "note": "<- $bb_permalink"
+     },
+     {
+      "var": "$bb_permalink",
+      "line": 1058,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SQLI (base de datos)",
+     "file": "swift-performance-lite/modules/cache/cache.php",
+     "line": 1083,
+     "severity": "critica",
+     "flow": "$id"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/cache/cache.php",
+     "content_hash": "db8841ff711fcdb5",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 31,
+       "tipo": "controllable",
+       "codigo": "if (isset($_GET['force-cache'])){"
+      },
+      {
+       "linea": 32,
+       "tipo": "controllable",
+       "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+      },
+      {
+       "linea": 54,
+       "tipo": "controllable",
+       "codigo": "if (!isset($_GET['force-cached']) && defined('LOGGED_IN_COOKIE') && isset($_COOKIE[LOGGED_IN_COOKIE]) && Swift_Performan"
+      },
+      {
+       "linea": 55,
+       "tipo": "controllable",
+       "codigo": "@list($user_login,,,) = explode('|', $_COOKIE[LOGGED_IN_COOKIE]);"
+      },
+      {
+       "linea": 58,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . $device . '/authenticated/' . $ha"
+      },
+      {
+       "linea": 62,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . (!empty($prefix) ? '@prefix/' . t"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$id"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {
+      "veredicto_gates": "hook-resuelto"
+     },
+     "entrada": "hook init"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SQLI (base de datos)",
+     "linea": 1083,
+     "severidad": "critica",
+     "codigo": "Swift_Performance::mysql_query(\"UPDATE \" . SWIFT_PERFORMANCE_TABLE_PREFIX . \"warmup SET timestamp = 0, type = '' WHERE id = '{$id}' LIMIT 1\");"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$id#129",
+     "lineage": [
+      "$id#129",
+      "$bb_permalink#126"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$bb_permalink#126"
+     ],
+     "transformations": [
+      "COPY-CLEAN",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 31,
+        "tipo": "controllable",
+        "codigo": "if (isset($_GET['force-cache'])){"
+       },
+       {
+        "linea": 32,
+        "tipo": "controllable",
+        "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $id#129 lineage=2 -> SQLI (base de datos) (1083)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: hook init, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "c9fc248f6352e9c2",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "c9fc248f6352e9c2"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/includes/classes/class.ajax.php",
+   "line": 821,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$shortcode",
+   "code": "echo do_shortcode('[' . $shortcode[0] . ' ' . $attributes . ']');",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$shortcode",
+     "line": 813,
+     "kind": "COPY",
+     "note": "<- $data"
+    },
+    {
+     "var": "$data",
+     "line": 798,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    }
+   ],
+   "chain_all": {
+    "$shortcode": [
+     {
+      "var": "$shortcode",
+      "line": 813,
+      "kind": "COPY",
+      "note": "<- $data"
+     },
+     {
+      "var": "$data",
+      "line": 798,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     }
+    ],
+    "$attributes": [
+     {
+      "var": "$attributes",
+      "line": 817,
+      "kind": "CONCAT-CLEAN",
+      "note": "<- $attributes"
+     },
+     {
+      "var": "$attributes",
+      "line": 812,
+      "kind": "CONST",
+      "note": "sin input"
+     }
+    ]
+   },
+   "_gate": "REVISAR-AUTH",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/includes/classes/class.ajax.php",
+     "line": 821,
+     "severity": "alta",
+     "flow": "$shortcode"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/includes/classes/class.ajax.php",
+     "content_hash": "893a4e193b7075e2",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 50,
+       "tipo": "controllable",
+       "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+      },
+      {
+       "linea": 87,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+      },
+      {
+       "linea": 88,
+       "tipo": "controllable",
+       "codigo": "$urls = Swift_Performance_Cache::custom_purge($_REQUEST['rule']);"
+      },
+      {
+       "linea": 127,
+       "tipo": "controllable",
+       "codigo": "parse_str($_REQUEST['data'], $data);"
+      },
+      {
+       "linea": 149,
+       "tipo": "controllable",
+       "codigo": "if (isset($_REQUEST['url'])){"
+      },
+      {
+       "linea": 153,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::prebuild_cache_hit($_REQUEST['url']);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$shortcode"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": {
+      "accion": "wp_ajax_swift_performance_ajaxify",
+      "archivo": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_hook": 35,
+      "callback": "ajaxify",
+      "anonimo": false,
+      "archivo_callback": "swift-performance-lite/includes/classes/class.ajax.php",
+      "linea_callback": 794,
+      "caps": false,
+      "nonce": false,
+      "veredicto": "REVISAR-AUTH"
+     },
+     "compuertas": {
+      "nonce": false,
+      "caps": false,
+      "nopriv": false,
+      "veredicto_gates": "REVISAR-AUTH"
+     },
+     "entrada": "requiere sesion (cualquier rol)"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 821,
+     "severidad": "alta",
+     "codigo": "echo do_shortcode('[' . $shortcode[0] . ' ' . $attributes . ']');"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$attributes#75",
+     "lineage": [
+      "$attributes#75",
+      "$attributes#73"
+     ],
+     "source": null,
+     "unknown_ancestors": [],
+     "transformations": [
+      "CONCAT-CLEAN",
+      "CONST"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 50,
+        "tipo": "controllable",
+        "codigo": "$type = (isset($_REQUEST['type']) ? $_REQUEST['type'] : 'all');"
+       },
+       {
+        "linea": 87,
+        "tipo": "controllable",
+        "codigo": "if (isset($_REQUEST['rule']) && !empty($_REQUEST['rule'])){"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $attributes#75 lineage=2 -> XSS (navegador) (821)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: requiere sesion (cualquier rol), nonce=False, caps=False"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "c8e542f2f39fe8b9",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "c8e542f2f39fe8b9"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+   "line": 1998,
+   "type": "XSS (navegador)",
+   "severity": "alta",
+   "flow": "$response",
+   "code": "echo $response['body'];",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$response",
+     "line": 1993,
+     "kind": "CONCAT",
+     "note": "<- $response"
+    },
+    {
+     "var": "$response",
+     "line": 1989,
+     "kind": "CONCAT",
+     "note": "<- $url"
+    },
+    {
+     "var": "$url",
+     "line": 1982,
+     "kind": "CONCAT",
+     "note": "<- $asset_path"
+    },
+    {
+     "var": "$asset_path",
+     "line": 1980,
+     "kind": "CONCAT",
+     "note": "<- $asset_path"
+    },
+    {
+     "var": "$asset_path",
+     "line": 1979,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    },
+    {
+     "var": "$cache_path",
+     "line": 1976,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$response": [
+     {
+      "var": "$response",
+      "line": 1993,
+      "kind": "CONCAT",
+      "note": "<- $response"
+     },
+     {
+      "var": "$response",
+      "line": 1989,
+      "kind": "CONCAT",
+      "note": "<- $url"
+     },
+     {
+      "var": "$url",
+      "line": 1982,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1980,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1979,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     },
+     {
+      "var": "$cache_path",
+      "line": 1976,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "XSS (navegador)",
+     "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "line": 1998,
+     "severity": "alta",
+     "flow": "$response"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "content_hash": "38e7388a918974c8",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 52,
+       "tipo": "controllable",
+       "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+      },
+      {
+       "linea": 322,
+       "tipo": "controllable",
+       "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      },
+      {
+       "linea": 327,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::log('Skip optimizing.' . $reasons . ' URL:' . $_SERVER['REQUEST_URI'] . ', Request:' . serialize($_RE"
+      },
+      {
+       "linea": 335,
+       "tipo": "controllable",
+       "codigo": "$this->current_path\t= ltrim(trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)),'/');"
+      },
+      {
+       "linea": 339,
+       "tipo": "controllable",
+       "codigo": "$info = 'Status code:' . http_response_code() . ', URL:' . $_SERVER['REQUEST_URI'] . ', POST:' . serialize($_POST) . ', "
+      },
+      {
+       "linea": 343,
+       "tipo": "controllable",
+       "codigo": "$path\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$response"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {
+      "veredicto_gates": "hook-resuelto"
+     },
+     "entrada": "hook init"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "XSS (navegador)",
+     "linea": 1998,
+     "severidad": "alta",
+     "codigo": "echo $response['body'];"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$response#382",
+     "lineage": [
+      "$response#382",
+      "$response#381",
+      "$url#379",
+      "$asset_path#378",
+      "$asset_path#377",
+      "$cache_path#376"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$cache_path#376"
+     ],
+     "transformations": [
+      "CONCAT",
+      "CONCAT",
+      "CONCAT",
+      "CONCAT",
+      "SOURCE",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 52,
+        "tipo": "controllable",
+        "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+       },
+       {
+        "linea": 322,
+        "tipo": "controllable",
+        "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $response#382 lineage=6 -> XSS (navegador) (1998)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: hook init, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "55a85dcdb277cc37",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "55a85dcdb277cc37"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+   "line": 1989,
+   "type": "SSRF (red)",
+   "severity": "media",
+   "flow": "$url",
+   "code": "$response = wp_remote_get($url);",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$url",
+     "line": 1982,
+     "kind": "CONCAT",
+     "note": "<- $asset_path"
+    },
+    {
+     "var": "$asset_path",
+     "line": 1980,
+     "kind": "CONCAT",
+     "note": "<- $asset_path"
+    },
+    {
+     "var": "$asset_path",
+     "line": 1979,
+     "kind": "SOURCE",
+     "note": "superglobal/input"
+    },
+    {
+     "var": "$cache_path",
+     "line": 1976,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$url": [
+     {
+      "var": "$url",
+      "line": 1982,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1980,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1979,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     },
+     {
+      "var": "$cache_path",
+      "line": 1976,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ],
+    "$response": [
+     {
+      "var": "$response",
+      "line": 1989,
+      "kind": "CONCAT",
+      "note": "<- $url"
+     },
+     {
+      "var": "$url",
+      "line": 1982,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1980,
+      "kind": "CONCAT",
+      "note": "<- $asset_path"
+     },
+     {
+      "var": "$asset_path",
+      "line": 1979,
+      "kind": "SOURCE",
+      "note": "superglobal/input"
+     },
+     {
+      "var": "$cache_path",
+      "line": 1976,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SSRF (red)",
+     "file": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "line": 1989,
+     "severity": "media",
+     "flow": "$url"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/asset-manager/asset-manager.php",
+     "content_hash": "38e7388a918974c8",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 52,
+       "tipo": "controllable",
+       "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+      },
+      {
+       "linea": 322,
+       "tipo": "controllable",
+       "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      },
+      {
+       "linea": 327,
+       "tipo": "controllable",
+       "codigo": "Swift_Performance::log('Skip optimizing.' . $reasons . ' URL:' . $_SERVER['REQUEST_URI'] . ', Request:' . serialize($_RE"
+      },
+      {
+       "linea": 335,
+       "tipo": "controllable",
+       "codigo": "$this->current_path\t= ltrim(trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)),'/');"
+      },
+      {
+       "linea": 339,
+       "tipo": "controllable",
+       "codigo": "$info = 'Status code:' . http_response_code() . ', URL:' . $_SERVER['REQUEST_URI'] . ', POST:' . serialize($_POST) . ', "
+      },
+      {
+       "linea": 343,
+       "tipo": "controllable",
+       "codigo": "$path\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$url"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {
+      "veredicto_gates": "hook-resuelto"
+     },
+     "entrada": "hook init"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SSRF (red)",
+     "linea": 1989,
+     "severidad": "media",
+     "codigo": "$response = wp_remote_get($url);"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$url#379",
+     "lineage": [
+      "$url#379",
+      "$asset_path#378",
+      "$asset_path#377",
+      "$cache_path#376"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [
+      "$cache_path#376"
+     ],
+     "transformations": [
+      "CONCAT",
+      "CONCAT",
+      "SOURCE",
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 52,
+        "tipo": "controllable",
+        "codigo": "if ((isset($_GET['action']) && $_GET['action'] == 'elementor') || isset($_GET['elementor-preview'])){"
+       },
+       {
+        "linea": 322,
+        "tipo": "controllable",
+        "codigo": "$path\t\t= parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $url#379 lineage=4 -> SSRF (red) (1989)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: hook init, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "a8bb99122a13bdef",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "a8bb99122a13bdef"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/cache/cache.php",
+   "line": 1097,
+   "type": "SSRF (red)",
+   "severity": "media",
+   "flow": "$bb_permalink",
+   "code": "wp_remote_get($bb_permalink);",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "$bb_permalink",
+     "line": 1058,
+     "kind": "UNKNOWN-FN",
+     "note": "valor de funcion no resuelta"
+    }
+   ],
+   "chain_all": {
+    "$bb_permalink": [
+     {
+      "var": "$bb_permalink",
+      "line": 1058,
+      "kind": "UNKNOWN-FN",
+      "note": "valor de funcion no resuelta"
+     }
+    ]
+   },
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SSRF (red)",
+     "file": "swift-performance-lite/modules/cache/cache.php",
+     "line": 1097,
+     "severity": "media",
+     "flow": "$bb_permalink"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/cache/cache.php",
+     "content_hash": "db8841ff711fcdb5",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 31,
+       "tipo": "controllable",
+       "codigo": "if (isset($_GET['force-cache'])){"
+      },
+      {
+       "linea": 32,
+       "tipo": "controllable",
+       "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+      },
+      {
+       "linea": 54,
+       "tipo": "controllable",
+       "codigo": "if (!isset($_GET['force-cached']) && defined('LOGGED_IN_COOKIE') && isset($_COOKIE[LOGGED_IN_COOKIE]) && Swift_Performan"
+      },
+      {
+       "linea": 55,
+       "tipo": "controllable",
+       "codigo": "@list($user_login,,,) = explode('|', $_COOKIE[LOGGED_IN_COOKIE]);"
+      },
+      {
+       "linea": 58,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . $device . '/authenticated/' . $ha"
+      },
+      {
+       "linea": 62,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . (!empty($prefix) ? '@prefix/' . t"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "$bb_permalink"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {
+      "veredicto_gates": "hook-resuelto"
+     },
+     "entrada": "hook init"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SSRF (red)",
+     "linea": 1097,
+     "severidad": "media",
+     "codigo": "wp_remote_get($bb_permalink);"
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_INCOMPLETE",
+     "value": "$bb_permalink#126",
+     "lineage": [
+      "$bb_permalink#126"
+     ],
+     "source": null,
+     "unknown_ancestors": [
+      "$bb_permalink#126"
+     ],
+     "transformations": [
+      "UNKNOWN-FN"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 31,
+        "tipo": "controllable",
+        "codigo": "if (isset($_GET['force-cache'])){"
+       },
+       {
+        "linea": 32,
+        "tipo": "controllable",
+        "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": false,
+      "evidencia": "PRUEBA SSA $bb_permalink#126 lineage=1 -> SSRF (red) (1097)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": true,
+      "evidencia": "entrada: hook init, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "7dc639d3b8ded2c5",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "7dc639d3b8ded2c5"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  },
+  {
+   "file": "swift-performance-lite/modules/cache/cache.php",
+   "line": 2499,
+   "type": "SSRF (red)",
+   "severity": "media",
+   "flow": "superglobal directo",
+   "code": "$response = wp_remote_post(home_url($_SERVER['REQUEST_URI']), array(",
+   "verdict": "flujo fuente->sink SIN sanitizador (taint estatico, nivel 1)",
+   "chain": [
+    {
+     "var": "-",
+     "line": 2499,
+     "kind": "SOURCE",
+     "note": "fuente directa en el sink"
+    }
+   ],
+   "_gate": "SIN-HANDLER",
+   "_chain": {
+    "finding": {
+     "type": "SSRF (red)",
+     "file": "swift-performance-lite/modules/cache/cache.php",
+     "line": 2499,
+     "severity": "media",
+     "flow": "superglobal directo"
+    },
+    "file": {
+     "file_id": "swift-performance-lite/modules/cache/cache.php",
+     "content_hash": "db8841ff711fcdb5",
+     "integrity": "OK"
+    },
+    "source": {
+     "fuentes": [
+      {
+       "linea": 31,
+       "tipo": "controllable",
+       "codigo": "if (isset($_GET['force-cache'])){"
+      },
+      {
+       "linea": 32,
+       "tipo": "controllable",
+       "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+      },
+      {
+       "linea": 54,
+       "tipo": "controllable",
+       "codigo": "if (!isset($_GET['force-cached']) && defined('LOGGED_IN_COOKIE') && isset($_COOKIE[LOGGED_IN_COOKIE]) && Swift_Performan"
+      },
+      {
+       "linea": 55,
+       "tipo": "controllable",
+       "codigo": "@list($user_login,,,) = explode('|', $_COOKIE[LOGGED_IN_COOKIE]);"
+      },
+      {
+       "linea": 58,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . $device . '/authenticated/' . $ha"
+      },
+      {
+       "linea": 62,
+       "tipo": "controllable",
+       "codigo": "$this->path = trailingslashit(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) . '/' . (!empty($prefix) ? '@prefix/' . t"
+      }
+     ],
+     "controlable": true
+    },
+    "flow": {
+     "vars": [
+      "superglobal directo"
+     ],
+     "saltos": "intra-archivo (nivel 1)"
+    },
+    "auth": {
+     "handler": null,
+     "compuertas": {},
+     "entrada": "NO RESUELTO"
+    },
+    "sanitization": {
+     "efectiva": false,
+     "detalle": [
+      "ninguna en la ruta"
+     ]
+    },
+    "sink": {
+     "tipo": "SSRF (red)",
+     "linea": 2499,
+     "severidad": "media",
+     "codigo": "$response = wp_remote_post(home_url($_SERVER['REQUEST_URI']), array("
+    },
+    "correlation": [
+     "TAINT-TRACE",
+     "GATES-AUDIT",
+     "FP-AUTO-CLOSE",
+     "DIFF-HUNT"
+    ],
+    "dynamic": {
+     "reproducido": false,
+     "nota": "estatico: falta dinamico"
+    },
+    "def_use": {
+     "proof": "DEF_USE_COMPLETE",
+     "value": "DIRECTO",
+     "lineage": [
+      "sink@2499"
+     ],
+     "source": "HTTP_INPUT",
+     "unknown_ancestors": [],
+     "transformations": [
+      "SOURCE"
+     ]
+    },
+    "fiscal": [
+     {
+      "requisito": "source controlado por atacante",
+      "probado": true,
+      "evidencia": [
+       {
+        "linea": 31,
+        "tipo": "controllable",
+        "codigo": "if (isset($_GET['force-cache'])){"
+       },
+       {
+        "linea": 32,
+        "tipo": "controllable",
+        "codigo": "$_COOKIE = $_REQUEST = $_POST = $_GET = array();"
+       }
+      ]
+     },
+     {
+      "requisito": "taint alcanza el sink",
+      "probado": true,
+      "evidencia": "PRUEBA SSA DIRECTO lineage=1 -> SSRF (red) (2499)"
+     },
+     {
+      "requisito": "sin sanitizacion efectiva",
+      "probado": true,
+      "evidencia": "ninguna en la ruta"
+     },
+     {
+      "requisito": "alcanzable sin privilegios",
+      "probado": false,
+      "evidencia": "entrada: NO RESUELTO, nonce=None, caps=None"
+     }
+    ],
+    "defensa": [
+     {
+      "refutacion": "alcance no resuelto",
+      "fuerza": "media",
+      "evidencia": "sin handler/hook/caller conocido"
+     }
+    ],
+    "juez": {
+     "verdicto": "PROBABLE",
+     "puntos_fiscal": "3/4",
+     "refutaciones_defensa": 0,
+     "falsadores": [
+      "nonce/caps en el caller no visto",
+      "sanitizador en archivo intermedio del flujo",
+      "reproduccion dinamica que falle"
+     ]
+    },
+    "evidence_hash": "442432547458d0d2",
+    "verdict_history": [
+     {
+      "verdicto": "PROBABLE",
+      "motivo": "fiscal 3/4, defensa 0 fuerte(s)",
+      "evidence_hash": "442432547458d0d2"
+     }
+    ]
+   },
+   "_verdict": "PROBABLE",
+   "slug": "swift-performance-lite",
+   "paga": false,
+   "vdp": false
+  }
+ ],
+ "pagables_con_hallazgo": []
+}
