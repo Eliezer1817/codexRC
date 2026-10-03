@@ -281,6 +281,15 @@ class PatternMatcher:
         r"capability|current_user_can|user_can\s*\(|"
         r"is_user_logged_in|\blogin\b|\brole\b|privilege|"
         r"\bcookie\b|manage_options|edit_others|manage_woocommerce")
+    # ---- RC-000136: gate adyacente mata el loose-cmp ----
+    # Si en +-1 linea de la comparacion senalada hay un capability check
+    # o early-return de auth, esa llamada ES el control de acceso real;
+    # la comparacion floja es solo router/filtro detras del gate.
+    _GATE_ADJ = re.compile(
+        r"current_user_can\s*\(|\buser_can\s*\(|"
+        r"is_user_logged_in\s*\(|_can_access\b|"
+        r"wp_die|\bdie\s*\(|\bexit\b")
+
     # tokens debiles (auth/token/secret abundan en flujos oauth y en
     # "author" de queries): solo cuentan en los OPERANDOS de la
     # comparacion misma
@@ -299,15 +308,21 @@ class PatternMatcher:
         # lejos del password: solo la linea senalada decide.
         m = re.search(r"[!=]=(?!=)", body)
         if m:
+            flagged = line0 + body.count("\n", 0, m.start())
+            lines = src.split("\n")
+            # RC-000136 PRIMERO: capability check / early-return de auth
+            # en +-1 linea = esa llamada ES el control de acceso real; el
+            # loose-cmp es router/filtro detras del gate -> FP
+            adj = self._nocomments(
+                "\n".join(lines[max(0, flagged - 2):flagged + 1]))
+            if self._GATE_ADJ.search(adj):
+                return False
             snip = self._nocomments(
                 body[max(0, m.start() - 80):m.end() + 80])
             if self._AUTH_STRONG.search(snip):
                 return True
             if self._AUTH_OPERAND.search(snip):
                 return True
-            # contexto: 5 lineas alrededor de la COMPARACION senalada
-            flagged = line0 + body.count("\n", 0, m.start())
-            lines = src.split("\n")
             lo = max(0, flagged - 1 - 5)
             hi = min(len(lines), flagged - 1 + 6)
             ctx = self._nocomments("\n".join(lines[lo:hi]))

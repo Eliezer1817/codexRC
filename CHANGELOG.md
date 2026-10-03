@@ -1,3 +1,17 @@
+## v0.57.10 — RC-000136: gate adyacente mata el loose-cmp
+
+- _GATE_ADJ generalizado (sin hardcodear funciones de plugin):
+  current_user_can | user_can( | is_user_logged_in | _can_access
+  | wp_die | die( | exit en la misma linea o la anterior a la
+  comparacion senalada => esa llamada es el control de acceso
+  real; el loose-cmp es router/filtro detras del gate.
+- Se evalua ANTES que los tokens AUTH de RC-000135 (los 6 de SNAP
+  volvian por el token 'auth' del operando sin pasar por el gate).
+- Medicion: los 6 vivos de RC-000135 (todos
+  $_GET['auth']==$ntInfo['lcode'] en SNAP) MUEREN. Lab 6875 real
+  (== sobre password, sin gate adyacente) SIGUE VIVO.
+- Familia loose-cmp N1∩VDP: 29 -> 0 vivos. Cerrada.
+
 ## v0.57.9 — RC-000135: loose-cmp exige contexto de AUTORIZACION
 
 - El patron loose-auth-cmp ya no dispara con cualquier == sobre input:
