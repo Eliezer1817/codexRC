@@ -1,3 +1,42 @@
+## v0.71.0 — ARSENAL-EXPANSION: RACE-PROOF + CSPT-SCAN + SAML-DEFENSE
+
+Tres modulos nuevos pedidos por el operador (tecnicas calientes
+2025-2026 que el engine no tenia):
+
+RACE-PROOF (core/race_proof.py): ejecutor dinamico de carreras
+TOCTOU. El brazo que le faltaba a RACE-TRACE (v0.70.0): dispara N
+requests simultaneos (barrera de conexiones pre-abiertas HTTP/1.1,
+o single-packet HTTP/2 si hay lib h2 y el server habla h2) y
+dictamina RACE-DEMO / SIN-RACE contando exitos sobre los
+permitidos. Fix real durante validacion: http.client lanza
+"CannotSendRequest: Idle" si el request se envio crudo por socket;
+se pasa a lectura cruda del socket (status + Content-Length).
+Validado en vivo: 20/20 exitos contra lab TOCTOU, SIN-RACE contra
+endpoint endurecido con lock.
+
+CSPT-SCAN (core/cspt_scan.py): Client-Side Path Traversal (clase
+2025-2026). Detecta FUENTE (location.search/hash, URLSearchParams)
+-> SINK (fetch/axios/xhr) con path concatenado en .js del
+plugin/tema. Veredictos CANDIDATO-CSPT (alta/media) y
+MITIGADO-ENC (encodeURIComponent). Fix real: la concatenacion
+debe estar EN la linea del sink (evaluar la ventana completa
+producia FP en fetch de ruta fija vecino). Fixture 2/2 sin FP;
+ruido casi cero en plugins reales (astra: 1 candidato real).
+
+SAML-DEFENSE (core/saml_audit.py): bypasses SAML/XML 2025 ("The
+Fragile Lock"). Detecta en PHP: XXE (parseo de XML con input
+usuario sin LIBXML_NONET), SAML-WSW (processResponse sin chequeo
+posterior de errores/validez), SAML-STRICT (strict=>false) y
+XInclude. Fix real: ->process( es omnipresente en PHP no-SAML
+(31 FP criticos contra DeskPro); WSW solo se evalua en archivos
+que usan un toolkit SAML real. DeskPro core verificado: limpio
+(su adapter valida getErrors + isAuthenticated correctamente).
+
+Integracion PLUGIN-BATCH: rec trae cspt_candidatos/cspt_resumen y
+saml_candidatos/saml_resumen; resumen agrega los 3 contadores.
+Regresion: RC-000158 (race-proof con lab TOCTU efimero),
+RC-000159 (cspt), RC-000160 (saml). Corpus 31/31 PASS.
+
 ## v0.70.0 — RACE-TRACE: TOCTOU en estado persistente
 
 Tecnica nueva incorporada al arsenal estatico: la clase de bug

@@ -1,0 +1,124 @@
+{
+ "resultados": [
+  {
+   "slug": "better-search",
+   "hallazgos": [],
+   "version": "4.5.0",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 30,
+   "lineas_nuevas": 1549,
+   "descartados_defensa": 0,
+   "segundos": 14.8,
+   "vdp": true
+  },
+  {
+   "slug": "contextual-related-posts",
+   "hallazgos": [],
+   "version": "4.5.0",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 27,
+   "lineas_nuevas": 2258,
+   "descartados_defensa": 0,
+   "segundos": 16.6,
+   "vdp": true
+  },
+  {
+   "slug": "html5-audio-player",
+   "hallazgos": [],
+   "version": "2.8.8",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 9,
+   "lineas_nuevas": 10,
+   "descartados_defensa": 0,
+   "segundos": 29.5,
+   "vdp": true
+  },
+  {
+   "slug": "import-users-from-csv-with-meta",
+   "hallazgos": [],
+   "version": "2.5.7",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 2,
+   "lineas_nuevas": 32,
+   "descartados_defensa": 0,
+   "segundos": 15.3,
+   "vdp": true
+  },
+  {
+   "slug": "termageddon-usercentrics",
+   "hallazgos": [],
+   "version": "1.14.4",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 1,
+   "lineas_nuevas": 2,
+   "descartados_defensa": 0,
+   "segundos": 3.8,
+   "vdp": true
+  },
+  {
+   "slug": "foogallery",
+   "hallazgos": [],
+   "version": "3.3.8",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 5,
+   "lineas_nuevas": 143,
+   "descartados_defensa": 0,
+   "segundos": 37.0,
+   "vdp": true
+  },
+  {
+   "slug": "simply-static",
+   "hallazgos": [],
+   "version": "3.8.16",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 5,
+   "lineas_nuevas": 53,
+   "descartados_defensa": 0,
+   "segundos": 9.8,
+   "vdp": true
+  },
+  {
+   "slug": "mediavine-create",
+   "hallazgos": [],
+   "version": "2.6.6",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 8,
+   "lineas_nuevas": 400,
+   "descartados_defensa": 0,
+   "segundos": 23.8,
+   "vdp": true
+  },
+  {
+   "slug": "woo-coupon-usage",
+   "hallazgos": [],
+   "version": "8.6.0",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 29,
+   "lineas_nuevas": 4952,
+   "descartados_defensa": 0,
+   "segundos": 21.0,
+   "vdp": true
+  },
+  {
+   "slug": "unlimited-elements-for-elementor",
+   "hallazgos": [],
+   "version": "2.0.23",
+   "modo": "DIFF",
+   "status": "ok",
+   "archivos_php_nuevos": 5,
+   "lineas_nuevas": 128,
+   "descartados_defensa": 0,
+   "segundos": 39.5,
+   "vdp": true
+  }
+ ]
+}

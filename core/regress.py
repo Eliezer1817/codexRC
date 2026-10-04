@@ -419,6 +419,67 @@ def seed_rc_000157() -> None:
     })
 
 
+def seed_rc_000158() -> None:
+    """RC-000158 (v0.71.0): RACE-PROOF, ejecutor dinamico de
+    carreras. Fix del bug real: getresponse() exige el estado
+    interno de http.client (ERROR Idle) cuando el request se
+    envia crudo por socket; se paso a lectura cruda."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000158" in cases:
+        return
+    _write_case({
+        "id": "RC-000158",
+        "module": "RACE-PROOF",
+        "problem": "fire_barrier usaba getresponse() tras enviar el "
+                   "request por socket crudo -> http.client lanza "
+                   "'CannotSendRequest: Idle' en todas las respuestas",
+        "first_seen": "v0.71.0",
+        "fixed_in": "v0.71.0",
+        "repro": {
+            "expected": {"toctou_endpoint": "RACE-DEMO (exitos>allowed)",
+                         "endpoint_endurecido": "SIN-RACE"},
+        },
+    })
+
+
+def seed_rc_000159() -> None:
+    """RC-000159 (v0.71.0): CSPT-SCAN. Fix del FP real: CONCAT en la
+    ventana (-3/+2) marcaba fetch de ruta fija cerca de codigo
+    vulnerable; la concatenacion debe estar EN la linea del sink."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000159" in cases:
+        return
+    _write_case({
+        "id": "RC-000159",
+        "module": "CSPT-SCAN",
+        "problem": "CONCAT.eval sobre la ventana completa producia FP "
+                   "en fetch de ruta fija adyacente a codigo vulnerable",
+        "first_seen": "v0.71.0",
+        "fixed_in": "v0.71.0",
+        "repro": {"expected": {"candidatos": 2,
+                                "falsos_positivos": 0}},
+    })
+
+
+def seed_rc_000160() -> None:
+    """RC-000160 (v0.71.0): SAML-DEFENSE. Fix del FP real: ->process(
+    es omnipresente en PHP no-SAML (Twig, JobQueue, email cutters);
+    31 FP criticos en DeskPro. WSW solo si el archivo usa un toolkit
+    SAML real."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000160" in cases:
+        return
+    _write_case({
+        "id": "RC-000160",
+        "module": "SAML-DEFENSE",
+        "problem": "PROCESS regex ->process( matcheaba cualquier "
+                   "framework; DeskPro produjo 31 falsos criticos",
+        "first_seen": "v0.71.0",
+        "fixed_in": "v0.71.0",
+        "repro": {"expected": {"fixture": 3, "deskpro_src": 0}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -436,6 +497,9 @@ def run() -> int:
     seed_rc_000155()
     seed_rc_000156()
     seed_rc_000157()
+    seed_rc_000158()
+    seed_rc_000159()
+    seed_rc_000160()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -729,6 +793,122 @@ class RC157 {
                 print(f"[{c['id']}] race-trace 4/4 verdictos "
                       f"(nopriv boost incluido) -> "
                       f"{'PASS' if ok else 'FAIL ' + str(verd)}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000158":
+            # lab TOCTOU efimero en puerto libre
+            import socket as sk
+            import subprocess
+            import tempfile
+            srv = """import json, time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+LIM = 1
+class H(BaseHTTPRequestHandler):
+    def _s(self, code, obj):
+        b = json.dumps(obj).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+    def do_POST(self):
+        n = len(self.path)
+        if self.path == "/v":
+            if H.us >= LIM:
+                return self._s(200, {"ok": 0, "msg": "limite"})
+            time.sleep(0.08)
+            H.us += 1
+            return self._s(200, {"ok": 1, "msg": "cupon aplicado"})
+        with H.lock:
+            if H.us >= LIM:
+                return self._s(200, {"ok": 0, "msg": "limite"})
+            H.us += 1
+            return self._s(200, {"ok": 1, "msg": "cupon aplicado"})
+    def log_message(self, *a): pass
+H.us = 0
+H.lock = __import__("threading").Lock()
+import sys
+ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
+"""
+            with tempfile.TemporaryDirectory() as tmp:
+                port = sk.socket()
+                port.bind(("127.0.0.1", 0))
+                portnum = port.getsockname()[1]
+                port.close()
+                spath = os.path.join(tmp, "srv.py")
+                open(spath, "w").write(srv)
+                proc = subprocess.Popen([sys.executable, spath,
+                                         str(portnum)])
+                try:
+                    import time as _t
+                    _t.sleep(1.0)
+                    from core.race_proof import audit as rpa
+                    r1 = rpa({"url": f"http://127.0.0.1:{portnum}/v",
+                              "count": 10,
+                              "success_contains": "cupon aplicado",
+                              "allowed": 1})
+                    ok1 = r1["veredicto"] == "RACE-DEMO" and \
+                        r1["exitos"] > 1
+                    r2 = rpa({"url": f"http://127.0.0.1:{portnum}/s",
+                              "count": 10,
+                              "success_contains": "cupon aplicado",
+                              "allowed": 1})
+                    ok2 = r2["veredicto"] == "SIN-RACE"
+                    ok = ok1 and ok2
+                    print(f"[{c['id']}] race-proof "
+                          f"{r1['veredicto']}/{r2['veredicto']} "
+                          f"(exitos={r1['exitos']}) -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    proc.kill()
+        if c["id"] == "RC-000159":
+            import tempfile
+            from core.cspt_scan import audit as cspt
+            js = ("const url = new URL(window.location.href);\n"
+                  "const endpoint = url.searchParams.get('endpoint');\n"
+                  "fetch('/api/v1/' + endpoint + '/d');\n"
+                  "axios.get(`/admin/${params.page}`).then(render);\n"
+                  "fetch('/api/v1/' + encodeURIComponent(location.search"
+                  ".slice(1)) + '/x');\n"
+                  "fetch('/api/v1/users/details');\n")
+            with tempfile.TemporaryDirectory() as tmp:
+                open(os.path.join(tmp, "app.js"), "w").write(js)
+                r = cspt(tmp)
+                cand = r["resumen"]["candidatos"]
+                ok = cand == 2 and r["resumen"]["criticos"] == 2
+                print(f"[{c['id']}] cspt candidatos={cand} "
+                      f"(esperados 2, sin FP) -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000160":
+            import tempfile
+            from core.saml_audit import audit as saml
+            vuln = ("<?php\n$auth = new OneLogin\\Auth($s);\n"
+                    "$auth->processResponse();\n"
+                    "$d = $auth->getAttributes();\n"
+                    "$x = simplexml_load_string($_POST['saml']);\n")
+            seg = ("<?php\n$auth = new OneLogin\\Auth($s);\n"
+                   "$auth->processResponse();\n"
+                   "if ($auth->hasErrors() || !$auth->isAuthenticated())"
+                   "{ wp_die(); }\n"
+                   "$x = simplexml_load_string($_POST['d'], null, "
+                   "LIBXML_NONET);\n")
+            with tempfile.TemporaryDirectory() as tmp:
+                strict = ("<?php\n$settings = ['strict' => false];\n"
+                          "$auth = new SimpleSAML\\Auth($settings);\n")
+                open(os.path.join(tmp, "v.php"), "w").write(vuln)
+                open(os.path.join(tmp, "s.php"), "w").write(seg)
+                open(os.path.join(tmp, "st.php"), "w").write(strict)
+                r = saml(tmp)
+                cand = r["resumen"]["candidatos"]
+                crit = r["resumen"]["criticos"]
+                ok = cand == 3 and crit == 1
+                print(f"[{c['id']}] saml candidatos={cand} "
+                      f"(esperados 3, 1 critico) -> "
+                      f"{'PASS' if ok else 'FAIL'}")
                 if not ok:
                     fails += 1
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")

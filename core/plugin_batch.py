@@ -37,6 +37,8 @@ from core.pattern_match import scan_path  # noqa: E402
 from core import vendor_farm  # noqa: E402
 from core.gates_audit import audit as gates_audit  # noqa: E402
 from core.race_trace import audit as race_audit  # noqa: E402
+from core.cspt_scan import audit as cspt_audit  # noqa: E402
+from core.saml_audit import audit as saml_audit  # noqa: E402
 from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
 from core.fp_autoclose import es_ruido_publico  # noqa: E402
 
@@ -187,6 +189,22 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
     rec["race_candidatos"] = race.get("candidatos", [])
     rec["race_resumen"] = race.get("resumen", {})
 
+    # 5b) CSPT-SCAN: client-side path traversal en JS (v0.71.0)
+    try:
+        cspt = cspt_audit(code)
+    except Exception:
+        cspt = {"candidatos": [], "resumen": {}}
+    rec["cspt_candidatos"] = cspt.get("candidatos", [])
+    rec["cspt_resumen"] = cspt.get("resumen", {})
+
+    # 5c) SAML-DEFENSE: XXE/SAML en PHP (v0.71.0)
+    try:
+        saml = saml_audit(code)
+    except Exception:
+        saml = {"candidatos": [], "resumen": {}}
+    rec["saml_candidatos"] = saml.get("candidatos", [])
+    rec["saml_resumen"] = saml.get("resumen", {})
+
     # 6) FP-AUTO-CLOSE: dictamen de falsos positivos conocidos
     clean = fp_annotate(clean, code)
     clean.sort(key=lambda h: (0 if h.get("_fp") is None else 1,
@@ -203,6 +221,10 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
         "fp_autocerrados": sum(1 for h in clean if h.get("_fp")),
         "race_candidatos": len(rec.get("race_candidatos", [])),
         "race_criticos": sum(1 for h in rec.get("race_candidatos", [])
+                             if h.get("severity") == "critica"),
+        "cspt_candidatos": len(rec.get("cspt_candidatos", [])),
+        "saml_candidatos": len(rec.get("saml_candidatos", [])),
+        "saml_criticos": sum(1 for h in rec.get("saml_candidatos", [])
                              if h.get("severity") == "critica"),
         "segundos": round(time.time() - t0, 1),
     }
