@@ -1,3 +1,47 @@
+## v0.76.0 — NORMALIZATION-AUDIT: que recibe el origin
+
+Pregunta: cuando el edge ACEPTA un framing contradictorio,
+¿que representacion termina recibiendo el origin?
+
+REGLA DE ORO (del operador): la tolerancia del edge NO es una
+vulnerabilidad por si misma. Este modulo describe
+transformaciones OBSERVABLES; no convierte una transformacion en
+hallazgo automaticamente. Lo no observable permanece unknown.
+
+Sonda central: BODY-DIFFERENTIAL, benigna por construccion.
+Cuerpo "5\r\nhello\r\n0\r\n\r\n": quien lee por TE entiende
+cuerpo "hello"; quien lee por CL entiende 17 bytes crudos. Las
+DOS lecturas consumen el mensaje completo: sin smuggle, sin
+leftover. El probe se contrasta contra dos canonicos limpios
+(cuerpo "hello" / cuerpo crudo) y contra el ECO del downstream
+(X-Received-*).
+
+Veredictos por variante: NORMALIZED (ECO te=none) | CONSERVED
+(ECO te intacto, respuesta = canonico crudo) | MISMATCH (ECO
+muestra que el origin ACTUO sobre la lectura TE mientras la
+respuesta coincide con el canonico A: dos capas, dos
+interpretaciones) | REJECTED | UNKNOWN.
+
+Doble honestidad:
+  - Escalera MISMATCH: reproducible -> estado/conexion ->
+    evidencia downstream -> SOSPECHA. DEMO queda para v0.77+.
+  - Poder discriminatorio: si los canonicos A y B son
+    indistinguibles para el target, NINGUN match del probe
+    significa algo y el veredicto es UNKNOWN (no "aparente").
+    Verificado en vivo: un "NORMALIZED-APARENTE" falso se
+    convirtio en UNKNOWN.
+
+Regresion RC-000165: eco-normaliza -> NORMALIZED/MATRIX;
+eco-conserva -> MISMATCH con escalera completa hasta SOSPECHA
+(reproducible + ECO); rechaza -> RECHAZADO-TOTAL. Corpus 36/36.
+
+En vivo (linktr.ee): acepta cl_te/te_doble/te_case, rechaza
+te_espacio; representacion downstream UNKNOWN (sin ECO y sin
+poder discriminatorio). Ficha honesta: MATRIX.
+
+Presupuesto: 11 (perfil) + 3 por variante aceptada, tope 24,
+secuencial, lectura A->B, cuerpos <= 17 bytes.
+
 ## v0.75.0 — EDGE-PROFILE: el contrato observable del edge
 
 Primera release del roadmap v0.75-v0.80 (EDGE-DIFFERENTIAL). No

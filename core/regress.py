@@ -580,6 +580,34 @@ def seed_rc_000164() -> None:
     })
 
 
+def seed_rc_000165() -> None:
+    """RC-000165 (v0.76.0): NORMALIZATION-AUDIT. La sonda
+    BODY-DIFFERENTIAL (cuerpo '5\r\nhello\r\n0\r\n\r\n', dos
+    lecturas posibles, sin smuggle) debe distinguir: normalizador
+    (origin recibe CL puro, ECO te=none), conservador+back TE
+    (origin ACTUA sobre la lectura TE: MISMATCH con escalera de
+    evidencia hasta SOSPECHA) y rechazador total. REGLA DE ORO: la
+    tolerancia del edge no es vulnerabilidad por si misma; solo
+    MISMATCH con evidencia downstream escala."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000165" in cases:
+        return
+    _write_case({
+        "id": "RC-000165",
+        "module": "NORMALIZATION-AUDIT",
+        "problem": "el perfil v0.75 dice que el edge acepta un "
+                   "framing, pero no que representacion recibe el "
+                   "origin; y la tolerancia no debe dictarse "
+                   "hallazgo",
+        "first_seen": "v0.76.0",
+        "fixed_in": "v0.76.0",
+        "repro": {"expected": {
+            "normaliza": "NORMALIZED",
+            "conserva": "MISMATCH->SOSPECHA",
+            "rechaza": "RECHAZADO-TOTAL"}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -604,6 +632,7 @@ def run() -> int:
     seed_rc_000162()
     seed_rc_000163()
     seed_rc_000164()
+    seed_rc_000165()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -1235,6 +1264,70 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                           f"{f3['cl_te']}/{f3['cierre_rechazo']} -> "
                           f"{'PASS' if c3 else 'FAIL'}")
                     print(f"[{c['id']}] ficha edge-profile -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p in procs.values():
+                        p.kill()
+        if c["id"] == "RC-000165":
+            import subprocess
+            from core.normalization_audit import audit as naudit
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["eco-normaliza", "eco-conserva", "rechaza"]
+                procs = {}
+                base_p = 19000
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _t.sleep(1.5)
+                    port = lambda m: base_p + mods.index(m) * 2
+                    aud = lambda m: naudit({
+                        "url": f"http://127.0.0.1:{port(m)}/",
+                        "timeout": 5.0})
+                    ok = True
+                    r1 = aud("eco-normaliza")
+                    m1 = r1["matriz"].get("cl_te", {})
+                    c1 = (m1.get("veredicto") == "NORMALIZED"
+                          and r1["veredicto"] == "MATRIX")
+                    if not c1:
+                        ok = False
+                    print(f"[{c['id']}] eco-normaliza: "
+                          f"{m1.get('veredicto')}/"
+                          f"{r1['veredicto']} -> "
+                          f"{'PASS' if c1 else 'FAIL'}")
+                    r2 = aud("eco-conserva")
+                    m2 = r2["matriz"].get("cl_te", {})
+                    c2 = (m2.get("veredicto") == "MISMATCH"
+                          and r2["veredicto"] == "SOSPECHA"
+                          and r2["escalera_mismatch"]
+                          ["reproducible"] == "yes"
+                          and r2["escalera_mismatch"]
+                          ["evidencia_downstream"] == "eco")
+                    if not c2:
+                        ok = False
+                    print(f"[{c['id']}] eco-conserva: "
+                          f"{m2.get('veredicto')}/"
+                          f"{r2['veredicto']} -> "
+                          f"{'PASS' if c2 else 'FAIL'}")
+                    r3 = aud("rechaza")
+                    c3 = r3["veredicto"] == "RECHAZADO-TOTAL"
+                    if not c3:
+                        ok = False
+                    print(f"[{c['id']}] rechaza: "
+                          f"{r3['veredicto']} -> "
+                          f"{'PASS' if c3 else 'FAIL'}")
+                    print(f"[{c['id']}] body-differential -> "
                           f"{'PASS' if ok else 'FAIL'}")
                     if not ok:
                         fails += 1
