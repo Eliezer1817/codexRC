@@ -270,7 +270,7 @@ def dictar(res, success_contains=None, allowed=1, probe_url=None,
 def audit(cfg: dict) -> dict:
     """API: {url, method, data, cookie, count, success_contains,
              allowed, single_packet, probe_url, probe_cookie}."""
-    count = int(cfg.get("count", 20))
+    count = min(int(cfg.get("count", 20)), 30)  # tope anti-DoS duro
     if cfg.get("single_packet"):
         try:
             res = fire_h2_single_packet(

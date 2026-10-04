@@ -480,6 +480,29 @@ def seed_rc_000160() -> None:
     })
 
 
+def seed_rc_000161() -> None:
+    """RC-000161 (v0.72.0): EDGESYNC-HUNT. Fix del bug real: el edge
+    reenviaba raw_head.encode() sobre bytes -> AttributeError
+    tragado por except silencioso; y el parser chunked no consumia
+    el CRLF final del chunk 0. Detector debe distinguir DESYNC-DEMO
+    (CL/TE) de SIN-DESYNC (CL/CL) con 3 probes."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000161" in cases:
+        return
+    _write_case({
+        "id": "RC-000161",
+        "module": "EDGESYNC-HUNT",
+        "problem": "lab desync: sendall(raw_head.encode()) sobre bytes "
+                   "mataba el reenvio silenciosamente; chunked parser "
+                   "dejaba rest2 sin actualizar",
+        "first_seen": "v0.72.0",
+        "fixed_in": "v0.72.0",
+        "repro": {"expected": {"desync_lab": "DESYNC-DEMO",
+                                "consistente_lab": "SIN-DESYNC",
+                                "probes_max": 3}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -500,6 +523,7 @@ def run() -> int:
     seed_rc_000158()
     seed_rc_000159()
     seed_rc_000160()
+    seed_rc_000161()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -908,6 +932,38 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 ok = cand == 3 and crit == 1
                 print(f"[{c['id']}] saml candidatos={cand} "
                       f"(esperados 3, 1 critico) -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000161":
+            import tempfile
+            import subprocess
+            import socket as sk
+            from core.edgesync import audit as esa
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                results = []
+                for ports, modo in [((18880, 18881), "desync"),
+                                   ((18882, 18883), "consistente")]:
+                    pe, pb = ports
+                    proc = subprocess.Popen(
+                        [sys.executable, lab, str(pe), str(pb), modo],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                    try:
+                        import time as _t
+                        _t.sleep(1.0)
+                        r = esa({"url": f"http://127.0.0.1:{pe}/",
+                                 "timeout": 5.0})
+                        results.append(r["veredicto"])
+                    finally:
+                        proc.kill()
+                ok = (results == ["DESYNC-DEMO", "SIN-DESYNC"])
+                print(f"[{c['id']}] edgesync {results} -> "
                       f"{'PASS' if ok else 'FAIL'}")
                 if not ok:
                     fails += 1

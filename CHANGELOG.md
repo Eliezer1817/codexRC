@@ -1,3 +1,44 @@
+## v0.72.0 — EDGESYNC-HUNT: detector de desync edge->back
+
+Primer modulo de capa transporte del engine (hasta ahora eramos
+capa app PHP/JS). Automatiza la metodologia de request smuggling
+(Kettle): hacer que front y backend discrepen sobre donde
+termina un request.
+
+TECNICA DEL ECO (core/edgesync.py): POST ambiguo con
+Content-Length que cubre TODO el request smuggleado +
+Transfer-Encoding: chunked. El front lee CL -> el smuggle es
+"cuerpo" (nunca un request para el). Un back que prefiera TE
+ejecuta el smuggle como request propio. El ECO: el cliente
+recibe una respuesta extra que nunca pidio, con un marker unico
+(X-Edge / path x-edgesync-sonde-<ts>).
+
+Veredictos: DESYNC-DEMO (marker presente: bug demostrado,
+lectura A->B), SOSPECHA (conteo de respuestas anormal),
+SIN-DESYNC (todo cuadra). CLI: python3 core/edgesync.py
+http://target[:puerto]/ [--json].
+
+SEGURIDAD ANTI-DOS (no negociable): max 3 requests por corrida
+(baseline + probe ambiguo + sonda), 1 conexion secuencial,
+cooldown 0.4s, cuerpo <= 4KB, sin loops ni flood ni RST. La
+bomba HTTP/2 (Rapid Reset) hace lo opuesto: miles de streams
+que se cancelan sin pagar; aqui el objetivo es el eco, no la
+exhaustion. Ademas: RACE-PROOF ahora clampa count a 30
+(tope duro anti-DoS).
+
+LAB VALIDACION (labs/desync_lab.py): edge CL -> backend TE
+(modo desync) o CL/CL (modo consistente), todo Python puro
+Termux-friendly. Bugs reales encontrados durante la validacion:
+(1) edge reenviaba raw_head.encode() sobre bytes ->
+AttributeError tragado por except silencioso (el request nunca
+llegaba al back); (2) parser chunked no actualizaba el buffer
+tras el chunk 0. Resultado determinista: lab desync =
+DESYNC-DEMO (3 respuestas, GET smuggleado ejecutado invisible
+al front), lab consistente = SIN-DESYNC (2 respuestas).
+
+Regresion: RC-000161 levanta labs efimeros en puertos libres y
+exige el par exacto [DESYNC-DEMO, SIN-DESYNC]. Corpus 32/32.
+
 ## v0.71.0 — ARSENAL-EXPANSION: RACE-PROOF + CSPT-SCAN + SAML-DEFENSE
 
 Tres modulos nuevos pedidos por el operador (tecnicas calientes
