@@ -26,6 +26,7 @@ import sys
 
 import hypothesis_graph as hg
 import research_memory as rm
+import experiment_selector as xs
 from experiment_catalog import (
     EXPERIMENTS, contract, _open, _get, _parts)
 
@@ -107,20 +108,30 @@ def audit(cfg):
     graph = hg.seed("baseline_ambiguous")
     rm.annotate(graph, prev)
 
-    # ---- LOOP DE EXPERIMENTOS
+    # ---- LOOP DE EXPERIMENTOS (v0.82: seleccion por EDV)
     bundle = {}
     ejecutados = []
-    for exp in EXPERIMENTS:
+    selector_stop = None
+    runners = {e["id"]: e for e in EXPERIMENTS}
+    costs = {e["id"]: e["cost"] for e in EXPERIMENTS}
+    hints = (set(prev.get("experimentos", []))
+             if prev else None)
+    while True:
         live = hg.live(graph)
         if not live:
             break
-        if len(live) == 1 and ejecutados and len(live) == 1 \
-                and _converge_por(graph, live):
+        if len(live) == 1 and ejecutados:
             break
-        if spent + exp["cost"] > BUDGET_TOTAL:
-            trace.append({"paso": "presupuesto", "nota":
-                f"{exp['id']} omitido: presupuesto agotado"})
+        sel, tabla, porque = xs.select(
+            graph, ejecutados, BUDGET_TOTAL - spent,
+            costs, hints)
+        if sel is None:
+            selector_stop = porque
+            trace.append({"paso": "selector",
+                          "tabla": tabla,
+                          "stop": porque})
             break
+        exp = runners[sel[0]]
         res = exp["run"](url, timeout)
         spent += res["cost"]
         bundle[exp["id"]] = res
@@ -130,11 +141,11 @@ def audit(cfg):
         trace.append({
             "paso": "experimento", "id": exp["id"],
             "cost": res["cost"],
+            "eleccion": {"edv": round(sel[1], 3),
+                         "tabla": tabla},
             "resultados": res["results"],
             "acciones": [f"{a}/{h}" for h, a, _ in acts],
             "vivas": [n["id"] for n in hg.live(graph)]})
-        if len(hg.live(graph)) == 1:
-            break
 
     # ---- JUEZ
     live = hg.live(graph)
@@ -151,6 +162,13 @@ def audit(cfg):
         gaps = gap_ledger(graph, ejecutados)
     rec = _sesion(url, verdicto, graph, ejecutados, trace,
                   spent, gaps, att, fps=fps, ambiguous=ambiguous)
+    if selector_stop:
+        rec["selector_stop"] = selector_stop
+        if isinstance(gaps, dict) and verdicto == \
+                "UNKNOWN-DEMOSTRADO":
+            prev_razon = gaps.get("razon", "")
+            gaps["razon"] = (f"{prev_razon} | {selector_stop}"
+                             if prev_razon else selector_stop)
     rec["memoria"] = rm.meta(url)
     rm.save(rec)
     return rec
@@ -235,6 +253,8 @@ def render(rec):
             out.append(f"  {n['id']} ventana previa "
                        f"({pr.get('window')}): "
                        f"{pr.get('status')}")
+    if rec.get("selector_stop"):
+        out.append(f"selector: {rec['selector_stop']}")
     out.append(f"experimentos: "
                f"{', '.join(rec['experimentos']) or 'ninguno'}")
     g = rec["gap_ledger"]

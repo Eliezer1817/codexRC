@@ -1,3 +1,46 @@
+## v0.82.0 — GRAFO DE EXPERIMENTOS: seleccion por EDV
+
+Pregunta central: dadas las hipotesis vivas y el presupuesto,
+¿cual es la siguiente prueba que mas informacion me puede
+dar?
+
+MODULO: core/experiment_selector.py. El loop fijo por
+dependencia (v0.81) se reemplaza por un selector que elige
+en cada paso.
+
+EDV (Valor de Discriminacion Esperado) por experimento:
+  para cada RAMA POSIBLE de su contrato (union estatica
+  pre-registrada, parte del contrato, no una prediccion):
+    CONTRADICT sobre una viva = 2.0 (es terminal: reduce
+    el conjunto vivo de forma determinista)
+    SUPPORT sobre una viva = 1.0 (prepara convergencia)
+  EDV = media de valores de rama. Sin probabilidades
+  inventadas: ramas uniformes porque NO se conoce su
+  probabilidad. EDV ordena; el CONTRATO decide evidencia.
+
+DAG de dependencias respetado (INTRA -> CROSS -> VIRGIN,
+INTRA -> TIME): un experimento sin prerequisito no es
+elegible. Desempates: EDV, epsilon por discriminante en
+ventana previa de memoria, orden del catalogo.
+
+PARADA HONESTA: si ningun experimento disponible puede
+tocar una hipotesis viva (EDV 0 en todos), el loop se
+detiene y declara la razon citando las vivas. El UNKNOWN
+conserva esa razon, no un silencio.
+
+EFECTO MEDIBLE:
+  origin_dynamics: 14 req -> 10 req (convergencia en 2
+  experimentos, el selector para al quedar 1 viva).
+  lb_variance: mismo veredicto y presupuesto (19 req),
+  pero orden guiado por EDV (VIRGIN EDV 2.5 corre antes
+  que SESSION 2.0) con tabla visible en cada eleccion.
+
+Validacion: RC-000191 (convergencia temprana 10 req, EDV
+en cada eleccion), RC-000192 (parada honesta EDV=0 con
+razon citando H2,H4), RC-000193 (orden por EDV con tabla
+visible), RC-000194 (invariantes v0.81/81.1: memoria y
+corpus ADAPTIVE re-ejecutados PASS). Corpus 65/65.
+
 ## v0.81.1 — RESEARCH-MEMORY: el motor recuerda
 
 Pregunta central: si vuelvo a un target manana, ¿empiezo de

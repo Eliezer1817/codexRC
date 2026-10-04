@@ -987,6 +987,55 @@ def seed_rc_000190() -> None:
         {"invariantes": "RC-000183..185 igual PASS, 0 fallo"})
 
 
+def seed_rc_000191() -> None:
+    """RC-000191: convergencia temprana. El selector debe
+    detenerse en cuanto queda una unica hipotesis viva:
+    origin_dynamics con 2 experimentos (10 req) en vez de
+    recorrer el catalogo completo."""
+    _seed_cache(
+        "RC-000191",
+        "el loop podia seguir ejecutando experimentos "
+        "despues de la convergencia",
+        {"early_stop": "10 req, 2 experimentos, "
+                       "EDV >= 1 en cada eleccion"})
+
+
+def seed_rc_000192() -> None:
+    """RC-000192: parada honesta EDV=0. Si ningun
+    experimento disponible puede tocar una hipotesis viva,
+    declarar la razon en vez de correr sondas inutiles."""
+    _seed_cache(
+        "RC-000192",
+        "el loop podia quedarse callado cuando ningun "
+        "experimento discrimina",
+        {"edv0": "stop con razon citando las vivas"})
+
+
+def seed_rc_000193() -> None:
+    """RC-000193: seleccion por EDV. El orden de ejecucion
+    sigue el valor de discriminacion, no el orden fijo:
+    INTRA primero por desempate y VIRGIN antes de SESSION
+    cuando su EDV es mayor (2.5 vs 2.0). Cada eleccion deja
+    tabla y EDV en el trace."""
+    _seed_cache(
+        "RC-000193",
+        "el orden de experimentos podia seguir siendo fijo "
+        "ignorando el valor de informacion",
+        {"edv_order": "INTRA, CROSS, VIRGIN(2.5), SESSION"})
+
+
+def seed_rc_000194() -> None:
+    """RC-000194: invariantes v0.81/v0.81.1. El selector no
+    debe alterar memoria ni veredictos del corpus
+    ADAPTIVE. Re-ejecuta RC-000187..190 via --only."""
+    _seed_cache(
+        "RC-000194",
+        "el loop EDV podia degradar memoria y casos "
+        "previos del corpus",
+        {"invariantes": "RC-000187..190 igual PASS, "
+                        "0 fallo"})
+
+
 _ADTMEM_TABLE = {
     "RC-000187": "reuse",
     "RC-000188": "ttl0",
@@ -1080,6 +1129,10 @@ def run(only_ids=None) -> int:
     seed_rc_000188()
     seed_rc_000189()
     seed_rc_000190()
+    seed_rc_000191()
+    seed_rc_000192()
+    seed_rc_000193()
+    seed_rc_000194()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2296,6 +2349,122 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 else:
                     os.environ["CODEXRC_HOME"] = _oldhome
                 proc.kill()
+        # ---- SELECTOR EDV v0.82 (RC-000191..194)
+        if c["id"] in ("RC-000191", "RC-000193"):
+            import tempfile
+            from core import adaptive_hunt as ah
+            mode = ("origin_dynamics"
+                    if c["id"] == "RC-000191"
+                    else "lb_variance")
+            port = (19260 if c["id"] == "RC-000191"
+                    else 19262)
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "adaptive_lab.py")
+            proc = subprocess.Popen(
+                [sys.executable, labp, str(port), mode],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+            _oldhome = os.environ.get("CODEXRC_HOME")
+            _tmp = tempfile.mkdtemp(prefix="rcedv")
+            os.environ["CODEXRC_HOME"] = _tmp
+            try:
+                _esperar_labs(port, 1)
+                rec = ah.audit({"url":
+                    f"http://127.0.0.1:{port}/",
+                    "timeout": 5.0})
+                tot = rec["budget"]["spent"]["total"]
+                exps = [t for t in rec["trace"]
+                        if t["paso"] == "experimento"]
+                ok = True
+                det = ""
+                if c["id"] == "RC-000191":
+                    ok = (rec["verdicto"]
+                          == "BASELINE-CARACTERIZADO"
+                          and "BY-ELIMINATION"
+                          in rec["atribucion"]
+                          and tot == 10
+                          and len(rec["experimentos"]) == 2
+                          and all(
+                              t["eleccion"]["edv"] >= 1
+                              for t in exps))
+                    det = (f"{tot} req, "
+                           f"{len(rec['experimentos'])} "
+                           f"experimentos")
+                else:
+                    ids = [t["id"] for t in exps]
+                    ok = (ids[:3] == ["INTRA-CONN",
+                                     "CROSS-CONN",
+                                     "VIRGIN"]
+                          and abs(
+                              exps[2]["eleccion"]["edv"]
+                              - 2.5) < 0.01
+                          and all(
+                              t["eleccion"].get("tabla")
+                              for t in exps))
+                    det = ("orden " + ",".join(ids)
+                           + " VIRGIN EDV "
+                           + str(exps[2]["eleccion"]
+                                 ["edv"]))
+                print(f"[{c['id']}] selector: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+            finally:
+                if _oldhome is None:
+                    del os.environ["CODEXRC_HOME"]
+                else:
+                    os.environ["CODEXRC_HOME"] = _oldhome
+                proc.kill()
+        if c["id"] == "RC-000192":
+            from core import experiment_selector as xs
+            from core import hypothesis_graph as hg2
+            g1 = hg2.seed("baseline_ambiguous")
+            sel1, tab1, _ = xs.select(g1, [], 30,
+                {"INTRA-CONN": 4, "CROSS-CONN": 5,
+                 "SESSION": 7, "VIRGIN": 6,
+                 "TIME-OFFSET": 5})
+            g2 = hg2.seed("baseline_ambiguous")
+            hg2.apply(g2, [("H1", "CONTRADICT", "t"),
+                           ("H3", "CONTRADICT", "t"),
+                           ("H5", "CONTRADICT", "t")])
+            sel2, tab2, rz = xs.select(g2, ["SESSION"],
+                30, {"INTRA-CONN": 4, "CROSS-CONN": 5,
+                     "SESSION": 7, "VIRGIN": 6,
+                     "TIME-OFFSET": 5})
+            ok = (sel1 is not None
+                  and sel1[0] == "INTRA-CONN"
+                  and ("SESSION", 2.0) in tab1
+                  and sel2 is None
+                  and "H2" in rz and "H4" in rz)
+            det = (f"primera {sel1}, EDV0 razon: "
+                   f"{rz if sel2 is None else 'NO PARO'}")
+            print(f"[RC-000192] parada honesta: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000194":
+            import subprocess as sp5
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            res = sp5.run(
+                [sys.executable,
+                 os.path.join(root, "core", "regress.py"),
+                 "--only",
+                 "RC-000187,RC-000188,RC-000189,"
+                 "RC-000190"],
+                capture_output=True, text=True,
+                timeout=1200)
+            out = res.stdout or ""
+            ok = (res.returncode == 0
+                  and out.rstrip().splitlines()[-1].strip()
+                  .endswith("0 fallo(s)"))
+            print(f"[{c['id']}] invariantes v0.81: "
+                  f"re-ejecucion RC-000187..190 exit="
+                  f"{res.returncode} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
         if c["id"] == "RC-000190":
             import subprocess as sp4
             root = os.path.dirname(os.path.dirname(
