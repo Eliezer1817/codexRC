@@ -941,6 +941,59 @@ def seed_rc_000186() -> None:
          "RC-000174..182 igual PASS, 0 fallo"})
 
 
+def seed_rc_000187() -> None:
+    """RC-000187: reuso determinista. Baseline identico
+    dentro del TTL: la segunda sesion debe reusar la ventana
+    previa (3 req, atribucion REUSADO), sin re-ejecutar
+    experimentos."""
+    _seed_cache(
+        "RC-000187",
+        "una sesion repetida podia gastar 19 requests "
+        "re-descubriendo lo ya observado",
+        {"reuse": "3 req, REUSADO, misma atribucion"})
+
+
+def seed_rc_000188() -> None:
+    """RC-000188: expiracion por ventana. Con TTL agotado el
+    reuso NO aplica: corrida fresca con las hipotesis
+    anotadas con su estado de ventana previa (contexto, no
+    veredicto heredado)."""
+    _seed_cache(
+        "RC-000188",
+        "una contradiccion vieja podia tomarse como verdad "
+        "eterna sin re-observar",
+        {"ttl0": "corrida fresca 19 req + anotacion previa"})
+
+
+def seed_rc_000189() -> None:
+    """RC-000189: baseline distinto NUNCA reusa. Si las
+    huellas del baseline difieren de la ventana previa, las
+    condiciones observadas cambiaron: ventana nueva."""
+    _seed_cache(
+        "RC-000189",
+        "un baseline distinto podia heredar un veredicto de "
+        "otras condiciones",
+        {"mismatch": "ventana nueva, cero reuso"})
+
+
+def seed_rc_000190() -> None:
+    """RC-000190: invariantes v0.81. La capa de memoria no
+    debe alterar ningun veredicto del corpus ADAPTIVE-HUNT.
+    Re-ejecuta RC-000183..185 via --only."""
+    _seed_cache(
+        "RC-000190",
+        "la memoria persistente podia contaminar los casos "
+        "del corpus v0.81",
+        {"invariantes": "RC-000183..185 igual PASS, 0 fallo"})
+
+
+_ADTMEM_TABLE = {
+    "RC-000187": "reuse",
+    "RC-000188": "ttl0",
+    "RC-000189": "mismatch",
+}
+
+
 _ADT_TABLE = {
     "RC-000183": ("lb_variance", "BASELINE-CARACTERIZADO",
                   {"attr_contains":
@@ -1023,6 +1076,10 @@ def run(only_ids=None) -> int:
     seed_rc_000184()
     seed_rc_000185()
     seed_rc_000186()
+    seed_rc_000187()
+    seed_rc_000188()
+    seed_rc_000189()
+    seed_rc_000190()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2165,6 +2222,100 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         fails += 1
                 finally:
                     proc.kill()
+        # ---- RESEARCH-MEMORY v0.81.1 (RC-000187..189)
+        if c["id"] in _ADTMEM_TABLE:
+            import tempfile
+            from core import adaptive_hunt as ah
+            from core import research_memory as rmx
+            import json as _json
+            mode = _ADTMEM_TABLE[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "adaptive_lab.py")
+            port = 19240 + (int(c["id"][-3:]) - 187) * 2
+            proc = subprocess.Popen(
+                [sys.executable, labp, str(port),
+                 "lb_variance"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+            _oldhome = os.environ.get("CODEXRC_HOME")
+            _tmp = tempfile.mkdtemp(prefix="rcmem")
+            os.environ["CODEXRC_HOME"] = _tmp
+            _url = f"http://127.0.0.1:{port}/"
+            try:
+                _esperar_labs(port, 1)
+                r1 = ah.audit({"url": _url, "timeout": 5.0})
+                ok = (r1["verdicto"]
+                      == "BASELINE-CARACTERIZADO"
+                      and "H1" in r1["atribucion"])
+                det = (f"fresco {r1['budget']['spent']['total']}"
+                       f" req")
+                if mode == "reuse":
+                    r2 = ah.audit({"url": _url, "timeout": 5.0,
+                                  "resume": True})
+                    ok = ok and r2.get("reuse") and (
+                        r2["budget"]["spent"]["total"] == 3
+                        ) and "REUSADO" in r2["atribucion"] \
+                        and "H1" in r2["atribucion"]
+                    _tot2 = r2["budget"]["spent"]["total"]
+                    det = (f"reuso {_tot2} req: "
+                           f"{r2['atribucion']}")
+                elif mode == "ttl0":
+                    r2 = ah.audit({"url": _url, "timeout": 5.0,
+                                  "resume": True,
+                                  "ttl_hours": 0.0})
+                    ok = ok and not r2.get("reuse") and (
+                        r2["budget"]["spent"]["total"] == 19
+                        ) and any(n.get("prior")
+                                  for n in r2["hipotesis"])
+                    _tot3 = r2["budget"]["spent"]["total"]
+                    det = (f"ventana nueva {_tot3} req + "
+                           f"anotacion previa")
+                elif mode == "mismatch":
+                    prev = rmx.load(_url)
+                    prev["baseline"]["huellas"] = [
+                        "dead0000dead0000"] * 3
+                    _json.dump(prev, open(
+                        os.path.join(rmx.mem_dir(_url),
+                                     "latest.json"), "w"))
+                    r2 = ah.audit({"url": _url, "timeout": 5.0,
+                                  "resume": True})
+                    ok = ok and not r2.get("reuse") and (
+                        r2["budget"]["spent"]["total"] == 19
+                        ) and any(n.get("prior")
+                                  for n in r2["hipotesis"])
+                    det = ("baseline distinto -> ventana nueva "
+                           "19 req")
+                print(f"[{c['id']}] memoria {mode}: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+            finally:
+                if _oldhome is None:
+                    del os.environ["CODEXRC_HOME"]
+                else:
+                    os.environ["CODEXRC_HOME"] = _oldhome
+                proc.kill()
+        if c["id"] == "RC-000190":
+            import subprocess as sp4
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            res = sp4.run(
+                [sys.executable,
+                 os.path.join(root, "core", "regress.py"),
+                 "--only",
+                 "RC-000183,RC-000184,RC-000185"],
+                capture_output=True, text=True, timeout=900)
+            out = res.stdout or ""
+            ok = (res.returncode == 0
+                  and out.rstrip().splitlines()[-1].strip()
+                  .endswith("0 fallo(s)"))
+            print(f"[{c['id']}] invariantes v0.81: "
+                  f"re-ejecucion RC-000183..185 exit="
+                  f"{res.returncode} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
         if c["id"] == "RC-000186":
             import subprocess as sp3
             root = os.path.dirname(os.path.dirname(

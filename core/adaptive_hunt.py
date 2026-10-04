@@ -19,11 +19,13 @@ Tres salidas, todas validas:
 Presupuesto heredado: 30 requests max por sesion.
 """
 
+import datetime
 import hashlib
 import json
 import sys
 
 import hypothesis_graph as hg
+import research_memory as rm
 from experiment_catalog import (
     EXPERIMENTS, contract, _open, _get, _parts)
 
@@ -60,13 +62,50 @@ def audit(cfg):
                    "huellas": hashes,
                    "disparador": ("baseline_ambiguous"
                                   if ambiguous else "stable")})
-    if not ambiguous:
-        return _sesion(url, "BASELINE-STABLE", None, [], trace,
-                       spent, gap_note(
-            "sin varianza: no hay hipotesis que formular"))
+    prev = (rm.load(url) if cfg.get("resume") else None)
+    ttl = cfg.get("ttl_hours", rm.TTL_HOURS_DEFAULT)
 
-    # ---- HIPOTESIS
+    # ---- REUSO determinista: baseline identico dentro del TTL
+    if prev and ambiguous and rm.reusable(prev, hashes, ttl):
+        trace.append({"paso": "memoria",
+                      "nota": (f"baseline identico a la ventana "
+                               f"{prev['window']}: reuso")}
+                     )
+        graph = hg.seed("baseline_ambiguous")
+        for node in graph["nodes"]:
+            pn = next((h for h in prev.get("hipotesis", [])
+                       if h["id"] == node["id"]), None)
+            if pn:
+                node["status"] = pn["status"]
+                node["evidence"] = ["reusado: " + e
+                                    for e in pn["evidence"]]
+                node["contradictions"] = [
+                    "reusado: " + c
+                    for c in pn["contradictions"]]
+        rec = _sesion(url, prev["verdicto"],
+                      graph, prev.get("experimentos", []),
+                      trace, spent, prev.get("gap_ledger"),
+                      prev.get("atribucion", "UNKNOWN")
+                      + " (REUSADO)",
+                      fps=fps, ambiguous=ambiguous)
+        rec["reuse"] = True
+        rec["memoria"] = rm.meta(url)
+        rm.save(rec)
+        return rec
+
+    if not ambiguous:
+        rec = _sesion(url, "BASELINE-STABLE", None, [], trace,
+                       spent, gap_note(
+            "sin varianza: no hay hipotesis que formular"),
+        fps=fps, ambiguous=ambiguous)
+        rec["memoria"] = rm.meta(url)
+        rm.save(rec)
+        return rec
+
+    # ---- HIPOTESIS (sembradas frescas; lo previo entra como
+    # ANOTACION de ventana, nunca como veredicto heredado)
     graph = hg.seed("baseline_ambiguous")
+    rm.annotate(graph, prev)
 
     # ---- LOOP DE EXPERIMENTOS
     bundle = {}
@@ -110,8 +149,11 @@ def audit(cfg):
         verdicto = "UNKNOWN-DEMOSTRADO"
         att = "UNKNOWN"
         gaps = gap_ledger(graph, ejecutados)
-    return _sesion(url, verdicto, graph, ejecutados, trace,
-                   spent, gaps, att)
+    rec = _sesion(url, verdicto, graph, ejecutados, trace,
+                  spent, gaps, att, fps=fps, ambiguous=ambiguous)
+    rec["memoria"] = rm.meta(url)
+    rm.save(rec)
+    return rec
 
 
 def _converge_por(graph, live):
@@ -147,12 +189,18 @@ def gap_ledger(graph, ejecutados):
 
 
 def _sesion(url, verdicto, graph, ejecutados, trace, spent,
-            gaps, att=None):
+            gaps, att=None, fps=None, ambiguous=False):
     if att is None:
         att = ("NINGUNA (baseline sin varianza)"
                if verdicto == "BASELINE-STABLE" else "UNKNOWN")
     return {
         "target": url,
+        "window": datetime.datetime.utcnow().isoformat(
+            timespec="seconds"),
+        "baseline": {"huellas": ([f["body_hash"] for f in fps]
+                                if fps else []),
+                     "trigger": ("baseline_ambiguous"
+                                 if ambiguous else "stable")},
         "verdicto": verdicto,
         "atribucion": att,
         "hipotesis": (hg.summary(graph) if graph else []),
@@ -175,6 +223,18 @@ def render(rec):
             out.append(f"    [+] {e}")
         for c in n["contradictions"]:
             out.append(f"    [-] {c}")
+    m = rec.get("memoria") or {}
+    if m.get("ventanas"):
+        extra = f" (reuso)" if rec.get("reuse") else ""
+        out.append(f"memoria: {m['ventanas']} ventana(s)"
+                   f"{extra}, ultima: "
+                   f"{m.get('ultimo_veredicto')}")
+    for n in rec["hipotesis"]:
+        pr = n.get("prior")
+        if pr:
+            out.append(f"  {n['id']} ventana previa "
+                       f"({pr.get('window')}): "
+                       f"{pr.get('status')}")
     out.append(f"experimentos: "
                f"{', '.join(rec['experimentos']) or 'ninguno'}")
     g = rec["gap_ledger"]
@@ -199,8 +259,23 @@ def main():
     ap.add_argument("url")
     ap.add_argument("--timeout", type=float, default=8.0)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--resume", action="store_true",
+                    help="consultar memoria del target")
+    ap.add_argument("--ttl", type=float, default=None,
+                    help="TTL horas para reuso (default 6)")
+    ap.add_argument("--history", action="store_true",
+                    help="mostrar dossier y salir")
     a = ap.parse_args()
-    rec = audit({"url": a.url, "timeout": a.timeout})
+    if a.history:
+        for w in rm.dossier(a.url if a.url.startswith("http")
+                            else "https://" + a.url):
+            print(f"{w.get('window')} {w.get('verdicto')}"
+                  f" | {w.get('atribucion')}"
+                  f" | {w['budget']['spent']['total']} req")
+        return
+    rec = audit({"url": a.url, "timeout": a.timeout,
+                 "resume": a.resume,
+                 "ttl_hours": a.ttl})
     if a.json:
         print(json.dumps(rec, indent=1, default=str))
     else:

@@ -24,3 +24,4 @@ auto_update.log
 waf_state.json
 tune_state.json
 .codexrc/intelligence/events/
+memory/

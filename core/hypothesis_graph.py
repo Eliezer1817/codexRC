@@ -79,7 +79,8 @@ def summary(graph):
     return [{"id": n["id"], "name": n["name"],
              "status": n["status"],
              "evidence": n["evidence"],
-             "contradictions": n["contradictions"]}
+             "contradictions": n["contradictions"],
+             "prior": n.get("prior")}
             for n in graph["nodes"]]
 
 

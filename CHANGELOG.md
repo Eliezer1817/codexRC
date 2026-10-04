@@ -1,3 +1,42 @@
+## v0.81.1 — RESEARCH-MEMORY: el motor recuerda
+
+Pregunta central: si vuelvo a un target manana, ¿empiezo de
+cero o se que se ya se probo y que quedo sin resolver?
+
+ALCANCE: core/research_memory.py + integracion en
+adaptive_hunt. Dossier por host en CODEXRC_HOME/memory/
+research/<host>/ (dossier.jsonl una linea por ventana +
+latest.json). Respeta CODEXRC_HOME: dos IAs no comparten
+dossier.
+
+TRES REGLAS DE HONESTIDAD:
+  1. Solo observaciones: se guarda lo visto, lo ejecutado y
+     lo descartado CON SU NOTA. Sin inferencias.
+  2. Las conclusiones CADUCAN POR VENTANA: al re-entrar, el
+     grafo se siembra FRESCO y lo previo entra como ANOTACION
+     ("ventana previa <ts>: SUPPORTED"). Contexto, nunca
+     veredicto heredado.
+  3. Reuso determinista UNICAMENTE con evidencia fuerte:
+     baseline identico (mismas huellas, mismo disparador)
+     dentro del TTL (default 6h, --ttl). Mismo observable =
+     mismas condiciones; baseline distinto = ventana nueva y
+     corrida nueva, siempre.
+
+EFECTO MEDIBLE: sesion repetida con baseline identico pasa de
+19 requests a 3 (reuso). Baseline distinto o TTL agotado:
+corrida fresca con historial visible.
+
+CLI: --resume, --ttl, --history (dossier ventana a ventana).
+
+Fix: reuso no pasaba las huellas del baseline a la sesion
+(TypeError, atrapado por el test manual antes de regresion).
+
+Validacion: RC-000187 (reuso 3 req REUSADO), RC-000188 (TTL
+agotado -> ventana nueva 19 req + anotacion previa),
+RC-000189 (baseline distinto -> cero reuso), RC-000190
+(invariantes v0.81: RC-000183..185 re-ejecutadas PASS).
+Corpus 61/61.
+
 ## v0.81.0 — ADAPTIVE-HUNT: la capa epistemica
 
 Pregunta central: no "que vulnerabilidad puedo probar" sino
