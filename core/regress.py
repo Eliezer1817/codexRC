@@ -638,6 +638,54 @@ def seed_rc_000166() -> None:
     })
 
 
+def seed_rc_000167() -> None:
+    """RC-000167 (v0.78.0): STATE-CORRELATION. El vector de
+    evidencia (E0-E5) y el juez determinista deben separar:
+    desync-pool (E4+E5 -> CROSS-CONNECTION-MISMATCH, DEMO) de
+    eco-normaliza (E3+E2+E0 -> PIPE-BENIGN SELLADO: evidencia
+    presente que NO escala) de consistente (E0/E0/E0 -> STABLE).
+    La regla del falso DEMO v0.77 queda sellada en el juez:
+    PIPE-BENIGN no escala por re-observacion."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000167" in cases:
+        return
+    _write_case({
+        "id": "RC-000167",
+        "module": "STATE-CORRELATION",
+        "problem": "veredictos por sonda separados sin vector de "
+                   "calidad: evidencia fuerte y debil pesaban "
+                   "igual y el PIPE legitimo podia re-observarse "
+                   "hasta escalar",
+        "first_seen": "v0.78.0",
+        "fixed_in": "v0.78.0",
+        "repro": {"expected": {
+            "desync-pool": "CROSS-CONNECTION-MISMATCH/DEMO",
+            "eco-normaliza": "PIPE-BENIGN sellado (E3+E2+E0)",
+            "consistente": "STABLE"}},
+    })
+
+
+def _esperar_labs(base_p, n, secs=15.0):
+    """Espera activa: los labs deben ESCUCHAR antes de auditar
+    (1.5s fijo no alcanza bajo carga)."""
+    import socket as _sk
+    import time as _t
+    t0 = _t.time()
+    while _t.time() - t0 < secs:
+        todos = True
+        for i in range(n):
+            try:
+                sk = _sk.create_connection(
+                    ("127.0.0.1", base_p + i * 2), 0.4)
+                sk.close()
+            except Exception:
+                todos = False
+        if todos:
+            return True
+        _t.sleep(0.25)
+    return False
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -664,6 +712,7 @@ def run() -> int:
     seed_rc_000164()
     seed_rc_000165()
     seed_rc_000166()
+    seed_rc_000167()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -1193,7 +1242,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                 try:
-                    _t.sleep(1.5)
+                    _esperar_labs(base_p, len(mods))
                     port = lambda m: base_p + mods.index(m) * 2
                     aud = lambda m, v=None: esa3({
                         "url": f"http://127.0.0.1:{port(m)}/",
@@ -1257,7 +1306,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                 try:
-                    _t.sleep(1.5)
+                    _esperar_labs(base_p, len(mods))
                     port = lambda m: base_p + mods.index(m) * 2
                     prof = lambda m: eprof({
                         "url": f"http://127.0.0.1:{port(m)}/",
@@ -1321,7 +1370,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                 try:
-                    _t.sleep(1.5)
+                    _esperar_labs(base_p, len(mods))
                     port = lambda m: base_p + mods.index(m) * 2
                     aud = lambda m: naudit({
                         "url": f"http://127.0.0.1:{port(m)}/",
@@ -1365,6 +1414,87 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 finally:
                     for p in procs.values():
                         p.kill()
+        if c["id"] == "RC-000167":
+            import subprocess
+            from core.state_correlation import audit as saudit
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["desync-pool", "eco-normaliza",
+                        "consistente"]
+                procs = {}
+                base_p = 19130
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(base_p, len(mods))
+                    port = lambda m: base_p + mods.index(m) * 2
+                    ok = True
+                    r1 = saudit({"url":
+                                 f"http://127.0.0.1:{port('desync-pool')}/",
+                                 "timeout": 5.0})
+                    v1 = r1.get("evidence_quality", {})
+                    c1 = (r1.get("resultado")
+                          == "CROSS-CONNECTION-MISMATCH"
+                          and r1.get("juez", {})
+                          .get("veredicto") == "DEMO"
+                          and v1.get("CONNECTION-STATE", {})
+                          .get("nivel") == "E4"
+                          and v1.get("SECURITY-IMPACT", {})
+                          .get("nivel") == "E5")
+                    if not c1:
+                        ok = False
+                    print(f"[{c['id']}] desync-pool: "
+                          f"{r1.get('resultado')}/"
+                          f"{r1.get('juez', {}).get('veredicto')} "
+                          f"(E4+E5) -> "
+                          f"{'PASS' if c1 else 'FAIL'}")
+                    r2 = saudit({"url":
+                                 f"http://127.0.0.1:{port('eco-normaliza')}/",
+                                 "timeout": 5.0})
+                    v2 = r2.get("evidence_quality", {})
+                    c2 = (r2.get("resultado") == "PIPE-BENIGN"
+                          and "sellado" in r2.get("juez", {})
+                          .get("veredicto", "")
+                          and v2.get("REPRESENTATION", {})
+                          .get("nivel") == "E3"
+                          and v2.get("CONNECTION-STATE", {})
+                          .get("nivel") == "E2"
+                          and v2.get("SECURITY-IMPACT", {})
+                          .get("nivel") == "E0")
+                    if not c2:
+                        ok = False
+                    print(f"[{c['id']}] eco-normaliza: "
+                          f"PIPE-BENIGN sellado "
+                          f"(E3+E2+E0 sin escalar) -> "
+                          f"{'PASS' if c2 else 'FAIL'}")
+                    r3 = saudit({"url":
+                                 f"http://127.0.0.1:{port('consistente')}/",
+                                 "timeout": 5.0})
+                    v3 = r3.get("evidence_quality", {})
+                    c3 = (r3.get("resultado") == "STABLE"
+                          and r3.get("juez", {})
+                          .get("veredicto") == "STABLE"
+                          and all(x.get("nivel") == "E0"
+                                  for x in v3.values()))
+                    if not c3:
+                        ok = False
+                    print(f"[{c['id']}] consistente: STABLE "
+                          f"(E0/E0/E0) -> "
+                          f"{'PASS' if c3 else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p2 in procs.values():
+                        p2.kill()
         if c["id"] == "RC-000166":
             import subprocess
             from core.connection_state import audit as caudit
@@ -1386,7 +1516,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                 try:
-                    _t.sleep(1.5)
+                    _esperar_labs(base_p, len(mods))
                     port = lambda m: base_p + mods.index(m) * 2
                     aud = lambda m: caudit({
                         "url": f"http://127.0.0.1:{port(m)}/",

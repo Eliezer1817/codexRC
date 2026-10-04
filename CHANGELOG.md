@@ -1,3 +1,49 @@
+## v0.78.0 — STATE-CORRELATION: un veredicto por target
+
+No agrega payloads. Une lo que v0.75 (contrato del edge),
+v0.76 (representacion) y v0.77 (estado de conexion) observan
+sobre el MISMO target en una ficha de estado unica:
+reuse, aceptadas, baseline_varianza, n_resp, b1_tragado,
+cross_connection_effect, reproducibilidad, cierre tras A.
+
+CUATRO RESULTADOS (solo el ultimo alimenta la escalera):
+  STABLE
+  PIPE-BENIGN      sellado: re-observar el desplazamiento mil
+                   veces jamas escala (regla del falso DEMO)
+  STATE-CHANGED    reproducible sin evidencia cross-connection
+  CROSS-CONNECTION-MISMATCH
+
+EVIDENCE QUALITY E0-E5, anotacion transversal por capa:
+  REPRESENTATION: E2 diferencial / E3 ECO downstream
+    (te=none ES observacion downstream: reporta la
+    normalizacion que llego al origin)
+  CONNECTION-STATE: E4 cross-connection
+  SECURITY-IMPACT: E5 respuesta ajena entregada a una
+    conexion inocente reproducible
+
+JUEZ determinista, no suma: DEMO exige E4+E5 SIEMPRE; E3
+sube confianza, no es requerido; PIPE-BENIGN sellado; baseline
+inestable -> UNKNOWN en todas las capas (sin poder
+discriminatorio no se concluye). La confianza sube por
+evidencia INDEPENDIENTE que reduce incertidumbre, no por
+repeticion de una anomalia.
+
+ATRIBUCION por capa: layers_con_evidencia vs unknown_layers
+(cache, origin, balanceador, aplicacion); atribucion fina por
+capa queda para ATTRIBUTION-CHAIN.
+
+Regresion RC-000167: desync-pool -> CROSS-CONNECTION-MISMATCH
+(E4+E5 -> DEMO); eco-normaliza -> PIPE-BENIGN sellado con
+vector E3+E2+E0 PRESENTE y sin escalar (la prueba del sello);
+consistente -> STABLE (E0/E0/E0). Corpus 38/38.
+
+Robustez: _esperar_labs (espera activa de puertos) en los 5
+bloques de labs de la regresion; el fix tras un Connection
+Refused esporadico: 1.5s fijo no alcanza bajo carga.
+
+En vivo (linktr.ee): UNKNOWN-BASELINE honesto (3 huellas en el
+propio baseline, reuse=no); atribucion lista capas unknown.
+
 ## v0.77.0 — CONNECTION-STATE AUDIT: el estado es el testigo
 
 Pregunta: ¿deja una peticion ambigua un estado observable
