@@ -1,3 +1,17 @@
+## v0.85.0 — PIPE-CROSS
+
+El Hunter automatico (/api/scan) ahora invoca la auditoria
+CROSS-LAYER (v0.83 grafo + v0.84 veredicto) como nodo nativo
+del pipeline, despues de SECURITY. Cada caza deja tarjeta
+X-LAYER en la UI (veredicto, baseline, reqs, experimentos,
+run_id del grafo) y linea humana en el log del job. El
+presupuesto se mantiene: <= 11 reqs por disparo.
+
+Lab: ThreadingHTTPServer (un edge real acepta conexiones
+concurrentes; el single-thread se bloqueaba con keep-alive
+de clientes previos). Regresion RC-000210 asegura el
+cableado backend+UI+presupuesto. Corpus: 81 casos.
+
 ## v0.84.0 — CROSS-LAYER CORRELATION
 
 Un disparo, tres capas observadas a la vez (Edge / Cache /

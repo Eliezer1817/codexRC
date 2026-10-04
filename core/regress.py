@@ -1256,6 +1256,25 @@ def seed_cross_layer() -> None:
         })
 
 
+def seed_rc_000210() -> None:
+    """RC-000210: PIPE-CROSS v0.85. El Hunter automatico debe
+    invocar la auditoria CROSS-LAYER (grafo v0.83 + veredicto)
+    en su pipeline."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000210" in cases:
+        return
+    _write_case({
+        "id": "RC-000210",
+        "module": "PIPE-CROSS",
+        "problem": "el hunter automatico podia cazar sin la "
+        "auditoria cross-layer ni trazabilidad al grafo",
+        "first_seen": "v0.85.0",
+        "fixed_in": "v0.85.0",
+        "repro": {"expected": "nodo cross_layer en NODE_ORDER/"
+                  "NODE_FUNCS/UI, presupuesto <= 11 reqs"},
+    })
+
+
 def run(only_ids=None) -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real).
@@ -1315,6 +1334,7 @@ def run(only_ids=None) -> int:
     for _n in range(195, 205):
         globals()[f"seed_rc_000{_n}"]()
     seed_cross_layer()
+    seed_rc_000210()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2930,6 +2950,34 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                   f"re-ejecucion RC-000174..182 exit="
                   f"{res.returncode} -> "
                   f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000210":
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            app_src = open(os.path.join(root, "backend",
+                                        "app.py")).read()
+            idx_src = open(os.path.join(root, "frontend",
+                                        "index.html")).read()
+            xl_src = open(os.path.join(root, "core",
+                                       "cross_layer.py")).read()
+            ok = True
+            rzn = []
+            if '"cross_layer", "domain_map"' not in app_src:
+                ok = False; rzn.append("NODE_ORDER sin cross_layer")
+            if '"cross_layer": node_cross_layer' not in app_src:
+                ok = False; rzn.append("NODE_FUNCS sin nodo")
+            if 'def node_cross_layer' not in app_src:
+                ok = False; rzn.append("sin node_cross_layer")
+            if 'id: "cross_layer", label: "X-LAYER"' not in idx_src:
+                ok = False; rzn.append("UI sin nodo X-LAYER")
+            if 'id="bXLayer"' not in idx_src:
+                ok = False; rzn.append("UI sin tarjeta")
+            if "MAX_PERTURBATIONS = 2" not in xl_src:
+                ok = False; rzn.append("presupuesto alterado")
+            print(f"[RC-000210] pipe-cross: nodo en backend+UI, "
+                  f"presupuesto intacto -> "
+                  f"{'PASS' if ok else 'FAIL: ' + '; '.join(rzn)}")
             if not ok:
                 fails += 1
         # ---- CROSS-LAYER v0.84 (RC-000205..209)

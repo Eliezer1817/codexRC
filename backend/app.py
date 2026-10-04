@@ -41,7 +41,7 @@ from core.pipeline import Pipeline
 from core.recon import Recon
 from core.tech_detect import TechDetector
 
-NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "domain_map", "cve_match"]
+NODE_ORDER = ["recon", "tech_detect", "auth_status", "security_audit", "cross_layer", "domain_map", "cve_match"]
 
 
 app = Flask(__name__, static_folder=str(ROOT / "frontend"), static_url_path="")
@@ -405,6 +405,16 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
             }
         }
 
+    def node_cross_layer(ctx: Dict[str, Any]) -> Dict[str, Any]:
+        """v0.85 PIPE-CROSS: auditoria CROSS-LAYER (Edge/Cache/Origin
+        + conexion) sobre el blanco, presupuesto fijo <= 11 reqs.
+        Veredicto determinista BENIGN/SUSPICIOUS/SHARED-STATE/DEMO,
+        trazabilidad al grafo de experimentos v0.83."""
+        from core import cross_layer as xl
+        url = ctx.get("final_url") or ctx["url"]
+        inf = xl.cross_audit({"url": url, "timeout": 15.0})
+        return {"cross_layer": inf}
+
     def node_domain(ctx: Dict[str, Any]) -> Dict[str, Any]:
         return {"domain_map": DomainMap().run(ctx["url"])}
 
@@ -413,6 +423,7 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
         "tech_detect": node_tech,
         "auth_status": node_auth_info,
         "security_audit": node_security,
+        "cross_layer": node_cross_layer,
         "domain_map": node_domain,
         "cve_match": node_cve,
     }
@@ -442,6 +453,13 @@ def execute_scan(url: str, data: Dict[str, Any], job: Dict[str, Any] = None) -> 
                 tls = sa["tls"]
                 tls_txt = f"TLS {tls.get('protocol', '?')}, vence en {tls.get('days_left')}d" if tls.get("enabled") else "TLS: sin acceso"
                 return f"SECURITY · WAF: {waf} · {tls_txt} · cabeceras seguras: {sa['headers_score']['present']}/{sa['headers_score']['total']}"
+            if name == "cross_layer":
+                cl = out.get("cross_layer", {})
+                v = cl.get("verdict", "?")
+                tag = ("\u2717\u2717 " if str(v).startswith("DEMO")
+                       else str(v))
+                return (f"CROSS-LAYER \u00b7 veredicto: {tag} \u00b7 "
+                        f"{cl.get('requests', 0)} reqs")
             if name == "domain_map":
                 dm = out["domain_map"]
                 ips = ", ".join(dm.get("ips", [])[:3]) or "?"

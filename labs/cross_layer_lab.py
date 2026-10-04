@@ -13,7 +13,8 @@ Python puro, un hilo, determinista. Uso:
 """
 
 import sys
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import (BaseHTTPRequestHandler,
+                           HTTPServer, ThreadingHTTPServer)
 
 SCENARIOS = {
     "absorbed": 19180, "edge_local": 19181,
@@ -86,7 +87,9 @@ def main():
         SCENARIOS[scen]
     Handler.scenario = scen
     Handler.state = {"last": "base"}
-    srv = HTTPServer(("127.0.0.1", port), Handler)
+    # ThreadingHTTPServer: un edge real acepta conexiones concurrentes
+    # (con keep-alive de clientes previos, el single-thread se bloqueaba)
+    srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print("lab %s en %d" % (scen, port), flush=True)
     srv.serve_forever()
 

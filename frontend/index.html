@@ -316,6 +316,7 @@
     .row .v { color: var(--text); text-align: right; word-break: break-word; }
     .row .v.good { color: var(--green); font-weight: 600; }
     .row .v.bad { color: var(--red); font-weight: 600; }
+    .row .v.warn { color: var(--amber, #ffb400); font-weight: 600; }
     .row .v.dim { color: var(--muted); }
     .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0; }
     .chip { background: #05140b; border: 1px solid var(--green-dark); color: var(--text); font-size: 0.78rem; padding: 0.25rem 0.55rem; border-radius: 2px; }
@@ -623,6 +624,10 @@
           <div class="card-body" id="bSec"><div class="empty">esperando escaneo…</div></div>
         </div>
         <div class="card">
+          <div class="card-head">CROSS-LAYER <span class="count" id="cXLayer">—</span></div>
+          <div class="card-body" id="bXLayer"><div class="empty">esperando escaneo…</div></div>
+        </div>
+        <div class="card">
           <div class="card-head">Dominios <span class="count" id="cDom">—</span></div>
           <div class="card-body" id="bDom"><div class="empty">esperando escaneo…</div></div>
         </div>
@@ -742,6 +747,7 @@
       { id: "tech_detect", label: "TECH" },
       { id: "auth_status", label: "AUTH" },
       { id: "security_audit", label: "SECURITY" },
+      { id: "cross_layer", label: "X-LAYER" },
       { id: "domain_map", label: "DOMAIN" },
       { id: "cve_match", label: "CVE" },
       { id: "report", label: "REPORT" },
@@ -828,6 +834,22 @@
         : '<div class="empty">ninguna tecnología detectada</div>';
     }
 
+    function renderXLayer(cl) {
+      const v = String(cl.verdict || "?");
+      const vClass = v === "DEMO" ? "bad" : (v === "SUSPICIOUS" || v.indexOf("SHARED") === 0 ? "warn" : "good");
+      document.getElementById("cXLayer").textContent = v;
+      const perts = (cl.experiments || []).map(p =>
+        `<div class="row"><span class="k">${esc(p.pid || "?")}</span>` +
+        `<span class="v ${p.contaminacion ? "bad" : "dim"}">mismatch ${p.mismatch ? "SÍ" : "no"} · repro ${p.reproducido ? "SÍ" : "no"} · contam ${p.contaminacion ? "SÍ" : "no"}</span></div>`).join("");
+      const reasons = (cl.reasons || []).map(r => `<div class="row"><span class="k">·</span><span class="v dim">${esc(r)}</span></div>`).join("");
+      document.getElementById("bXLayer").innerHTML =
+        `<div class="row"><span class="k">Veredicto</span><span class="v ${vClass}"><b>${esc(v)}</b></span></div>` +
+        `<div class="row"><span class="k">Baseline</span><span class="v">${esc(cl.baseline_state || "?")}</span></div>` +
+        `<div class="row"><span class="k">Requests</span><span class="v">${cl.requests != null ? cl.requests : "?"} (tope 11)</span></div>` +
+        perts + reasons +
+        (cl.graph_run ? `<div class="row"><span class="k">Grafo</span><span class="v dim">${esc(cl.graph_run)}</span></div>` : "");
+    }
+
     function renderSec(sa) {
       const score = sa.headers_score || {};
       const grade = score.total ? (score.present >= 6 ? "A" : score.present >= 4 ? "B" : score.present >= 2 ? "C" : "D") : "?";
@@ -885,6 +907,7 @@
       const ok = (name) => R[name] && R[name].status === "success" && R[name].data;
       if (ok("tech_detect")) renderTech(R.tech_detect.data.technologies || []);
       if (ok("security_audit")) renderSec(R.security_audit.data.security_audit || {});
+      if (ok("cross_layer")) renderXLayer(R.cross_layer.data.cross_layer || {});
       if (ok("domain_map")) renderDom(R.domain_map.data.domain_map || {});
       if (R.auth_status) renderAuth(job, R.auth_status);
     }
