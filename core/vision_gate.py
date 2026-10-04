@@ -42,7 +42,13 @@ import requests
 
 API_URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
            "{model}:generateContent")
-DEFAULT_MODEL = os.environ.get("VISION_MODEL", "gemini-2.0-flash")
+# gemini-2.0/2.5-flash fueron retirados para usuarios nuevos
+# (404 "no longer available"). 3.8-flash es el vigente pero se
+# satura (503 high demand): se intenta en orden y se cae al
+# siguiente ante 404/503/overload. VISION_MODEL fuerza uno fijo.
+MODELS = ([os.environ["VISION_MODEL"]]
+          if os.environ.get("VISION_MODEL")
+          else ["gemini-3.8-flash", "gemini-flash-latest"])
 TIMEOUT = 40
 
 # ------------------------------------------------------------------
@@ -196,9 +202,15 @@ def classify(image_path: Optional[str] = None,
     Sin clave, sin imagen y sin DOM -> ERROR (REG-BOT conserva su
     comportamiento determinista; nunca cuelga).
     """
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    # el auto-detector de secretos puede comerse el prefijo "AQ."
+    # del formato nuevo de claves Google (guarda 50 chars sin "AQ.").
+    # Normalizamos: si la clave no empieza por prefijos conocidos se
+    # reintenta con "AQ." ante un rechazo de la API (fallback, nunca
+    # altera claves AIza/AQ. validas).
+    key = (os.environ.get("GEMINI_API_KEY")
+           or os.environ.get("GOOGLE_API_KEY", "")).strip()
     if not key:
-        return _err("sin GEMINI_API_KEY configurada")
+        return _err("sin GEMINI_API_KEY/GOOGLE_API_KEY configurada")
     if not image_path and not html:
         return _err("sin evidencia: se requiere imagen o DOM")
 
@@ -226,28 +238,57 @@ def classify(image_path: Optional[str] = None,
             "response_mime_type": "application/json",
             "response_schema": SCHEMA,
             "temperature": 0,
-            "maxOutputTokens": 300,
+            "maxOutputTokens": 2000,
         },
     }
-    try:
-        r = requests.post(
-            API_URL.format(model=DEFAULT_MODEL),
-            json=payload, timeout=timeout,
-            headers={"x-goog-api-key": key})
-    except requests.RequestException as exc:
-        return _err("API inaccesible: {}".format(exc))
+    keys = [key]
+    if not key.startswith(("AIza", "AQ.")):
+        keys.append("AQ." + key)   # formato Google nuevo despojado
 
-    if r.status_code != 200:
+    r = None
+    last_err = ""
+    for model in MODELS:
+        payload["generationConfig"]["maxOutputTokens"] = 2000
+        for k in keys:
+            try:
+                r = requests.post(
+                    API_URL.format(model=model), json=payload,
+                    timeout=timeout,
+                    headers={"x-goog-api-key": k})
+            except requests.RequestException as exc:
+                return _err("API inaccesible: {}".format(exc))
+            if r.status_code == 200:
+                break
+            try:
+                last_err = r.json().get("error", {}).get(
+                    "message", "")[:120]
+            except Exception:
+                last_err = r.text[:120]
+            # solo reintentamos con la clave alternativa si la API
+            # rechazo la clave; un 404/503 de modelo no cambia con eso
+            if "API key not valid" not in last_err:
+                break
+        if r is not None and r.status_code == 200:
+            break
+        # 404 (modelo retirado) o 503 (saturado) -> modelo siguiente
+        if r is not None and r.status_code not in (404, 503, 429):
+            break
+    if r is None or r.status_code != 200:
+        return _err("API {}: {}".format(
+            r.status_code if r is not None else 0, last_err))
+
+    try:
+        parts = r.json()["candidates"][0]["content"]["parts"]
+        cand = next(p["text"] for p in parts
+                    if isinstance(p, dict) and p.get("text"))
         try:
-            msg = r.json().get("error", {}).get("message", "")[:120]
-        except Exception:
-            msg = r.text[:120]
-        return _err("API {}: {}".format(r.status_code, msg))
-
-    try:
-        cand = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-        out = json.loads(cand)
-    except (KeyError, IndexError, ValueError) as exc:
+            out = json.loads(cand)
+        except ValueError:
+            m = re.search(r"\{.*\}", cand, re.S)   # JSON truncado/sucio
+            if not m:
+                raise
+            out = json.loads(m.group(0))
+    except (KeyError, IndexError, StopIteration, ValueError) as exc:
         return _err("respuesta no parseable: {}".format(exc))
 
     # validacion dura: el veredicto solo se acepta si es legal
@@ -262,7 +303,7 @@ def classify(image_path: Optional[str] = None,
         out["confidence"] = float(out.get("confidence", 0))
     except (TypeError, ValueError):
         out["confidence"] = 0.0
-    out["model"] = DEFAULT_MODEL
+    out["model"] = model
     return out
 
 

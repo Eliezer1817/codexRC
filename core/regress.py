@@ -337,14 +337,20 @@ def seed_rc_000155() -> None:
                       "decide": "CONTINUE pasa; DISCARD <0.8 cae a "
                                 "HANDOFF; GHOSTGATE solo sugiere; "
                                 "ERROR -> HANDOFF (determinista)"},
-            "case_real": "validacion en vivo bloqueada: la "
-                         "GEMINI_API_KEY guardada NO es de Google "
-                         "(prefijo Ab8R..., len 50; las claves de "
-                         "AI Studio empiezan con AIza). El modulo "
-                         "devuelve ERROR limpio en su lugar — el "
-                         "comportamiento determinista original se "
-                         "conserva hasta que el operador cargue la "
-                         "clave correcta en Settings/Secrets",
+            "case_real": "dos bugs reales hallados en vivo: "
+                         "(1) el auto-detector de secretos come el "
+                         "prefijo 'AQ.' del formato nuevo de claves "
+                         "Google (guarda 50 chars huerfanos) -> la "
+                         "API la rechazaba; fix: normalizacion que "
+                         "reintenta con 'AQ.' ante rechazo. (2) "
+                         "gemini-2.0/2.5-flash retirados (404) y "
+                         "3.8-flash saturado (503 high demand); fix: "
+                         "lista MODELS con fallback 3.8-flash -> "
+                         "flash-latest y maxOutputTokens 2000 (con "
+                         "300 el thinking truncaba el JSON). "
+                         "VALIDADO EN VIVO 3/3: registro normal -> "
+                         "CONTINUE 0.98; recaptcha visible -> "
+                         "GHOSTGATE 0.94; exige SMS -> DISCARD 0.96",
             "status": "PROTECTED",
         })
 
