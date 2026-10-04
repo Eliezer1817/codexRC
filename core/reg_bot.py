@@ -570,7 +570,14 @@ class RegBot:
         if not info["has_registration"]:
             self.log("  [REG-BOT] sin registro visible")
             return idents
-        if info.get("forms") and info["forms"][0]["discard"]:
+        if not info.get("forms"):
+            # V0.69.3: SPA/IdP (Descope, Auth0, etc.) sin <form> HTML:
+            # nunca crashear; reportar el caso para GHOSTGATE/own-creds.
+            self.log("  [REG-BOT] sin <form> HTML (SPA/IdP: registro "
+                     "via JS SDK) -> imposible registrar solo; usar "
+                     "GHOSTGATE o --own")
+            return idents
+        if info["forms"][0]["discard"]:
             self.log("  [REG-BOT] DESCARTADO: exige {} (regla permanente)".format(
                 info["forms"][0]["discard"]))
             return idents
