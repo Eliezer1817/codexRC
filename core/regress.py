@@ -260,6 +260,51 @@ def seed_rc_000153() -> None:
         })
 
 
+def seed_rc_000154() -> None:
+    """RC-000154 (v0.68.0): REG-BOT + AB-DIFF universal (no-WP).
+    Proveedor universal de identidades: registra cuentas ninja en
+    sitios desconocidos (FORM-DISCOVERY lee el formulario,
+    CONSTRAINT-SOLVER resuelve politicas, VERIFICATION-FLOW con
+    codigo/enlace y polling corto) y AB-DIFF difa sesiones con
+    relacion A-duena-de-X / B-independiente. Veredictos
+    DEMO-UNAUTH / DEMO-BAC / REFUTADO con evidencia por endpoint."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000154" not in cases:
+        _write_case({
+            "id": "RC-000154",
+            "module": "REG-BOT + AB-DIFF (no-WordPress)",
+            "problem": "las 5 capas de AUTHZ-PROOF eran nativas de "
+                       "WordPress; contra sitios no-WP el motor no "
+                       "podia crear identidades ni difar autorizacion",
+            "first_seen": "v0.67.0 (capas BAC solo aplicaban a "
+                          "plugins WP)",
+            "fixed_in": "v0.68.0 (core/reg_bot.py: 7 submodulos + "
+                        "Identity estandarizado; core/ab_diff.py: "
+                        "niveles automaticos 1/2/3; "
+                        "core/lab_ab_site.py: laboratorio local; "
+                        "backend/app.py: POST/GET /api/ab_diff)",
+            "repro": {"lab": "lab_ab_site con IDOR intencional "
+                            "(/api/user/<id> sin owner check) y gate "
+                            "correcto (/api/user/<id>/notes)",
+                      "expect": "REG-BOT registra A y B solas "
+                                "(codigo por mailbox, 0 humano); "
+                                "AB-DIFF: DEMO-BAC en /api/user/<id> "
+                                "y REFUTADO en notes; sin veredictos "
+                                "en endpoints publicos"},
+            "case_real": "bug real encontrado durante el desarrollo: "
+                         "_parse_forms solo devolvia formularios con "
+                         "campo password, asi que el formulario de "
+                         "verificacion (solo campo de codigo, sin "
+                         "password) nunca se veia -> todos los "
+                         "registros quedaban en timeout 180s. Fix: "
+                         "include_all=True desde _find_verify_form. "
+                         "Segundo bug: login() hacia POST a la accion "
+                         "relativa ('/login') -> MissingSchema. Fix: "
+                         "absolutizar accion contra self.site",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -273,6 +318,7 @@ def run() -> int:
     seed_rc_000151()
     seed_rc_000152()
     seed_rc_000153()
+    seed_rc_000154()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -414,6 +460,13 @@ class RC151 {
             # python3 core/bac_proof.py <plugin> — validado v0.67.0
             print(f"[{c['id']}] BAC-PROOF dinamico — repro en vivo "
                   f"(ver case_real), no se re-ejecuta en corpus")
+        if c["id"] == "RC-000154":
+            # repro en vivo (lab local):
+            # python3 core/lab_ab_site.py 8899 &
+            # python3 core/ab_diff.py http://127.0.0.1:8899             #     --mock http://127.0.0.1:8899 — validado v0.68.0
+            print(f"[{c['id']}] REG-BOT + AB-DIFF — repro en vivo "
+                  f"en lab_ab_site (ver case_real), no se "
+                  f"re-ejecuta en corpus")
         if c["id"] == "RC-000152":
             import tempfile
             from core import fp_memory

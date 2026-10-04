@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+import itertools
 import threading
 
 from core.auth import AuthManager
@@ -121,7 +122,7 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.67.0"
+VERSION = "0.68.0"
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")
@@ -1410,6 +1411,72 @@ def _create_hunt_job(data: Dict[str, Any], url: str = None):
 
 
 # ------------------------- CAZA EN LOTE (v0.25.2) -------------------------
+# ------------------------------------------------------------
+# AB-DIFF universal (v0.68.0): diff de sesiones para sitios
+# NO-WordPress. REG-BOT registra identidades ninja (A duena del
+# objeto, B independiente) y el diff emite DEMO-UNAUTH / DEMO-BAC
+# / REFUTADO con evidencia. Niveles automaticos: 1 registro libre,
+# 2 credenciales propias, 3 anonimo.
+# ------------------------------------------------------------
+AB_JOBS: Dict[str, Dict[str, Any]] = {}
+AB_LOCK = threading.Lock()
+_ab_seq = itertools.count(1)
+
+
+@app.post("/api/ab_diff")
+def api_ab_diff():
+    data = request.get_json(silent=True) or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "falta url"}), 400
+    own = None
+    if data.get("own_email"):
+        own = {"email": data["own_email"],
+               "password": data.get("own_pass", "")}
+    aid = "ab_" + datetime.now().strftime("%H%M%S") + str(next(_ab_seq))
+    job = {"id": aid, "url": url, "status": "running", "log": [],
+           "result": None, "created_at": datetime.now().isoformat()}
+    with AB_LOCK:
+        AB_JOBS[aid] = job
+
+    def emit(msg: str) -> None:
+        with AB_LOCK:
+            job["log"].append(str(msg)[:300])
+            job["log"] = job["log"][-100:]
+
+    def run_ab() -> None:
+        try:
+            from core import ab_diff as abmod
+            res = abmod.run(url, own=own, log=emit)
+            with AB_LOCK:
+                job["status"] = "finished"
+                job["result"] = res
+            log_event("ab_diff_done", job_id=aid, url=safe_url(url),
+                      level=res.get("level"),
+                      veredictos=len(res.get("veredictos", [])))
+        except Exception as exc:
+            with AB_LOCK:
+                job["status"] = "failed"
+                job["error"] = str(exc)[:300]
+            log_event("ab_diff_failed", job_id=aid, url=safe_url(url),
+                      error=str(exc)[:200])
+
+    threading.Thread(target=run_ab, daemon=True).start()
+    return jsonify({"id": aid, "status": "running",
+                    "poll_url": f"/api/ab_diff/{aid}"}), 202
+
+
+@app.get("/api/ab_diff/<aid>")
+def api_ab_diff_get(aid: str):
+    with AB_LOCK:
+        job = AB_JOBS.get(aid)
+        if not job:
+            return jsonify({"error": "job desconocido"}), 404
+        return jsonify({k: job.get(k) for k in
+                        ("id", "url", "status", "log", "result",
+                         "error", "created_at")})
+
+
 BATCHES: Dict[str, Dict[str, Any]] = {}
 BATCHES_LOCK = threading.Lock()
 BATCH_PER_TARGET_TIMEOUT = 50 * 60  # 50 min por blanco (watchdog mata a los 45)

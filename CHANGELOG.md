@@ -1,3 +1,60 @@
+## v0.68.0 — REG-BOT + AB-DIFF universal: identidades no-WordPress (RC-000154)
+
+El concepto de la capa 4 (diff de sesiones) portado a CUALQUIER
+web. AUTHZ-PROOF ya no es exclusivo de WordPress: consume objetos
+Identity estandarizados y no sabe si la cuenta nacio en WP,
+Laravel, Django, Express o una app propia.
+
+NUEVO core/reg_bot.py — PROVEEDOR UNIVERSAL DE IDENTIDADES:
+- FORM-DISCOVERY: lee el formulario (hints, patrones, honeypots),
+  no lo adivina; descarta blancos que exigen telefono/KYC
+  (regla permanente); CAPTCHA -> CAPTCHA-PENDING (cola de handoff
+  al operador, nunca un sistema para vencer CAPTCHA)
+- CONSTRAINT-SOLVER + IDENTITY-GENERATOR: identidad plausible y
+  unica por sitio; password siempre cumple politicas estrictas;
+  alias con sufijo numerico y reintento condicionado a respuesta
+  REAL del servidor (hasta 5)
+- REGISTRATION-FLOW: multi-paso, TODOS los campos password
+  reciben la misma clave (confirm), formulario de verificacion
+  LEIDO de la respuesta del registro
+- VERIFICATION-FLOW: codigo 4-8 digitos O enlace magico, polling
+  corto (6s) porque los codigos caducan en minutos, reenvio hasta
+  3 ante expiracion
+- SESSION-HANDLER: captura cookies/csrf/tokens en el Identity
+- RECIPE-MEMORY: receta por sitio (no re-aprender nunca mas);
+  identidades y recetas viven en CODEXRC_HOME (privado, jamas git)
+- Buzones: mail.tm (API real) o MockMailProvider (laboratorio)
+- Identity = {id, credentials, cookies, csrf, tokens,
+  verification_state, registration_recipe, capabilities}
+
+NUEVO core/ab_diff.py — DIFF DE SESIONES UNIVERSAL:
+- Niveles AUTOMATICOS: 1) registro libre -> ANON + A(duena de X)
+  + B(independiente); 2) credenciales propias -> ANON + OWN;
+  3) nada -> ANON solo (fugas sin autenticacion)
+- Relacion A-duena-de-X / B-independiente: el diff es
+  CONCLUYENTE (B ve los datos de A = BAC/IDOR demostrado,
+  B bloqueado = REFUTADO con gate verificado)
+- Veredictos: DEMO-UNAUTH / DEMO-BAC / REFUTADO con evidencia
+  por endpoint; presupuesto MAX_CALLS=60 (solo lectura A->B,
+  cero payloads de exploit)
+- CLI: python3 core/ab_diff.py <url> [--own email:pass]
+
+NUEVO core/lab_ab_site.py — laboratorio no-WP local (filosofia
+WP-LAB): app "Laravel-like" con registro+verificacion por codigo,
+login, /api/user/<id> SIN owner check (IDOR a detectar) y
+/api/user/<id>/notes CON owner check (caso a refutar). Validacion
+end-to-end 100% local, cero terceros.
+
+BACKEND: POST /api/ab_diff {url, own_email?, own_pass?} -> job
+consultable en GET /api/ab_diff/<id> (log en vivo). VERSION 0.68.0.
+
+Bugs reales encontrados durante el desarrollo (case_real
+RC-000154): (1) _parse_forms solo devolvia formularios con
+password -> el form de verificacion (solo codigo) jamas se veia:
+todos los registros morian en timeout 180s; (2) login() hacia
+POST a la accion relativa -> MissingSchema. Ambos fixeados y
+regresados.
+
 ## v0.67.0 — AUTHZ-PROOF capa 4: BAC-PROOF dinamico (RC-000153)
 
 La joya de la corona del BAC 2.0: validacion DINAMICA con
