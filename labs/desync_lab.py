@@ -11,6 +11,9 @@ Modos (par edge->back):
   lenient         edge CL        back TE-lenient   (parsers tolerantes)
   rechaza         edge 400+close  back TE-strict    (rechaza framing
                                                   ambiguo; back vuln)
+  eco-normaliza   edge RECONSTRUYE el request (suelta TE,
+                  pone CL real); back responde ECO con lo recibido
+  eco-conserva    edge reenvia crudo; back responde ECO
 
 TE-strict: honra chunked SOLO con un unico header Transfer-Encoding,
 sin espacio antes de los dos puntos, valor == chunked (tras strip).
@@ -27,10 +30,15 @@ MODO = sys.argv[3] if len(sys.argv) > 3 else "desync"
 
 EDGE_FRAMING = {"desync": "cl", "consistente": "cl", "tecl": "te",
                 "consistente-te": "te", "lenient": "cl",
-                "rechaza": "cl-rechaza"}[MODO]
+                "rechaza": "cl-rechaza",
+                "eco-normaliza": "cl-rebuild",
+                "eco-conserva": "cl"}[MODO]
 BACK_FRAMING = {"desync": "te-strict", "consistente": "cl",
                 "tecl": "cl", "consistente-te": "te-strict",
-                "lenient": "te-lenient", "rechaza": "te-strict"}[MODO]
+                "lenient": "te-lenient", "rechaza": "te-strict",
+                "eco-normaliza": "cl",
+                "eco-conserva": "te-lenient"}[MODO]
+ECO = MODO in ("eco-normaliza", "eco-conserva")
 
 
 def recv_until(sock, buf, marker, timeout=5.0):
@@ -121,7 +129,7 @@ def chunked_extent(sock, buf):
         buf = resto[tam + 2:]
 
 
-def responder(sock, path):
+def responder(sock, path, head_txt=""):
     if path.startswith("/secreto"):
         body = b"SECRETO-SMUGGLED-CONTENT\n"
     elif path == "/":
@@ -130,9 +138,23 @@ def responder(sock, path):
         body = b"post-accepted\n"
     else:
         body = b"not-found\n"
+    extra = b""
+    if ECO:
+        te_v = "none"
+        cl_v = "none"
+        for k, v in header_lines(head_txt):
+            kk = k.strip().lower()
+            if kk == "transfer-encoding":
+                te_v = v.strip()
+            elif kk == "content-length":
+                cl_v = v.strip()
+        extra = (b"X-Received-Te: " + te_v.encode() + b"\r\n"
+                 b"X-Received-Cl: " + cl_v.encode() + b"\r\n"
+                 b"X-Received-Path: " + path.encode() + b"\r\n")
     resp = (b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
             b"Content-Length: " + str(len(body)).encode() + b"\r\n"
-            b"X-Path: " + path.encode() + b"\r\n\r\n" + body)
+            b"X-Path: " + path.encode() + b"\r\n" + extra +
+            b"\r\n" + body)
     print(f"[back] responde a {path}", file=sys.stderr, flush=True)
     sock.sendall(resp)
 
@@ -158,7 +180,7 @@ def backend_conn(conn):
                 buf = rest[n:]
             first = parse_first(head_txt)
             path = first.split(" ")[1] if " " in first else "/"
-            responder(conn, path)
+            responder(conn, path, head_txt)
     except Exception as e:
         print(f"[back-conn] EXCEP: {e!r}", file=sys.stderr, flush=True)
     finally:
@@ -187,7 +209,28 @@ def edge_conn(conn, back_sock):
                              b"Content-Length: 0\r\n"
                              b"Connection: close\r\n\r\n")
                 return
-            if (EDGE_FRAMING == "te"
+            if EDGE_FRAMING == "cl-rebuild":
+                # normaliza: consume el cuerpo bajo SU lectura y
+                # reenvia un request limpio (sin TE, CL real)
+                if te_honored(head_txt, "te-lenient"):
+                    cuerpo, buf = chunked_extent(conn, rest)
+                else:
+                    n = cl_value(head_txt)
+                    while len(rest) < n:
+                        rest, ok2 = recv_n(conn, rest, n)
+                        if not ok2:
+                            return
+                    cuerpo = rest[:n]
+                    buf = rest[n:]
+                first = parse_first(head_txt)
+                rebuilt = (first.encode() + b"\r\n"
+                           b"Content-Length: "
+                           + str(len(cuerpo)).encode()
+                           + b"\r\n\r\n" + cuerpo)
+                print(f"[edge] rebuild: {rebuilt[:60]!r}",
+                      file=sys.stderr, flush=True)
+                back_sock.sendall(rebuilt)
+            elif (EDGE_FRAMING == "te"
                     and te_honored(head_txt, "te-strict")):
                 cuerpo, buf = chunked_extent(conn, rest)
                 back_sock.sendall(raw_head + b"\r\n\r\n" + cuerpo)

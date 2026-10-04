@@ -1,3 +1,37 @@
+## v0.75.0 — EDGE-PROFILE: el contrato observable del edge
+
+Primera release del roadmap v0.75-v0.80 (EDGE-DIFFERENTIAL). No
+busca desync y no lanza smuggles: responde "¿que transformaciones
+aplica cada frontera antes de entregar el mensaje a la siguiente
+capa?" con sondeos BENIGNOS (framing contradictorio con cuerpo
+VACIO, sin contenido smuggleado) y nada inferido: lo no observable
+queda unknown.
+
+Ficha: version HTTP observado | reuse (3 GETs en 1 conexion) |
+cierre_rechazo | cl_te / te_doble / te_espacio / te_case
+(rejected|accepted|unknown) | normalizacion
+(normalized|conserved|unknown, observable solo si el downstream
+hace ECO) | downstream (reached|unknown) | cache (firma Age/
+X-Cache entre repeticiones) | origin (unknown: no observable).
+
+Lab: modos "eco-normaliza" (edge RECONSTRUYE: consume el cuerpo
+bajo su lectura y reenvia CL puro sin TE) y "eco-conserva" (edge
+reenvia crudo); el backend devuelve X-Received-Te/Cl/Path con lo
+que llego, volviendo la transformacion un hecho medible.
+
+Regresion RC-000164: normaliza -> normalized+reached; conserva ->
+conserved+reached; rechaza -> rejected+cierre yes+unknowns.
+Corpus 35/35.
+
+Primera ficha real (linktr.ee, edge Varnish): HTTP/1.1, reuse no
+(cierra tras 2 requests), cierre_rechazo yes, y el hallazgo de
+CONTRATO: ACEPTA cl_te, te_doble y te_case pero RECHAZA
+te_espacio (400+close). El siguiente paso del roadmap (v0.76
+NORMALIZATION-AUDIT) debe determinar que hace con lo que acepta.
+
+Presupuesto: 11 requests por ficha (1 conexion de reutilizacion
++ 4 probes de 1 conexion), secuencial, lectura A->B.
+
 ## v0.74.0 — EDGESYNC-V3: SONDA-DE-CORRELACION
 
 Salto de arquitectura: el veredicto ya no nace de una sola

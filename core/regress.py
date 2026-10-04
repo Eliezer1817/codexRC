@@ -556,6 +556,30 @@ def seed_rc_000163() -> None:
     })
 
 
+def seed_rc_000164() -> None:
+    """RC-000164 (v0.75.0): EDGE-PROFILE. La ficha del contrato del
+    edge debe distinguir normalizador (reenvia CL puro) de
+    conservador (reenvia crudo con TE) de rechazador (400+close),
+    leyendo el ECO del downstream. Nada inferido: lo no observable
+    debe quedar unknown."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000164" in cases:
+        return
+    _write_case({
+        "id": "RC-000164",
+        "module": "EDGE-PROFILE",
+        "problem": "el veredicto de desync no caracteriza el "
+                   "contrato del edge: que rechaza, normaliza o "
+                   "conserva ante cada framing",
+        "first_seen": "v0.75.0",
+        "fixed_in": "v0.75.0",
+        "repro": {"expected": {
+            "normaliza": "normalized+reached",
+            "conserva": "conserved+reached",
+            "rechaza": "rejected+cierre_yes"}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -579,6 +603,7 @@ def run() -> int:
     seed_rc_000161()
     seed_rc_000162()
     seed_rc_000163()
+    seed_rc_000164()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -1146,6 +1171,70 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                           f"{t1['clase']}/{t2['clase']}/{t3['clase']}"
                           f" -> {'PASS' if tc else 'FAIL'}")
                     print(f"[{c['id']}] sonda de correlacion -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p in procs.values():
+                        p.kill()
+        if c["id"] == "RC-000164":
+            import subprocess
+            from core.edge_profile import profile as eprof
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["eco-normaliza", "eco-conserva", "rechaza"]
+                procs = {}
+                base_p = 18980
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _t.sleep(1.5)
+                    port = lambda m: base_p + mods.index(m) * 2
+                    prof = lambda m: eprof({
+                        "url": f"http://127.0.0.1:{port(m)}/",
+                        "timeout": 5.0})
+                    ok = True
+                    f1 = prof("eco-normaliza")
+                    c1 = (f1["normalizacion"] == "normalized"
+                          and f1["downstream"] == "reached"
+                          and f1["cl_te"] == "accepted")
+                    if not c1:
+                        ok = False
+                    print(f"[{c['id']}] eco-normaliza: "
+                          f"{f1['normalizacion']}/"
+                          f"{f1['downstream']} -> "
+                          f"{'PASS' if c1 else 'FAIL'}")
+                    f2 = prof("eco-conserva")
+                    c2 = (f2["normalizacion"] == "conserved"
+                          and f2["downstream"] == "reached"
+                          and f2["cl_te"] == "accepted")
+                    if not c2:
+                        ok = False
+                    print(f"[{c['id']}] eco-conserva: "
+                          f"{f2['normalizacion']}/"
+                          f"{f2['downstream']} -> "
+                          f"{'PASS' if c2 else 'FAIL'}")
+                    f3 = prof("rechaza")
+                    c3 = (f3["cl_te"] == "rejected"
+                          and f3["te_case"] == "rejected"
+                          and f3["cierre_rechazo"] == "yes"
+                          and f3["normalizacion"] == "unknown"
+                          and f3["origin"] == "unknown")
+                    if not c3:
+                        ok = False
+                    print(f"[{c['id']}] rechaza: "
+                          f"{f3['cl_te']}/{f3['cierre_rechazo']} -> "
+                          f"{'PASS' if c3 else 'FAIL'}")
+                    print(f"[{c['id']}] ficha edge-profile -> "
                           f"{'PASS' if ok else 'FAIL'}")
                     if not ok:
                         fails += 1
