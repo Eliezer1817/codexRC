@@ -14,6 +14,10 @@ Modos (par edge->back):
   eco-normaliza   edge RECONSTRUYE el request (suelta TE,
                   pone CL real); back responde ECO con lo recibido
   eco-conserva    edge reenvia crudo; back responde ECO
+  desync-pool     front honra CL, back TE-strict, y el socket
+                  back es COMPARTIDO entre clientes (topologia
+                  real de pool): el veneno de un cliente puede
+                  contaminar la respuesta de otro
 
 TE-strict: honra chunked SOLO con un unico header Transfer-Encoding,
 sin espacio antes de los dos puntos, valor == chunked (tras strip).
@@ -32,12 +36,14 @@ EDGE_FRAMING = {"desync": "cl", "consistente": "cl", "tecl": "te",
                 "consistente-te": "te", "lenient": "cl",
                 "rechaza": "cl-rechaza",
                 "eco-normaliza": "cl-rebuild",
-                "eco-conserva": "cl"}[MODO]
+                "eco-conserva": "cl",
+                "desync-pool": "cl"}[MODO]
 BACK_FRAMING = {"desync": "te-strict", "consistente": "cl",
                 "tecl": "cl", "consistente-te": "te-strict",
                 "lenient": "te-lenient", "rechaza": "te-strict",
                 "eco-normaliza": "cl",
-                "eco-conserva": "te-lenient"}[MODO]
+                "eco-conserva": "te-lenient",
+                "desync-pool": "te-strict"}[MODO]
 ECO = MODO in ("eco-normaliza", "eco-conserva")
 
 
@@ -161,9 +167,11 @@ def responder(sock, path, head_txt=""):
 
 def backend_conn(conn):
     buf = b""
+    _t = 86400.0 if POOL else 5.0
     try:
         while True:
-            buf, ok = recv_until(conn, buf, b"\r\n\r\n")
+            buf, ok = recv_until(conn, buf, b"\r\n\r\n",
+                                 timeout=_t)
             if not ok:
                 return
             raw_head, rest = buf.split(b"\r\n\r\n", 1)
@@ -174,7 +182,7 @@ def backend_conn(conn):
             else:
                 n = cl_value(head_txt)
                 while len(rest) < n:
-                    rest, ok2 = recv_n(conn, rest, n)
+                    rest, ok2 = recv_n(conn, rest, n, timeout=_t)
                     if not ok2:
                         return
                 buf = rest[n:]
@@ -246,6 +254,64 @@ def edge_conn(conn, back_sock):
         print(f"[edge-conn] EXCEP: {e!r}", file=sys.stderr, flush=True)
 
 
+POOL = MODO == "desync-pool"
+if POOL:
+    import queue as _q
+    _pool_back = None
+    _resp_q = _q.Queue()
+    _pool_lock = threading.Lock()
+
+    def pool_init():
+        """Conecta el back COMPARTIDO (llamar cuando el backend ya
+        escucha)."""
+        global _pool_back
+        _pool_back = socket.socket()
+        _pool_back.connect(("127.0.0.1", PORT_BACK))
+
+    def _pool_reader():
+        while True:
+            try:
+                d = _pool_back.recv(65535)
+            except Exception:
+                break
+            if not d:
+                break
+            _resp_q.put(d)
+
+    def _pool_edge(conn):
+        """Front honra CL y reenvia por el socket back COMPARTIDO
+        (bajo lock); cada request reenviado toma UNA respuesta de
+        la cola (FIFO). Si el back no responde (cuerpo incompleto
+        por desync), la respuesta pendiente la tomara quien llegue
+        despues: la contaminacion cross-connection es observable.
+        """
+        buf = b""
+        try:
+            while True:
+                buf, ok = recv_until(conn, buf, b"\r\n\r\n")
+                if not ok:
+                    return
+                raw_head, rest = buf.split(b"\r\n\r\n", 1)
+                head_txt = raw_head.decode("latin-1")
+                n = cl_value(head_txt)
+                while len(rest) < n:
+                    rest, ok2 = recv_n(conn, rest, n)
+                    if not ok2:
+                        return
+                with _pool_lock:
+                    _pool_back.sendall(raw_head + b"\r\n\r\n"
+                                       + rest[:n])
+                buf = rest[n:]
+                try:
+                    d = _resp_q.get(timeout=1.0)
+                    conn.sendall(d)
+                except Exception:
+                    pass   # respuesta pendiente: la toma otro
+        except Exception as e:
+            print(f"[pool-edge] EXCEP: {e!r}",
+                  file=sys.stderr, flush=True)
+
+
 def backend_server():
     srv = socket.socket()
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -277,8 +343,17 @@ def edge_server():
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind(("127.0.0.1", PORT_EDGE))
     srv.listen(50)
+    if POOL:
+        pool_init()
+        threading.Thread(target=_pool_reader, daemon=True).start()
+        print("[pool] back COMPARTIDO entre clientes",
+              file=sys.stderr, flush=True)
     while True:
         c, _ = srv.accept()
+        if POOL:
+            threading.Thread(target=_pool_edge, args=(c,),
+                             daemon=True).start()
+            continue
         b = socket.socket()
         b.connect(("127.0.0.1", PORT_BACK))
         threading.Thread(target=relay, args=(b, c), daemon=True).start()

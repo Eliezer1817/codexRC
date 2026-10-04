@@ -1,3 +1,62 @@
+## v0.77.0 — CONNECTION-STATE AUDIT: el estado es el testigo
+
+Pregunta: ¿deja una peticion ambigua un estado observable
+que modifica la interpretacion de una peticion posterior
+sobre la misma conexion?
+
+HALLAZGO DE DISEÑO (el mas importante de la serie): un edge
+que honra TE (RFC 7230, CORRECTO) produce el MISMO
+desplazamiento observable en conexion unica que un desync
+real. La sonda de conexion unica NO puede distinguirlos:
+"B cambio de respuesta" no es smuggling. La diferencia
+verdadera es de IMPACTO CROSS-CONNECTION.
+
+Sonda T2 VENENO QUEUE-POISONING (self-cleaning): prefijo =
+POST incompleto con Content-Length EXACTO = B1 + GET inocuo.
+  - front honra TE (correcto): B1 queda absorbido por el
+    request del propio cliente; la conexion inocente recibe
+    SU respuesta -> STATE-STABLE+PIPE (benigno, documentado).
+  - front honra CL y back TE con back COMPARTIDO (pool): B1 es
+    tragado y el GET inocuo de OTRA conexion completa el cuerpo
+    y RECIBE la respuesta del POST ajeno: contaminacion
+    cross-connection reproducible -> DEMO.
+
+Control de conexion inocente (conn2): GET limpio en conexion
+nueva despues del tratamiento. Solo si conn2 recibe respuesta
+ajena (marker) o silencio hay desacuerdo de CADENA; si conn2
+queda limpia, lo ocurrido es pipelining legitimo del front.
+
+Baseline con varianza: K=3 corridas A0->B0; B1 debe caer fuera
+de la distribucion para contar. Si el baseline varia solo
+(Linktree: bot management rotando respuestas) ->
+BASELINE-AMBIGUO: sin poder discriminatorio no se concluye
+nada. Verificado en vivo.
+
+STATE-CONTINUITY como evidencia: n_resp, estado del parser
+(respondio A? cuantas?), huella de respuesta de B, latencia,
+silencio, cierre.
+
+Escalera: STATE-CHANGED -> reproducible? no -> UNKNOWN; si ->
+SOSPECHA; y si ademas la conexion inocente recibio respuesta
+AJENA reproducible -> DEMO.
+
+Lab nuevo: modo desync-pool (front honra CL, back TE-strict,
+socket back COMPARTIDO entre clientes con cola FIFO de
+respuestas): topologia real de pool donde el smuggling cruza
+clientes. El desync por-cliente (sin pool) queda contenido:
+solo auto-dano, veredicto honesto PIPE.
+
+Regresion RC-000166: desync-pool -> DEMO (conn2_marker=True);
+eco-normaliza -> STATE-STABLE+PIPE (el falso DEMO de la
+primera version quedo muerto); consistente -> STATE-STABLE.
+Corpus 37/37.
+
+Presupuesto: perfil (11) + baseline (6) + T1 por variante
+(2) + T2 (3: A1+B1+conn2) + repro (3), tope 32, secuencial.
+
+En vivo (linktr.ee): BASELINE-AMBIGUO honesto (3 huellas
+distintas en el baseline); T2 sin estado observable.
+
 ## v0.76.0 — NORMALIZATION-AUDIT: que recibe el origin
 
 Pregunta: cuando el edge ACEPTA un framing contradictorio,

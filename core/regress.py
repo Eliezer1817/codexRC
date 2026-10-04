@@ -608,6 +608,36 @@ def seed_rc_000165() -> None:
     })
 
 
+def seed_rc_000166() -> None:
+    """RC-000166 (v0.77.0): CONNECTION-STATE AUDIT. Un edge que
+    honra TE (RFC 7230, correcto) produce el MISMO desplazamiento
+    observable en conexion unica que un desync real; la
+    diferencia es de IMPACTO cross-connection. El control de
+    conexion inocente debe separar: desync-pool (front CL + back
+    TE en back COMPARTIDO: la conexion inocente recibe respuesta
+    ajena reproducible -> DEMO) de eco-normaliza (pipelining
+    legitimo del front, conexion 2 limpia -> STABLE+PIPE) de
+    consistente (STABLE). 'Cambio la respuesta' NO es smuggling
+    por si solo."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000166" in cases:
+        return
+    _write_case({
+        "id": "RC-000166",
+        "module": "CONNECTION-STATE",
+        "problem": "las sondas de conexion unica no distinguen "
+                   "pipelining legitimo del front (edge honra TE) "
+                   "de un desacuerdo real front/back: DEMO falso "
+                   "sobre edges correctos",
+        "first_seen": "v0.77.0",
+        "fixed_in": "v0.77.0",
+        "repro": {"expected": {
+            "desync-pool": "DEMO",
+            "eco-normaliza": "STABLE+PIPE",
+            "consistente": "STATE-STABLE"}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -633,6 +663,7 @@ def run() -> int:
     seed_rc_000163()
     seed_rc_000164()
     seed_rc_000165()
+    seed_rc_000166()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -1329,6 +1360,72 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                           f"{'PASS' if c3 else 'FAIL'}")
                     print(f"[{c['id']}] body-differential -> "
                           f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p in procs.values():
+                        p.kill()
+        if c["id"] == "RC-000166":
+            import subprocess
+            from core.connection_state import audit as caudit
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["desync-pool", "eco-normaliza",
+                        "consistente"]
+                procs = {}
+                base_p = 19120
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _t.sleep(1.5)
+                    port = lambda m: base_p + mods.index(m) * 2
+                    aud = lambda m: caudit({
+                        "url": f"http://127.0.0.1:{port(m)}/",
+                        "timeout": 5.0})
+                    ok = True
+                    r1 = aud("desync-pool")
+                    t1 = r1["resultados"].get("T2:veneno", {})
+                    c1 = (t1.get("veredicto") == "DEMO"
+                          and r1["veredicto"] == "DEMO"
+                          and t1.get("conn2_marker") is True)
+                    if not c1:
+                        ok = False
+                    print(f"[{c['id']}] desync-pool: "
+                          f"{t1.get('veredicto')}/conn2_marker="
+                          f"{t1.get('conn2_marker')} -> "
+                          f"{'PASS' if c1 else 'FAIL'}")
+                    r2 = aud("eco-normaliza")
+                    t2 = r2["resultados"].get("T2:veneno", {})
+                    c2 = (t2.get("veredicto")
+                          in ("STATE-STABLE+PIPE", "STATE-STABLE")
+                          and r2["veredicto"] != "DEMO"
+                          and not t2.get("conn2_marker"))
+                    if not c2:
+                        ok = False
+                    print(f"[{c['id']}] eco-normaliza: "
+                          f"{t2.get('veredicto')} (sin falso "
+                          f"DEMO) -> {'PASS' if c2 else 'FAIL'}")
+                    r3 = aud("consistente")
+                    c3 = (r3["veredicto"] == "STATE-STABLE"
+                          and r3["resultados"]
+                          .get("T2:veneno", {})
+                          .get("veredicto") == "STATE-STABLE")
+                    if not c3:
+                        ok = False
+                    print(f"[{c['id']}] consistente: "
+                          f"{r3['veredicto']} -> "
+                          f"{'PASS' if c3 else 'FAIL'}")
+                    print(f"[{c['id']}] control cross-connection "
+                          f"-> {'PASS' if ok else 'FAIL'}")
                     if not ok:
                         fails += 1
                 finally:
