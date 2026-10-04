@@ -40,6 +40,7 @@ from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
 from core.fp_autoclose import es_ruido_publico  # noqa: E402
 
 DL_URL = "https://downloads.wordpress.org/plugin/{}.latest-stable.zip"
+THEME_URL = "https://downloads.wordpress.org/theme/{}.zip"
 
 # rutas que NO son codigo propio del plugin (librerias de terceros)
 NOISE_RE = re.compile(
@@ -66,14 +67,29 @@ def is_noise(path: str) -> bool:
 
 
 def download(slug: str, workdir: str) -> Optional[str]:
-    """Descarga y descomprime; devuelve ruta del codigo o None."""
+    """Descarga y descomprime; devuelve ruta del codigo o None.
+
+    V0.69.2: si el slug no existe como plugin se reintenta como
+    THEME de wordpress.org (astra, hello-elementor, kadence,
+    blocksy... pagan los bounties mas altos de Patchstack y viven
+    en /theme/, no en /plugin/).
+    """
     dest = os.path.join(workdir, slug)
     if os.path.isdir(dest):
         return dest  # cache de corridas anteriores
     zip_path = os.path.join(workdir, slug + ".zip")
+    data = None
+    for url in (DL_URL.format(slug), THEME_URL.format(slug)):
+        try:
+            with urllib.request.urlopen(url, timeout=90) as r:
+                data = r.read()
+            if data:
+                break
+        except Exception:
+            continue
+    if not data:
+        return None
     try:
-        with urllib.request.urlopen(DL_URL.format(slug), timeout=90) as r:
-            data = r.read()
         with open(zip_path, "wb") as f:
             f.write(data)
         with zipfile.ZipFile(zip_path) as z:

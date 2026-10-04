@@ -355,6 +355,45 @@ def seed_rc_000155() -> None:
         })
 
 
+def seed_rc_000156() -> None:
+    """RC-000156 (v0.69.2): downloader de PLUGIN-BATCH solo
+    conocia /plugin/ de wordpress.org; los THEMES con los
+    bounties mas altos de Patchstack (astra $7.200,
+    hello-elementor $7.200, kadence $4.900, blocksy $2.600,
+    hello-biz $2.600) viven en downloads.wordpress.org/theme/ y
+    rebotaban como download_error. Fix: fallback automatico
+    plugin -> theme en download(). Validado en vivo: 5/5 temas
+    descargados y auditados en 2.7s-5s cada uno."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000156" not in cases:
+        _write_case({
+            "id": "RC-000156",
+            "module": "PLUGIN-BATCH (downloader)",
+            "problem": "los themes pagables fallaban con "
+                       "download_error: el downloader solo probaba "
+                       "downloads.wordpress.org/plugin/<slug>",
+            "first_seen": "v0.69.1 (lote PAYABLE-FIRST top-30)",
+            "fixed_in": "v0.69.2 (fallback a /theme/<slug>.zip)",
+            "repro": {"antes": "astra/hello-elementor/kadence/blocksy/"
+                               "hello-biz -> download_error",
+                      "despues": "5/5 descargados y auditados con "
+                                 "hallazgos propios procesados"},
+            "case_real": "35 pagables auditados (30 plugins + 5 "
+                         "themes); 110 hallazgos crudos, TODOS "
+                         "refutados en triaje manual: gotmls "
+                         "(array-select isset + regex checksums + "
+                         "md5 hex + admin/nonce), hello-biz "
+                         "(wp_ajax_install_plugin hace "
+                         "current_user_can propio de core), blocksy "
+                         "(importador admin-only PR:H), asgaros-forum "
+                         "(sanitize_file_name en upload + loose-cmp "
+                         "era CSS admin), astra/kadence (ternarios "
+                         "literales + valores customizer admin). "
+                         "SIN 0-days en el lote.",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -370,6 +409,7 @@ def run() -> int:
     seed_rc_000153()
     seed_rc_000154()
     seed_rc_000155()
+    seed_rc_000156()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
