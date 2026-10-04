@@ -1,3 +1,51 @@
+## v0.81.0 — ADAPTIVE-HUNT: la capa epistemica
+
+Pregunta central: no "que vulnerabilidad puedo probar" sino
+"que experimento me daria la mayor informacion para distinguir
+entre las hipotesis que tengo".
+
+Flujo: OBSERVACION -> HIPOTESIS -> EXPERIMENTO (contrato
+pre-registrado) -> EVIDENCIA -> ACTUALIZAR -> ... -> VEREDICTO
++ GAP LEDGER. Un UNKNOWN ya no es un punto muerto: es una ruta
+con la evidencia que falta enumerada.
+
+MODULOS:
+  hypothesis_graph: H1..H5 (load_balancing, personalization,
+    cache_variation, bot_management, origin_dynamics) con
+    reglas deterministas: SUPPORT exige evidencia positiva,
+    CONTRADICT exige observacion discriminante y es terminal,
+    el resto queda UNKNOWN
+  experiment_catalog: 5 sondas HTTP de solo lectura con
+    CONTRATO pre-registrado (INTRA-CONN, CROSS-CONN, SESSION,
+    VIRGIN, TIME-OFFSET); cada contrato declara ANTES de
+    ejecutar que resultado apoya o refuta que hipotesis
+  adaptive_hunt: orquestador con juez determinista y tres
+    salidas validas: BASELINE-CARACTERIZADO (con soporte o
+    por eliminacion honesta marcada BY-ELIMINATION),
+    BASELINE-STABLE y UNKNOWN-DEMOSTRADO (razon demostrable
+    e hipotesis abiertas enumeradas)
+  labs/adaptive_lab.py: 3 mecanismos deterministas
+
+FIXES DE CONTRATO (atrapados por el lab):
+  TIME-OFFSET mezclaba dimension temporal con conexion (falso
+  soporte H5 en lb_variance): ahora mide sobre la misma
+  conexion
+  CROSS re-aplicaba contratos de INTRA ya ejecutado (notas
+  duplicadas)
+
+Validacion: 3/3 lab (lb->H1 SUPPORTED, origin->H5
+BY-ELIMINATION, transient->UNKNOWN-DEMOSTRADO con H1/H3 vivas
+y razon citada); corpus 57/57 (RC-000183..186, invariantes
+v0.80 re-ejecutadas).
+
+Sesiones vivas linktr.ee: 2x BASELINE-STABLE (3 req cada una).
+La ambiguedad observada por SEMANTIC-CACHE v0.80 era
+intermitente: queda en el dossier longitudinal como
+observacion de ventana, sin inferencia.
+
+CLI: python3 core/adaptive_hunt.py <url> [--timeout N]
+[--json]. Presupuesto heredado: 30 requests.
+
 ## v0.80.0 — SEMANTIC-CACHE: desacuerdos semanticos (fase 2 del estado compartido)
 
 Pregunta central: dado un diferencial o una convergencia de cache,

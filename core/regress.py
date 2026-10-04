@@ -890,6 +890,70 @@ def seed_rc_000182() -> None:
          "RC-000168..173 igual PASS, 0 fallo"}),
 
 
+def seed_rc_000183() -> None:
+    """RC-000183: lb_variance. Backend A/B sticky por conexion:
+    el loop debe converger a BASELINE-CARACTERIZADO con H1
+    load_balancing SUPPORTED (contrato: estable dentro, varia
+    entre conexiones, virgen tambien varia), nunca UNKNOWN."""
+    _seed_cache(
+        "RC-000183",
+        "una varianza por conexion podia quedarse UNKNOWN "
+        "sin caracterizar el mecanismo que la explica",
+        {"lb_variance":
+         "BASELINE-CARACTERIZADO/H1 SUPPORTED"})
+
+
+def seed_rc_000184() -> None:
+    """RC-000184: origin_dynamics. Cuerpo distinto en cada
+    request: INTRA contradice H1/H3, SESSION contradice
+    H2/H4 (cookies no estabilizan): convergencia por
+    eliminacion honesta a H5, marcada BY-ELIMINATION."""
+    _seed_cache(
+        "RC-000184",
+        "una dinamica por-request podia atribuirse a un "
+        "mecanismo sin contradecir el resto",
+        {"origin_dynamics":
+         "BASELINE-CARACTERIZADO/H5 BY-ELIMINATION"})
+
+
+def seed_rc_000185() -> None:
+    """RC-000185: transient. La varianza del baseline no se
+    reproduce en ninguna dimension disponible: el loop debe
+    declarar UNKNOWN-DEMOSTRADO (no forzar atribucion por
+    eliminacion) con H1/H3 vivas y razon citada."""
+    _seed_cache(
+        "RC-000185",
+        "una varianza transitoria no reproducible podia "
+        "forzarse a una atribucion sin evidencia",
+        {"transient":
+         "UNKNOWN-DEMOSTRADO/H1+H3 vivas, razon citada"})
+
+
+def seed_rc_000186() -> None:
+    """RC-000186: invariantes v0.80. ADAPTIVE-HUNT es capa
+    nueva y no debe alterar ningun veredicto del corpus
+    SEMANTIC-CACHE. Re-ejecuta RC-000174..182 via --only."""
+    _seed_cache(
+        "RC-000186",
+        "una capa epistemica nueva podia degradar los casos "
+        "v0.80 del corpus",
+        {"invariantes":
+         "RC-000174..182 igual PASS, 0 fallo"})
+
+
+_ADT_TABLE = {
+    "RC-000183": ("lb_variance", "BASELINE-CARACTERIZADO",
+                  {"attr_contains":
+                   "H1:load_balancing (SUPPORTED)"}),
+    "RC-000184": ("origin_dynamics", "BASELINE-CARACTERIZADO",
+                  {"attr_contains":
+                   "H5:origin_dynamics (BY-ELIMINATION)"}),
+    "RC-000185": ("transient", "UNKNOWN-DEMOSTRADO",
+                  {"live": ["H1", "H3"],
+                   "razon": True}),
+}
+
+
 _SEM_TABLE = {
     "RC-000174": ("collision_legitima", "BENIGN",
                   {"self_induced": "RULED_OUT",
@@ -955,6 +1019,10 @@ def run(only_ids=None) -> int:
     seed_rc_000180()
     seed_rc_000181()
     seed_rc_000182()
+    seed_rc_000183()
+    seed_rc_000184()
+    seed_rc_000185()
+    seed_rc_000186()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2045,6 +2113,76 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                   .endswith("0 fallo(s)"))
             print(f"[{c['id']}] invariantes v0.79: "
                   f"re-ejecucion RC-000168..173 exit="
+                  f"{res.returncode} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        # ---- ADAPTIVE-HUNT v0.81 (RC-000183..185)
+        if c["id"] in _ADT_TABLE:
+            from core.adaptive_hunt import audit as adaudit
+            mode, exp_verdict, chk = _ADT_TABLE[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "adaptive_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/adaptive_lab.py "
+                      f"ausente -> SKIP (no FAIL)")
+            else:
+                port = 19230 + (int(c["id"][-3:]) - 183) * 2
+                proc = subprocess.Popen(
+                    [sys.executable, labp, str(port), mode],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1)
+                    rec = adaudit({
+                        "url": f"http://127.0.0.1:{port}/",
+                        "timeout": 5.0})
+                    ok = rec["verdicto"] == exp_verdict
+                    det = rec["verdicto"]
+                    if chk.get("attr_contains"):
+                        if chk["attr_contains"] not in \
+                                rec["atribucion"]:
+                            ok = False
+                        det = rec["atribucion"]
+                    if chk.get("live"):
+                        vivas = sorted(x["id"] for x in rec
+                                       ["gap_ledger"]
+                                       ["hipotesis_vivas"])
+                        if vivas != sorted(chk["live"]):
+                            ok = False
+                        det = f"vivas {vivas}"
+                    if chk.get("razon"):
+                        if not rec["gap_ledger"].get("razon"):
+                            ok = False
+                    tot = rec["budget"]["spent"]["total"]
+                    if tot > 30:
+                        ok = False
+                    print(f"[{c['id']}] {mode}: {det}/"
+                          f"{tot} req -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    proc.kill()
+        if c["id"] == "RC-000186":
+            import subprocess as sp3
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            res = sp3.run(
+                [sys.executable,
+                 os.path.join(root, "core", "regress.py"),
+                 "--only",
+                 "RC-000174,RC-000175,RC-000176,RC-000177,"
+                 "RC-000178,RC-000179,RC-000180,RC-000181,"
+                 "RC-000182"],
+                capture_output=True, text=True, timeout=1500)
+            out = res.stdout or ""
+            ok = (res.returncode == 0
+                  and out.rstrip().splitlines()[-1].strip()
+                  .endswith("0 fallo(s)"))
+            print(f"[{c['id']}] invariantes v0.80: "
+                  f"re-ejecucion RC-000174..182 exit="
                   f"{res.returncode} -> "
                   f"{'PASS' if ok else 'FAIL'}")
             if not ok:
