@@ -529,6 +529,33 @@ def seed_rc_000162() -> None:
     })
 
 
+def seed_rc_000163() -> None:
+    """RC-000163 (v0.74.0): SONDA-DE-CORRELACION. Tres dimensiones
+    (framing, persistencia, estado) + poison probes + TOPOLOGY-PRE.
+    El veredicto debe distinguir el edge que RECHAZA el framing
+    ambiguo (postura activa) del blanco limpio, y el poison debe
+    demostrar desync por desplazamiento de la sonda sin eco
+    clasico."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000163" in cases:
+        return
+    _write_case({
+        "id": "RC-000163",
+        "module": "EDGESYNC-CORRELACION",
+        "problem": "una sola dimension (eco) no distingue rechazo "
+                   "del edge, blanco limpio y desync sin eco",
+        "first_seen": "v0.74.0",
+        "fixed_in": "v0.74.0",
+        "repro": {"expected": {
+            "P1_vs_desync": "DESYNC-DEMO",
+            "P1_vs_consistente": "SIN-DESYNC",
+            "P2_vs_consistente_te": "SIN-DESYNC",
+            "P1_vs_rechaza": "RECHAZO-EDGE",
+            "bateria_vs_rechaza": "RECHAZO-EDGE",
+            "topologia": "cdn|proxy|directo"}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -551,6 +578,7 @@ def run() -> int:
     seed_rc_000160()
     seed_rc_000161()
     seed_rc_000162()
+    seed_rc_000163()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -1052,6 +1080,72 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                           f" cand={cands} -> "
                           f"{'PASS' if bt else 'FAIL'}")
                     print(f"[{c['id']}] matriz 9 framings -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p in procs.values():
+                        p.kill()
+        if c["id"] == "RC-000163":
+            import subprocess
+            from core.edgesync import audit as esa3
+            from core.edgesync import clasificar_topologia as ctop
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["desync", "consistente", "rechaza",
+                        "consistente-te"]
+                procs = {}
+                base_p = 18960
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _t.sleep(1.5)
+                    port = lambda m: base_p + mods.index(m) * 2
+                    aud = lambda m, v=None: esa3({
+                        "url": f"http://127.0.0.1:{port(m)}/",
+                        "timeout": 5.0, "variant": v})
+                    ok = True
+                    for vid, m, exp in [
+                            ("P1", "desync", "DESYNC-DEMO"),
+                            ("P1", "consistente", "SIN-DESYNC"),
+                            ("P2", "consistente-te", "SIN-DESYNC"),
+                            ("P1", "rechaza", "RECHAZO-EDGE")]:
+                        got = aud(m, vid)["veredicto"]
+                        tag = "PASS" if got == exp else "FAIL"
+                        if got != exp:
+                            ok = False
+                        print(f"[{c['id']}] {vid} vs {m}: "
+                              f"{got} (esperado {exp}) {tag}")
+                    r = aud("rechaza")
+                    br = r["veredicto"] == "RECHAZO-EDGE"
+                    if not br:
+                        ok = False
+                    print(f"[{c['id']}] bateria vs rechaza: "
+                          f"{r['veredicto']} -> "
+                          f"{'PASS' if br else 'FAIL'}")
+                    t1 = ctop({"server": "cloudflare",
+                               "cf-ray": "abc"})
+                    t2 = ctop({"via": "1.1 squid"})
+                    t3 = ctop({})
+                    tc = (t1["clase"] == "cdn-blindado"
+                          and t1["alcance"] == ["V1", "V2", "P1"]
+                          and t2["clase"] == "proxy-intermedio"
+                          and t3["clase"] == "directo")
+                    if not tc:
+                        ok = False
+                    print(f"[{c['id']}] topologia "
+                          f"{t1['clase']}/{t2['clase']}/{t3['clase']}"
+                          f" -> {'PASS' if tc else 'FAIL'}")
+                    print(f"[{c['id']}] sonda de correlacion -> "
                           f"{'PASS' if ok else 'FAIL'}")
                     if not ok:
                         fails += 1

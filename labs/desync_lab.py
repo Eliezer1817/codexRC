@@ -9,6 +9,8 @@ Modos (par edge->back):
   tecl            edge TE        back CL           (TE.CL invertido)
   consistente-te  edge TE        back TE-strict    (control negativo TE)
   lenient         edge CL        back TE-lenient   (parsers tolerantes)
+  rechaza         edge 400+close  back TE-strict    (rechaza framing
+                                                  ambiguo; back vuln)
 
 TE-strict: honra chunked SOLO con un unico header Transfer-Encoding,
 sin espacio antes de los dos puntos, valor == chunked (tras strip).
@@ -24,10 +26,11 @@ PORT_BACK = int(sys.argv[2])
 MODO = sys.argv[3] if len(sys.argv) > 3 else "desync"
 
 EDGE_FRAMING = {"desync": "cl", "consistente": "cl", "tecl": "te",
-                "consistente-te": "te", "lenient": "cl"}[MODO]
+                "consistente-te": "te", "lenient": "cl",
+                "rechaza": "cl-rechaza"}[MODO]
 BACK_FRAMING = {"desync": "te-strict", "consistente": "cl",
                 "tecl": "cl", "consistente-te": "te-strict",
-                "lenient": "te-lenient"}[MODO]
+                "lenient": "te-lenient", "rechaza": "te-strict"}[MODO]
 
 
 def recv_until(sock, buf, marker, timeout=5.0):
@@ -162,6 +165,12 @@ def backend_conn(conn):
         conn.close()
 
 
+def tiene_cl_y_te(head_txt):
+    keys = [k.strip().lower() for k, _ in header_lines(head_txt)]
+    return ("content-length" in keys
+            and "transfer-encoding" in keys)
+
+
 def edge_conn(conn, back_sock):
     buf = b""
     try:
@@ -171,6 +180,13 @@ def edge_conn(conn, back_sock):
                 return
             raw_head, rest = buf.split(b"\r\n\r\n", 1)
             head_txt = raw_head.decode("latin-1")
+            if EDGE_FRAMING == "cl-rechaza" and tiene_cl_y_te(head_txt):
+                # postura activa: rechaza el framing ambiguo aunque
+                # el back sea vulnerable (modo "rechaza")
+                conn.sendall(b"HTTP/1.1 400 Bad Request\r\n"
+                             b"Content-Length: 0\r\n"
+                             b"Connection: close\r\n\r\n")
+                return
             if (EDGE_FRAMING == "te"
                     and te_honored(head_txt, "te-strict")):
                 cuerpo, buf = chunked_extent(conn, rest)

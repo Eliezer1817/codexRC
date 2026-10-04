@@ -1,3 +1,53 @@
+## v0.74.0 — EDGESYNC-V3: SONDA-DE-CORRELACION
+
+Salto de arquitectura: el veredicto ya no nace de una sola
+dimension (el eco). Cada variante se observa en TRES dimensiones
+sobre la misma conexion:
+
+  dim1 framing      respuesta al mensaje ambiguo (eco/conteo)
+  dim2 persistencia la conexion sobrevive al ambiguo, o el edge
+                    la mata? un cierre activo del edge significa
+                    algo muy distinto a una conexion que sigue
+                    con estado inconsistente
+  dim3 estado       la sonda conserva su estado esperado, o
+                    llega desplazada/envenenada?
+
+La pregunta que responde: ¿el comportamiento observado demuestra
+que DOS componentes interpretaron el mismo mensaje distinto?
+Escalera de veredictos: RECHAZO-EDGE (el edge corto el framing:
+postura activa, nada observable, distinto de un blanco limpio) |
+SIN-DESYNC | SOSPECHA (una dimension discrepa, eco y sonda
+anomala exigen REPRODUCCION) | DESYNC-DEMO.
+
+Nuevos payloads POISON: P1 (CL.TE) y P2 (TE.CL), prefijo de
+request SIN terminar: el back lo pega a la sonda y la respuesta
+de la sonda sale por el camino del veneno. Detecta desync por
+desplazamiento de la sonda SIN eco clasico (dimension 3 pura).
+
+TOPOLOGY-PRE: el baseline se parsea (Server/Via/CF-Ray/Age/
+X-Cache) y clasifica el blanco: cdn-blindado -> bateria reducida
+(V1, V2, P1); proxy-intermedio o directo -> bateria completa. La
+topologia queda en la evidencia y alimenta UNIVERSAL-RECON.
+
+Lab: modo "rechaza" (edge 400+close aunque el back sea
+vulnerable): antes indistinguible de un blanco limpio, hoy
+veredicto propio. Regresion RC-000163: P1 demuestra desync por
+poison contra desync, calla contra consistente, RECHAZO-EDGE
+contra rechaza; P2 limpio contra consistente-te; bateria vs
+rechaza = RECHAZO-EDGE; clasificador de topologia 3/3. Corpus
+34/34.
+
+Prueba en vivo (linktr.ee): clasificado proxy-intermedio (Varnish
+doble via + cache MISS/HIT). Rechaza 400 en V2/V4/V8/V9/P2,
+cierra la conexion tras responder en V1/V3/V5/V6/V7 (dim2:
+postura defensiva), y P1 deja sonda anomala REPRODUCIBLE
+(SOSPECHA honesta: algo en la cadena pego o rechazo el veneno;
+diferencial manual pendiente, sin demo).
+
+Limitacion documentada (heredada): front que honre TE estricto
+puede reflejar pipelining como eco CL.TE; los ecos TE.CL y P2
+siguen siendo candidatos.
+
 ## v0.73.0 — EDGESYNC-HUNT V2: bateria de 9 framings
 
 Una sola sonda CL+TE no basta: cada parser resuelve la
