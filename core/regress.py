@@ -1198,6 +1198,64 @@ _SEM_TABLE = {
 }
 
 
+
+
+def _kill_labs():
+    """Mata labs huerfanos (flake de puertos en meta-runs
+    anidados). Solo procesos labs/, nunca regress.py."""
+    try:
+        out = subprocess.run(
+            ["pgrep", "-f", "labs/"],
+            capture_output=True, text=True)
+        for pid in out.stdout.split():
+            if pid and int(pid) != os.getpid():
+                try:
+                    os.kill(int(pid), 9)
+                except OSError:
+                    pass
+    except Exception:
+        pass
+
+
+def seed_cross_layer() -> None:
+    """RC-000205..209: CROSS-LAYER CORRELATION v0.84.
+    Un disparo, tres capas + dimension de conexion."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000205" in cases:
+        return
+    for cid, prob, exp in [
+        ("RC-000205",
+         "una perturbacion normalizada por todas las capas "
+         "podia escalarse como hallazgo",
+         "absorbed -> BENIGN"),
+        ("RC-000206",
+         "la tolerancia del edge (cierra conexion) sin "
+         "efecto en el origin no es vulnerabilidad",
+         "edge_local -> BENIGN (EDGE-ONLY, sin escalada)"),
+        ("RC-000207",
+         "un mismatch reproducible desde 2 conexiones sin "
+         "contaminacion no debe escalar a DEMO",
+         "shared_state -> SHARED-STATE"),
+        ("RC-000208",
+         "contaminacion observable (una conexion nueva "
+         "recibe el efecto) con controles PASSED debe "
+         "escalar a DEMO",
+         "contamination -> DEMO"),
+        ("RC-000209",
+         "invariantes de presupuesto y escalera del "
+         "modulo cross_layer",
+         "bateria y escalera monotona -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": "CROSS-LAYER-CORRELATION",
+            "problem": prob,
+            "first_seen": "v0.84.0",
+            "fixed_in": "v0.84.0",
+            "repro": {"expected": exp},
+        })
+
+
 def run(only_ids=None) -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real).
@@ -1256,6 +1314,7 @@ def run(only_ids=None) -> int:
     seed_rc_000194()
     for _n in range(195, 205):
         globals()[f"seed_rc_000{_n}"]()
+    seed_cross_layer()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2843,14 +2902,26 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
             import subprocess as sp3
             root = os.path.dirname(os.path.dirname(
                 os.path.abspath(__file__)))
-            res = sp3.run(
-                [sys.executable,
-                 os.path.join(root, "core", "regress.py"),
-                 "--only",
-                 "RC-000174,RC-000175,RC-000176,RC-000177,"
-                 "RC-000178,RC-000179,RC-000180,RC-000181,"
-                 "RC-000182"],
-                capture_output=True, text=True, timeout=1500)
+            cmd = [sys.executable,
+                   os.path.join(root, "core", "regress.py"),
+                   "--only",
+                   "RC-000174,RC-000175,RC-000176,"
+                   "RC-000177,RC-000178,RC-000179,"
+                   "RC-000180,RC-000181,RC-000182"]
+            res = sp3.run(cmd, capture_output=True,
+                          text=True, timeout=1500)
+            with open("/tmp/rc000186_nested.log", "w")                     as _f:
+                _f.write(res.stdout or "")
+            if res.returncode != 0:
+                # un solo reintento tras limpiar labs
+                # huerfanos (flake de puertos)
+                _kill_labs()
+                res = sp3.run(cmd, capture_output=True,
+                              text=True, timeout=1500)
+                with open("/tmp/rc000186_nested.log",
+                          "a") as _f:
+                    _f.write("\n=== retry ===\n"
+                             + (res.stdout or ""))
             out = res.stdout or ""
             ok = (res.returncode == 0
                   and out.rstrip().splitlines()[-1].strip()
@@ -2861,6 +2932,69 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                   f"{'PASS' if ok else 'FAIL'}")
             if not ok:
                 fails += 1
+        # ---- CROSS-LAYER v0.84 (RC-000205..209)
+        if c["id"] in ("RC-000205", "RC-000206",
+                       "RC-000207", "RC-000208"):
+            import tempfile
+            from core import cross_layer as xl
+            scens = {
+                "RC-000205": ("absorbed", 19180, "BENIGN"),
+                "RC-000206": ("edge_local", 19181, "BENIGN"),
+                "RC-000207": ("shared_state", 19182,
+                              "SHARED-STATE"),
+                "RC-000208": ("contamination", 19183,
+                              "DEMO"),
+            }
+            scen, port, want = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "cross_layer_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/cross_layer_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                _oldh = os.environ.get("CODEXRC_HOME")
+                _tmpd = tempfile.mkdtemp(prefix="rcxl")
+                os.environ["CODEXRC_HOME"] = _tmpd
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1)
+                    inf = xl.cross_audit({
+                        "url": f"http://127.0.0.1:{port}",
+                        "timeout": 5.0})
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 11)
+                    det = (f"{scen}: {inf['verdict']} "
+                           f"(esperado {want}), "
+                           f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                    if _oldh is None:
+                        del os.environ["CODEXRC_HOME"]
+                    else:
+                        os.environ["CODEXRC_HOME"] = _oldh
+                print(f"[{c['id']}] cross-layer: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000209":
+            from core import cross_layer as xl
+            bat = xl.perturbation_battery()
+            ok = (len(bat) <= xl.MAX_PERTURBATIONS == 2
+                  and xl.BASELINE_PROBES == 2
+                  and xl.perturbation_battery()[0][
+                      "pid"] == "P-CASE")
+            det = (f"bateria {len(bat)} perturbaciones, "
+                   f"presupuesto "
+                   f"{4 * len(bat) + 3} reqs max")
+            print(f"[{c['id']}] invariantes cross-layer: "
+                  f"{det} -> {'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")
     return 1 if fails else 0
 

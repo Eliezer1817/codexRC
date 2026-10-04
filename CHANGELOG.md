@@ -1,3 +1,39 @@
+## v0.84.0 — CROSS-LAYER CORRELATION
+
+Un disparo, tres capas observadas a la vez (Edge / Cache /
+Origin) + dimension de conexion (A, B, control). Antes cada
+modulo media una capa aislada; v0.84 correlaciona la MISMA
+perturbacion a traves de capas y conexiones en un solo
+experimento del grafo.
+
+- core/cross_layer.py: cross_audit() dispara la bateria de
+  perturbaciones (P-CASE, P-SLASH; presupuesto 11 reqs) y
+  registra 4 observaciones por perturbacion (A conn1+reuse,
+  B conn2, C control nuevo = contaminacion, D control fresco
+  = semantica del origin). Capa EDGE: status + persistencia
+  de conexion. Capa CACHE: fingerprint completo (Age, X-Cache,
+  ETag, Vary...). Capa ORIGIN: status + hash de cuerpo.
+- Clases de evidencia E-XL-MISMATCH (origin sirve distinto
+  lo que el edge acepto), E-XL-SHARED (efecto reproducido
+  desde 2 conexiones: estado compartido) y
+  E-XL-CONTAMINATION (una conexion nueva recibe el efecto
+  sin pedirlo). Todas con contratos pre-registrados.
+- Escalera determinista: BENIGN (absorbida o EDGE-ONLY:
+  tolerancia del edge NO es vulnerabilidad) -> SUSPICIOUS
+  (mismatch no reproducido) -> SHARED-STATE -> DEMO (exige
+  contaminacion observable + controles PASSED: Vary sensible
+  o cookies descalifican).
+- Veredictos honestos: baseline AMBIGUO o diff no observable
+  -> UNKNOWN; UNREACHABLE si el baseline falla.
+- labs/cross_layer_lab.py: 4 escenarios deterministicos
+  (absorbed 19180, edge_local 19181, shared_state 19182,
+  contamination 19183) con HTTP/1.1 real para medir
+  persistencia. Ningun puerto colisiona con labs previos.
+- RC-000205..209: absorbed->BENIGN, edge_local->BENIGN
+  (EDGE-ONLY sin escalada), shared_state->SHARED-STATE (no
+  DEMO sin contaminacion), contamination->DEMO, invariantes
+  de presupuesto y escalera. 5/5 PASS.
+
 ## v0.83.0 — EXPERIMENT-GRAPH: la investigacion como grafo
 
 Objetivo: que codexRC construya y recorra un grafo de
