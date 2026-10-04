@@ -1,3 +1,69 @@
+## v0.83.0 — EXPERIMENT-GRAPH: la investigacion como grafo
+
+Objetivo: que codexRC construya y recorra un grafo de
+investigacion experimental (hipotesis, experimentos,
+observaciones, evidencias, resultados, siguiente
+experimento) para la linea DESYNC. La corona no se
+fabrica: se construye el camino hacia ella.
+
+MODULOS:
+  core/experiment_graph.py — el backbone. Nodos
+  HYPOTHESIS/EXPERIMENT/OBSERVATION/EVIDENCE, journal
+  append-only (la evidencia previa nunca se sobrescribe),
+  provenance (run_id, target, git_commit) en todo.
+  Contratos registrados ANTES de ejecutar (re-registrar
+  post-hoc: rechazado). Estados de hipotesis: LIVE /
+  SUPPORTED / CONTRADICTED (terminal) / INCONCLUSIVE /
+  CLOSED. Sobrevivir NO demuestra: solo evidencia
+  explicita apoya.
+
+  core/desync_hunt.py — la investigacion DESYNC sobre el
+  grafo, consumiendo EDGESYNC (v0.74) sin reemplazarlo.
+  Cada sonda = EXPERIMENTO con contrato; cada disparo =
+  OBSERVACION con huellas de reproducibilidad completas
+  (request fp, identidad de conexion, reuso, timing,
+  respuesta, estado, cache, baseline, controles,
+  genealogia); el contrato convierte senales en EVIDENCIA.
+
+FILOSFIA ANTI-FALSO-POSITIVO (la leccion del lab):
+  El eco puede aparecer en PRE (pipeline del edge o split
+  del backend: desde una sola conexion son
+  INDISTINGUIBLES, atribucion honesta UNKNOWN) o en POST
+  (la sonda recibio una respuesta que no pidio: efecto de
+  estado OBSERVABLE). Solo el eco-post produce
+  E-DESYNC-STATE. El lab consistente (pipelining) queda
+  en REPRODUCIBLE sin efecto de estado; el lab desync
+  demuestra P1 eco-state y llega a IMPACT-CANDIDATE.
+
+ESCALERA DE IMPACTO (nunca se salta):
+  DESYNC OBSERVED -> REPRODUCIBLE (2 genealogias
+  independientes) -> STATE EFFECT -> CROSS-CONNECTION ->
+  SECURITY IMPACT. CONFIRMED exige E-DESYNC-IMPACT +
+  invariantes limpias (baseline caracterizado, multiples
+  anomalias, reproducibilidad, impacto). El candidato
+  nunca salta de anomalia a vulnerabilidad.
+
+SELECCION: EDV (v0.82) sobre hipotesis LIVE; el contrato
+sigue siendo la autoridad; EDV 0 -> parada honesta con
+razon citando las vivas.
+
+PERSISTENCIA: .codexrc/intelligence/experiments/<host>/
+  <run_id>.json — nunca se sobrescribe una investigacion;
+  latest_run por campo created (no por nombre). Completa
+  el dossier longitudinal.
+
+CLI: python3 core/desync_hunt.py <url> [--json] y
+  --cmd active|graph|next|explain [--exp EXP-XXXX].
+
+Validacion: RC-000195..204 (construccion, lifecycle,
+provenance anti post-hoc, EDV, contradiccion con
+historial preservado, reproducibilidad por genealogias,
+lifecycle del candidato, invariantes anti-FP,
+persistencia, explain-path). Labs: desync -> V1/V6/V7
+eco-cand + P1 eco-state -> IMPACT-CANDIDATE; consistente
+-> V2/V9 eco-cand (pipeline) -> REPRODUCIBLE sin efecto
+de estado. SECURITY IMPACT: NOT DEMONSTRATED en ambos.
+
 ## v0.82.0 — GRAFO DE EXPERIMENTOS: seleccion por EDV
 
 Pregunta central: dadas las hipotesis vivas y el presupuesto,

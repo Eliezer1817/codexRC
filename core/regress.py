@@ -1036,6 +1036,127 @@ def seed_rc_000194() -> None:
                         "0 fallo"})
 
 
+def seed_rc_000195() -> None:
+    """RC-000195: construccion del grafo. Nodos de los 5
+    tipos con relaciones y provenance (run_id, target) en
+    cada uno."""
+    _seed_cache(
+        "RC-000195",
+        "el grafo podia perder provenance o tipos de nodo",
+        {"construction": "5 tipos, relaciones y provenance"})
+
+
+def seed_rc_000196() -> None:
+    """RC-000196: ciclo de vida de hipotesis. LIVE ->
+    SUPPORTED solo con evidencia explicita; CONTRADICTED
+    es terminal; sobrevivir NO demuestra."""
+    _seed_cache(
+        "RC-000196",
+        "una hipotesis podia darse por demostrada solo "
+        "por sobrevivir experimentos",
+        {"lifecycle": "SUPPORTED con evidencia, terminal "
+                      "CONTRADICTED, sin demo por "
+                      "supervivencia"})
+
+
+def seed_rc_000197() -> None:
+    """RC-000197: provenance de experimento. Re-registrar
+    un contrato ya ejecutado se rechaza (anti post-hoc);
+    observar sin contrato se rechaza."""
+    _seed_cache(
+        "RC-000197",
+        "un contrato podia registrarse despues de ver el "
+        "resultado (razonamiento post-hoc)",
+        {"provenance": "post-hoc y sin contrato "
+                       "rechazados"})
+
+
+def seed_rc_000198() -> None:
+    """RC-000198: integracion EDV. next_experiment elige
+    el mayor EDV sobre vivas y devuelve tabla; EDV 0 en
+    todos devuelve la razon citando las vivas."""
+    _seed_cache(
+        "RC-000198",
+        "el selector podia elegir sin tabla ni razon "
+        "reconstruible",
+        {"edv": "mejor EDV elegido, tabla visible, "
+                "EDV0 con razon"})
+
+
+def seed_rc_000199() -> None:
+    """RC-000199: propagacion de contradiccion. La
+    observacion contradice -> CONTRADICTED con evidencia
+    citada; el apoyo previo queda preservado en el
+    historial, no sobrescrito."""
+    _seed_cache(
+        "RC-000199",
+        "una contradiccion podia borrar el historial de "
+        "apoyo previo",
+        {"contradiction": "terminal + historial "
+                          "preservado"})
+
+
+def seed_rc_000200() -> None:
+    """RC-000200: reproducibilidad. REPRODUCIBLE exige 2
+    genealogias independientes de E-DESYNC-SIGNAL; una
+    sola ventana no basta. Dos respuestas iguales no es
+    reproducibilidad sin genealogia."""
+    _seed_cache(
+        "RC-000200",
+        "dos respuestas iguales podian tomarse como "
+        "reproducibilidad sin genealogia",
+        {"repro": "2 genealogias exigidas, 1 "
+                  "rechazada"})
+
+
+def seed_rc_000201() -> None:
+    """RC-000201: ciclo de vida del candidato DESYNC.
+    NONE -> CANDIDATE -> SUPPORTED -> REPRODUCIBLE ->
+    IMPACT-CANDIDATE solo con evidencia de estado;
+    CONFIRMED bloqueado sin E-DESYNC-IMPACT."""
+    _seed_cache(
+        "RC-000201",
+        "el candidato podia escalar sin la evidencia de "
+        "cada escalon",
+        {"candidate": "escalera completa, CONFIRMED "
+                      "bloqueado sin impacto"})
+
+
+def seed_rc_000202() -> None:
+    """RC-000202: invariantes anti-falso-positivo.
+    confirm_blockers reporta exactamente lo que falta;
+    CONFIRMED con bloqueos se rechaza y queda en el
+    journal."""
+    _seed_cache(
+        "RC-000202",
+        "CONFIRMED podia declararse con bloqueos "
+        "pendientes",
+        {"fp": "bloqueos exactos, confirm rechazado"})
+
+
+def seed_rc_000203() -> None:
+    """RC-000203: persistencia. Cada investigacion es un
+    archivo por run_id: nunca se sobrescribe; latest_run
+    devuelve la ultima."""
+    _seed_cache(
+        "RC-000203",
+        "una investigacion podia sobrescribir la "
+        "anterior",
+        {"persistence": "sin sobreescritura, latest "
+                         "ok"})
+
+
+def seed_rc_000204() -> None:
+    """RC-000204: explain-path. why() reconstruye la
+    cadena EXP <- seleccion <- targets <- evidencia <-
+    observacion; sin seleccion lo declara, no inventa."""
+    _seed_cache(
+        "RC-000204",
+        "el porque de un experimento podia no "
+        "reconstruirse desde el grafo",
+        {"explain": "cadena completa reconstruible"})
+
+
 _ADTMEM_TABLE = {
     "RC-000187": "reuse",
     "RC-000188": "ttl0",
@@ -1133,6 +1254,8 @@ def run(only_ids=None) -> int:
     seed_rc_000192()
     seed_rc_000193()
     seed_rc_000194()
+    for _n in range(195, 205):
+        globals()[f"seed_rc_000{_n}"]()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -2349,6 +2472,237 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 else:
                     os.environ["CODEXRC_HOME"] = _oldhome
                 proc.kill()
+        # ---- EXPERIMENT-GRAPH v0.83 (RC-000195..204)
+        if 195 <= int(c["id"][-3:]) <= 204:
+            import tempfile
+            from core import experiment_graph as eg2
+            ok = True
+            det = ""
+            br = {"senal": {
+                "supports": ["HH1"],
+                "clase": eg2.E_SIGNAL}}
+            sp = [[("HH1", "SUPPORT")],
+                  [("HH1", "CONTRADICT")]]
+            if c["id"] == "RC-000195":
+                g = eg2.ExpGraph("t195", [
+                    ("HH1", "hip"), ("HH2", "hip2")])
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                oid = g.add_observation("EX1", {})
+                g.apply("EX1", oid, "senal")
+                tipos = {n["tipo"] for n in
+                         g.nodes.values()}
+                ok = (tipos == {"HYPOTHESIS", "EXPERIMENT",
+                                "OBSERVATION", "EVIDENCE"}
+                       and all(n["run_id"] == g.run_id
+                               for n in
+                               g.nodes.values()))
+                det = f"tipos {sorted(tipos)}"
+            elif c["id"] == "RC-000196":
+                g = eg2.ExpGraph("t196", [("HH1", "h")])
+                ok = g.nodes["HH1"]["state"] == "LIVE"
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                oid = g.add_observation("EX1", {})
+                g.apply("EX1", oid, "senal")
+                ok = ok and g.nodes["HH1"]["state"] == \
+                    "SUPPORTED"
+                br2 = {"mal": {"contradicts": ["HH1"]}}
+                g.register_contract("EX2", ["HH1"], "p",
+                                    br2, [], {"max_requests": 2,
+                                              "max_connections": 1}, sp)
+                o2 = g.add_observation("EX2", {})
+                g.apply("EX2", o2, "mal")
+                ok = ok and g.nodes["HH1"]["state"] == \
+                    "CONTRADICTED"
+                # contradiccion terminal: apoyo posterior
+                # no revive
+                g.register_contract("EX3", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o3 = g.add_observation("EX3", {})
+                g.apply("EX3", o3, "senal")
+                ok = ok and g.nodes["HH1"]["state"] == \
+                    "CONTRADICTED"
+                # una hipotesis sin evidencia sigue LIVE
+                g.add_hypothesis("HH9", "nueva")
+                ok = ok and g.nodes["HH9"]["state"] == \
+                    "LIVE"
+                det = "lifecycle ok"
+            elif c["id"] == "RC-000197":
+                g = eg2.ExpGraph("t197", [("HH1", "h")])
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                g.add_observation("EX1", {})
+                try:
+                    g.register_contract("EX1", ["HH1"],
+                                        "otro", {}, [],
+                                        {"max_requests": 2,
+                                         "max_connections": 1},
+                                        sp)
+                    ok = False
+                except ValueError:
+                    ok = True
+                try:
+                    g.add_observation("EX9", {})
+                    ok = False
+                except ValueError:
+                    ok = ok and True
+                det = "post-hoc rechazado"
+            elif c["id"] == "RC-000198":
+                g = eg2.ExpGraph("t198", [("HH1", "h")])
+                g.register_contract("EXLOW", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1},
+                                    [[("HH1", "INCONCLUSIVE")]])
+                g.register_contract("EXHIGH", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                nxt, edv, tab, rz = g.next_experiment()
+                ok = (nxt == "EXHIGH"
+                      and abs(edv - 1.5) < 0.01
+                      and len(tab) == 2)
+                g.nodes["HH1"]["state"] = "CLOSED"
+                nxt2, _, _, rz2 = g.next_experiment()
+                ok = ok and nxt2 is None and rz2.startswith(
+                    "ningun experimento")
+                det = f"next {nxt} edv {edv}; EDV0: {rz2[:30]}"
+            elif c["id"] == "RC-000199":
+                g = eg2.ExpGraph("t199", [("HH1", "h")])
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                oid = g.add_observation("EX1", {})
+                g.apply("EX1", oid, "senal")
+                brm = {"mal": {"contradicts": ["HH1"]}}
+                g.register_contract("EX2", ["HH1"], "p",
+                                    brm, [], {"max_requests": 2,
+                                              "max_connections": 1}, sp)
+                o2 = g.add_observation("EX2", {})
+                g.apply("EX2", o2, "mal")
+                h = g.nodes["HH1"]
+                ok = (h["state"] == "CONTRADICTED"
+                      and len(h["evidence_against"]) == 1
+                      and len(h["evidence_for"]) == 1)
+                det = "historial preservado"
+            elif c["id"] == "RC-000200":
+                g = eg2.ExpGraph("t200", [("HH1", "h")],
+                                 baseline_state="STABLE")
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o1 = g.add_observation("EX1", {},
+                    repro={"genealogy": ["r1", "V1", "p1"]})
+                g.apply("EX1", o1, "senal")
+                ok1, st1 = g.declare_transition(
+                    "CANDIDATE", "senal 1")
+                ok, st = g.declare_transition("REPRODUCIBLE",
+                                              "1 gen")
+                ok = (ok is False and st == "CANDIDATE"
+                      and ok1)
+                g.register_contract("EX2", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o2 = g.add_observation("EX2", {},
+                    repro={"genealogy": ["r1", "V1", "p2"]})
+                g.apply("EX2", o2, "senal")
+                ok2, st2 = g.declare_transition(
+                    "REPRODUCIBLE", "2 genealogias")
+                ok = ok and ok2 and st2 == "REPRODUCIBLE"
+                det = f"1 gen rechazada, 2 genes -> {st2}"
+            elif c["id"] == "RC-000201":
+                g = eg2.ExpGraph("t201", [("HH1", "h")],
+                                 baseline_state="STABLE")
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o1 = g.add_observation("EX1", {},
+                    repro={"genealogy": ["g1"]})
+                g.apply("EX1", o1, "senal")
+                ok = g.candidate == "CANDIDATE"
+                ok, st = g.declare_transition("SUPPORTED",
+                                              "b")
+                g.register_contract("EX2", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o2 = g.add_observation("EX2", {},
+                    repro={"genealogy": ["g2"]})
+                g.apply("EX2", o2, "senal")
+                g.declare_transition("REPRODUCIBLE", "2")
+                ok = ok and g.candidate == "REPRODUCIBLE"
+                ok3, st3 = g.declare_transition(
+                    "CONFIRMED", "sin impacto")
+                ok = ok and ok3 is False
+                det = (f"{g.candidate}, confirm "
+                       f"bloqueado={not ok3}")
+            elif c["id"] == "RC-000202":
+                g = eg2.ExpGraph("t202", [("HH1", "h")],
+                                 baseline_state="AMBIGUO")
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                o1 = g.add_observation("EX1", {},
+                    repro={"genealogy": ["g1"]})
+                g.apply("EX1", o1, "senal")
+                b = g.confirm_blockers()
+                ok = ("baseline_caracterizado" in b
+                      and "multiples_anomalias" in b
+                      and "reproducible" in b
+                      and "impacto" in b)
+                det = f"bloqueos {b}"
+            elif c["id"] == "RC-000203":
+                _h = os.environ.get("CODEXRC_HOME")
+                _t = tempfile.mkdtemp(prefix="rcgraph")
+                os.environ["CODEXRC_HOME"] = _t
+                try:
+                    g = eg2.ExpGraph("t203.host", [
+                        ("HH1", "h")])
+                    p = g.save()
+                    ok = os.path.exists(p)
+                    try:
+                        g.save()
+                        ok = False
+                    except ValueError:
+                        ok = ok and True
+                    g2 = eg2.ExpGraph("t203.host", [
+                        ("HH1", "h")])
+                    g2.save()
+                    lr = eg2.latest_run("t203.host")
+                    ok = ok and lr["run_id"] == g2.run_id
+                    det = "2 runs, latest ok"
+                finally:
+                    if _h is None:
+                        del os.environ["CODEXRC_HOME"]
+                    else:
+                        os.environ["CODEXRC_HOME"] = _h
+            elif c["id"] == "RC-000204":
+                g = eg2.ExpGraph("t204", [("HH1", "h")])
+                g.register_contract("EX1", ["HH1"], "p",
+                                    br, [], {"max_requests": 2,
+                                             "max_connections": 1}, sp)
+                g.record_selection("EX1", 1.5,
+                                   [("EX1", 1.5)],
+                                   ["HH1"], "mayor EDV")
+                oid = g.add_observation("EX1", {})
+                g.apply("EX1", oid, "senal")
+                ch = g.why("EX1")
+                links = [x["link"] for x in ch]
+                ok = ("EXPERIMENT" in links
+                      and "HYPOTHESIS" in links
+                      and "EVIDENCE" in links
+                      and "OBSERVATION" in links)
+                ch2 = g.why("EX-SIN-SEL")
+                ok = ok and ch2 and "sin registro" in \
+                    ch2[0]["porque"]
+                det = f"cadena {links}"
+            print(f"[{c['id']}] graph: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+
         # ---- SELECTOR EDV v0.82 (RC-000191..194)
         if c["id"] in ("RC-000191", "RC-000193"):
             import tempfile
