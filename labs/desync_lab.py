@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 """Lab desync para EDGESYNC-HUNT (solo localhost).
-Edge (CL) -> Backend (TE si desync / CL si consistente).
-Puerto: args = puerto_edge puerto_backend modo(desync|consistente)
+
+Puertos: argv = puerto_edge puerto_backend modo
+
+Modos (par edge->back):
+  desync          edge CL        back TE-strict   (CL.TE clasico)
+  consistente     edge CL        back CL           (control negativo)
+  tecl            edge TE        back CL           (TE.CL invertido)
+  consistente-te  edge TE        back TE-strict    (control negativo TE)
+  lenient         edge CL        back TE-lenient   (parsers tolerantes)
+
+TE-strict: honra chunked SOLO con un unico header Transfer-Encoding,
+sin espacio antes de los dos puntos, valor == chunked (tras strip).
+TE-lenient: tolera duplicados, espacio antes de los dos puntos y
+"identity,chunked" (gana el ultimo TE con chunked).
 """
-import re
 import socket
 import sys
 import threading
@@ -12,9 +23,14 @@ PORT_EDGE = int(sys.argv[1])
 PORT_BACK = int(sys.argv[2])
 MODO = sys.argv[3] if len(sys.argv) > 3 else "desync"
 
+EDGE_FRAMING = {"desync": "cl", "consistente": "cl", "tecl": "te",
+                "consistente-te": "te", "lenient": "cl"}[MODO]
+BACK_FRAMING = {"desync": "te-strict", "consistente": "cl",
+                "tecl": "cl", "consistente-te": "te-strict",
+                "lenient": "te-lenient"}[MODO]
+
 
 def recv_until(sock, buf, marker, timeout=5.0):
-    """Recibe hasta encontrar marker en buf acumulado."""
     sock.settimeout(timeout)
     while marker not in buf:
         chunk = sock.recv(65535)
@@ -34,15 +50,72 @@ def recv_n(sock, buf, n, timeout=5.0):
     return buf, True
 
 
-def parse_headers(text):
-    head = text.split("\r\n\r\n", 1)[0]
-    hdrs = {}
-    first = head.split("\r\n")[0]
-    for line in head.split("\r\n")[1:]:
+def header_lines(raw_head_text):
+    """Lista de (key_raw, value_raw) sin normalizar."""
+    out = []
+    for line in raw_head_text.split("\r\n")[1:]:
         if ":" in line:
             k, v = line.split(":", 1)
-            hdrs[k.strip().lower()] = v.strip()
-    return first, hdrs
+            out.append((k, v))
+    return out
+
+
+def te_honored(raw_head_text, rule):
+    """Decide si el parser honra Transfer-Encoding: chunked."""
+    lines = header_lines(raw_head_text)
+    if rule == "te-strict":
+        tes = [(k, v) for k, v in lines
+               if k.lower() == "transfer-encoding"]   # sin strip
+        if len(tes) != 1:
+            return False
+        return tes[0][1].strip().lower() == "chunked"
+    if rule == "te-lenient":
+        tes = [(k, v) for k, v in lines
+               if k.strip().lower() == "transfer-encoding"]
+        if not tes:
+            return False
+        return "chunked" in tes[-1][1].strip().lower()
+    return False
+
+
+def parse_first(raw_head_text):
+    return raw_head_text.split("\r\n")[0]
+
+
+def cl_value(raw_head_text):
+    for k, v in header_lines(raw_head_text):
+        if k.strip().lower() == "content-length":
+            try:
+                return int(v.strip())
+            except ValueError:
+                return 0
+    return 0
+
+
+def chunked_extent(sock, buf):
+    """Consume un cuerpo chunked desde buf (y del socket si falta).
+    Devuelve (cuerpo_completo, leftover). len(izq) bytes van al wire."""
+    wire = b""
+    while True:
+        while b"\r\n" not in buf:
+            buf, ok = recv_until(sock, buf, b"\r\n")
+            if not ok:
+                return wire + buf, b""
+        linea, _, resto = buf.partition(b"\r\n")
+        try:
+            tam = int(linea.split(b";")[0].strip() or b"0", 16)
+        except ValueError:
+            return wire + buf, b""
+        if tam == 0:
+            if resto.startswith(b"\r\n"):
+                resto = resto[2:]
+            return wire + linea + b"\r\n\r\n", resto
+        while len(resto) < tam + 2:
+            resto, ok = recv_n(sock, resto, tam + 2)
+            if not ok:
+                return wire + buf, b""
+        wire += linea + b"\r\n" + resto[:tam + 2]
+        buf = resto[tam + 2:]
 
 
 def responder(sock, path):
@@ -57,69 +130,39 @@ def responder(sock, path):
     resp = (b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
             b"Content-Length: " + str(len(body)).encode() + b"\r\n"
             b"X-Path: " + path.encode() + b"\r\n\r\n" + body)
-    import sys as _s
-    print(f"[back] responde a {path}", file=_s.stderr, flush=True)
+    print(f"[back] responde a {path}", file=sys.stderr, flush=True)
     sock.sendall(resp)
 
 
-def body_len_backend(hdrs, raw_head):
-    """Backend: TE si modo desync, CL si consistente."""
-    if MODO == "desync" and "transfer-encoding" in hdrs:
-        return "chunked", None
-    return "cl", int(hdrs.get("content-length", 0) or 0)
-
-
 def backend_conn(conn):
-    import sys as _s
-    print("[back-conn] nace", file=_s.stderr, flush=True)
     buf = b""
     try:
         while True:
             buf, ok = recv_until(conn, buf, b"\r\n\r\n")
             if not ok:
                 return
-            print(f"[back-conn] headers: {buf[:40]!r}", file=_s.stderr,
-                  flush=True)
             raw_head, rest = buf.split(b"\r\n\r\n", 1)
-            first, hdrs = parse_headers(raw_head.decode("latin-1"))
-            modo_body, n = body_len_backend(hdrs, raw_head)
-            if modo_body == "chunked":
-                # parsear chunked manual hasta chunk 0
-                rest2 = rest
-                while True:
-                    if b"\r\n" not in rest2:
-                        rest2 += conn.recv(65535)
-                        continue
-                    linea, _, resto = rest2.partition(b"\r\n")
-                    tam = int(linea.split(b";")[0] or b"0", 16)
-                    resto2 = resto
-                    if tam == 0:
-                        # fin chunked: consumir CRLF final si viene
-                        if resto2.startswith(b"\r\n"):
-                            resto2 = resto2[2:]
-                        break
-                    while len(resto2) < tam + 2:
-                        resto2 += conn.recv(65535)
-                    resto2 = resto2[tam + 2:]
-                buf = resto2
+            head_txt = raw_head.decode("latin-1")
+            if BACK_FRAMING.startswith("te") and te_honored(head_txt,
+                                                             BACK_FRAMING):
+                cuerpo, buf = chunked_extent(conn, rest)
             else:
+                n = cl_value(head_txt)
                 while len(rest) < n:
                     rest, ok2 = recv_n(conn, rest, n)
                     if not ok2:
                         return
                 buf = rest[n:]
+            first = parse_first(head_txt)
             path = first.split(" ")[1] if " " in first else "/"
             responder(conn, path)
     except Exception as e:
-        import traceback
-        print(f"[back-conn] EXCEP: {e!r}", file=_s.stderr, flush=True)
-        traceback.print_exc()
+        print(f"[back-conn] EXCEP: {e!r}", file=sys.stderr, flush=True)
     finally:
         conn.close()
 
 
 def edge_conn(conn, back_sock):
-    """Edge: SIEMPRE parsea con CL (aunque haya TE). Reenvia crudo."""
     buf = b""
     try:
         while True:
@@ -127,27 +170,21 @@ def edge_conn(conn, back_sock):
             if not ok:
                 return
             raw_head, rest = buf.split(b"\r\n\r\n", 1)
-            first, hdrs = parse_headers(raw_head.decode("latin-1"))
-            n = int(hdrs.get("content-length", 0) or 0)
-            while len(rest) < n:
-                rest, ok2 = recv_n(conn, rest, n)
-                if not ok2:
-                    return
-            # reenviar el request crudo completo al backend
-            import sys as _s
-            print(f"[edge] fwd: {raw_head[:40]!r} cl={n}", file=_s.stderr,
-                  flush=True)
-            try:
+            head_txt = raw_head.decode("latin-1")
+            if (EDGE_FRAMING == "te"
+                    and te_honored(head_txt, "te-strict")):
+                cuerpo, buf = chunked_extent(conn, rest)
+                back_sock.sendall(raw_head + b"\r\n\r\n" + cuerpo)
+            else:
+                n = cl_value(head_txt)
+                while len(rest) < n:
+                    rest, ok2 = recv_n(conn, rest, n)
+                    if not ok2:
+                        return
                 back_sock.sendall(raw_head + b"\r\n\r\n" + rest[:n])
-                print("[edge] sendall OK", file=_s.stderr, flush=True)
-            except Exception as e:
-                print(f"[edge] sendall FALLO: {e!r}", file=_s.stderr,
-                      flush=True)
-            buf = rest[n:]
+                buf = rest[n:]
     except Exception as e:
-        import traceback
-        print(f"[edge-conn] EXCEP: {e!r}", file=_s.stderr, flush=True)
-        traceback.print_exc()
+        print(f"[edge-conn] EXCEP: {e!r}", file=sys.stderr, flush=True)
 
 
 def backend_server():
@@ -161,6 +198,21 @@ def backend_server():
                          daemon=True).start()
 
 
+def relay(src, dst):
+    try:
+        while True:
+            d = src.recv(65535)
+            if not d:
+                break
+            dst.sendall(d)
+    except Exception:
+        pass
+    try:
+        dst.shutdown(socket.SHUT_WR)
+    except Exception:
+        pass
+
+
 def edge_server():
     srv = socket.socket()
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -172,24 +224,6 @@ def edge_server():
         b.connect(("127.0.0.1", PORT_BACK))
         threading.Thread(target=relay, args=(b, c), daemon=True).start()
         threading.Thread(target=edge_conn, args=(c, b), daemon=True).start()
-
-
-def relay(src, dst):
-    import sys as _s
-    print("[relay] vivo", file=_s.stderr, flush=True)
-    try:
-        while True:
-            d = src.recv(65535)
-            if not d:
-                break
-            print(f"[relay] -> {len(d)} bytes", file=_s.stderr, flush=True)
-            dst.sendall(d)
-    except Exception:
-        pass
-    try:
-        dst.shutdown(socket.SHUT_WR)
-    except Exception:
-        pass
 
 
 if __name__ == "__main__":

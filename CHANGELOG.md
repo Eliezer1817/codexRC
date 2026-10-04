@@ -1,3 +1,45 @@
+## v0.73.0 — EDGESYNC-HUNT V2: bateria de 9 framings
+
+Una sola sonda CL+TE no basta: cada parser resuelve la
+ambiguedad a su manera. La bateria ahora dispara NUEVE framings
+por target y para al primer eco reproducido.
+
+Familia CL.TE (smuggle dentro de la ventana CL, invisible al
+front CL; un back TE lo ejecuta):
+  V1 clasico | V3 TE duplicado | V4 espacio antes de ":" |
+  V5 identity+chunked | V6 tab tras ":" | V7 mayusculas
+  ofuscadas | V8 mixto (espacio+duplicado)
+Familia TE.CL (smuggle dentro del data de un chunk, invisible al
+front TE; un back CL lo ejecuta):
+  V2 invertido (CL corto) | V9 extension de chunk + hex mayus
+
+Veredictos: DESYNC-DEMO exige eco REPRODUCIBLE (familia CL.TE);
+los ecos TE.CL quedan como TECL-CANDIDATO (desync o pipelining:
+ambiguo sin prueba cruzada, no dictamina DEMO); conteos anormales
+sin eco = SOSPECHA; rechazo activo del front (400/405/501 al
+framing ambiguo) = buena postura, se registra como front_rechazos
+y NO es sospecha. Presupuesto: 12 pruebas max (baseline + 9 +
+reproduccion), 1 conexion secuencial por variante, cooldown, sin
+flood/RST, cuerpos <= 4KB.
+
+Lab v2 (labs/desync_lab.py): 5 modos (desync, consistente, tecl,
+consistente-te, lenient) con parsers strict (rechaza TE
+duplicado/espaciado) y lenient (los honra). La matriz de
+regresion RC-000162 exige que cada variante distinga el parser
+que le toca: V3/V4 callan al strict y gritan al lenient; V6/V7
+atraviesan el strict; V2/V9 dejan candidato solo contra tecl y
+limpio contra consistente-te. Corpus 33/33.
+
+Prueba en vivo (Linktree/Cloudflare): SIN-DESYNC. Front rechaza
+activamente V2/V4/V8/V9 (400+close) y resuelve consistente V1/V3/
+V5/V6/V7. Postura solida; el modulo queda listo para edges
+menores y VDP self-hosted.
+
+Limitacion documentada: un front que honre TE estricto puede
+reflejar pipelining como eco CL.TE; en blancos CDN (front
+normalizado) la senal es solida, en fronts TE puros se exige
+diferencial manual.
+
 ## v0.72.0 — EDGESYNC-HUNT: detector de desync edge->back
 
 Primer modulo de capa transporte del engine (hasta ahora eramos

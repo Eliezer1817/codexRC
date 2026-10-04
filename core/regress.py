@@ -503,6 +503,32 @@ def seed_rc_000161() -> None:
     })
 
 
+def seed_rc_000162() -> None:
+    """RC-000162 (v0.73.0): bateria EDGESYNC de 9 framings.
+    Cada variante debe distinguir el parser que le corresponde:
+    estricto (rechaza dup/espacio) vs lenient (los honra), y la
+    familia TE.CL debe dejar huella de candidato sin falsos DEMO
+    en mundos consistentes."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000162" in cases:
+        return
+    _write_case({
+        "id": "RC-000162",
+        "module": "EDGESYNC-HUNT-V2",
+        "problem": "una sola sonda CL+TE no basta: parsers distintos "
+                   "caen en framings distintos",
+        "first_seen": "v0.73.0",
+        "fixed_in": "v0.73.0",
+        "repro": {"expected": {
+            "V1_vs_consistente": "SIN-DESYNC",
+            "V3V4_vs_desync": "SIN-DESYNC",
+            "V6V7_vs_desync": "DESYNC-DEMO",
+            "V3V4V5V8_vs_lenient": "DESYNC-DEMO",
+            "V2V9_vs_consistente_te": "SIN-DESYNC",
+            "bateria_tecl": "SIN + candidatos [V2,V9]"}},
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -524,6 +550,7 @@ def run() -> int:
     seed_rc_000159()
     seed_rc_000160()
     seed_rc_000161()
+    seed_rc_000162()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -967,6 +994,70 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                       f"{'PASS' if ok else 'FAIL'}")
                 if not ok:
                     fails += 1
+        if c["id"] == "RC-000162":
+            import subprocess
+            from core.edgesync import audit as esa2
+            lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "desync_lab.py")
+            if not os.path.exists(lab):
+                print(f"[{c['id']}] labs/desync_lab.py ausente -> "
+                      f"SKIP (no FAIL)")
+            else:
+                import time as _t
+                mods = ["desync", "consistente", "tecl",
+                        "consistente-te", "lenient"]
+                procs = {}
+                base_p = 18920
+                for i, m in enumerate(mods):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, lab, str(base_p + i * 2),
+                         str(base_p + i * 2 + 1), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _t.sleep(1.2)
+                    port = lambda m: base_p + mods.index(m) * 2
+                    aud = lambda m, v=None: esa2({
+                        "url": f"http://127.0.0.1:{port(m)}/",
+                        "timeout": 5.0, "variant": v})
+                    esperado = [
+                        ("V1", "consistente", "SIN-DESYNC"),
+                        ("V3", "desync", "SIN-DESYNC"),
+                        ("V4", "desync", "SIN-DESYNC"),
+                        ("V6", "desync", "DESYNC-DEMO"),
+                        ("V7", "desync", "DESYNC-DEMO"),
+                        ("V3", "lenient", "DESYNC-DEMO"),
+                        ("V4", "lenient", "DESYNC-DEMO"),
+                        ("V5", "lenient", "DESYNC-DEMO"),
+                        ("V8", "lenient", "DESYNC-DEMO"),
+                        ("V2", "consistente-te", "SIN-DESYNC"),
+                        ("V9", "consistente-te", "SIN-DESYNC"),
+                    ]
+                    ok = True
+                    for vid, m, exp in esperado:
+                        got = aud(m, vid)["veredicto"]
+                        tag = "PASS" if got == exp else "FAIL"
+                        if got != exp:
+                            ok = False
+                        print(f"[{c['id']}] {vid} vs {m}: "
+                              f"{got} (esperado {exp}) {tag}")
+                    # bateria: tecl debe dar SIN con candidatos V2,V9
+                    r = aud("tecl")
+                    cands = r["evidencia"].get("tecl_candidatos")
+                    bt = (r["veredicto"] == "SIN-DESYNC"
+                          and sorted(cands) == ["V2", "V9"])
+                    if not bt:
+                        ok = False
+                    print(f"[{c['id']}] bateria vs tecl: {r['veredicto']}"
+                          f" cand={cands} -> "
+                          f"{'PASS' if bt else 'FAIL'}")
+                    print(f"[{c['id']}] matriz 9 framings -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for p in procs.values():
+                        p.kill()
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")
     return 1 if fails else 0
 
