@@ -36,6 +36,7 @@ from core.taint_trace import trace_path  # noqa: E402
 from core.pattern_match import scan_path  # noqa: E402
 from core import vendor_farm  # noqa: E402
 from core.gates_audit import audit as gates_audit  # noqa: E402
+from core.race_trace import audit as race_audit  # noqa: E402
 from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
 from core.fp_autoclose import es_ruido_publico  # noqa: E402
 
@@ -178,7 +179,15 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
                 gv = g.get("veredicto", "?")
                 break
         h["_gate"] = gv
-    # 5) FP-AUTO-CLOSE: dictamen de falsos positivos conocidos
+    # 5) RACE-TRACE: TOCTOU en estado persistente (v0.70.0)
+    try:
+        race = race_audit(code)
+    except Exception:
+        race = {"candidatos": [], "resumen": {}}
+    rec["race_candidatos"] = race.get("candidatos", [])
+    rec["race_resumen"] = race.get("resumen", {})
+
+    # 6) FP-AUTO-CLOSE: dictamen de falsos positivos conocidos
     clean = fp_annotate(clean, code)
     clean.sort(key=lambda h: (0 if h.get("_fp") is None else 1,
                0 if h.get("_gate") == "CANDIDATO-BAC" else
@@ -192,6 +201,9 @@ def scan_slug(slug: str, workdir: str, vdp: Dict[str, Any],
                         str(h.get("severity", "")).lower() in
                         ("critical", "alta", "high", "error")),
         "fp_autocerrados": sum(1 for h in clean if h.get("_fp")),
+        "race_candidatos": len(rec.get("race_candidatos", [])),
+        "race_criticos": sum(1 for h in rec.get("race_candidatos", [])
+                             if h.get("severity") == "critica"),
         "segundos": round(time.time() - t0, 1),
     }
     return rec

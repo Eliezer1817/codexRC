@@ -324,6 +324,10 @@ def _body_of(lines: List[str], start: int) -> Tuple[str, int]:
 
 def _resolve_callback(cb_expr: str) -> Optional[str]:
     """'func', array($this,'m'), ['Cls','m'], 'Cls::m' -> nombre navegable."""
+    # v0.70.0 fix: array('Cls','m') devolvia la clase, no el metodo.
+    am = re.search(r"\barray\s*\(\s*['\"]\w+['\"]\s*,\s*['\"](\w+)['\"]", cb_expr)
+    if am:
+        return am.group(1)
     m = re.search(r"['\"](\w+)['\"]", cb_expr)
     return m.group(1) if m else None
 

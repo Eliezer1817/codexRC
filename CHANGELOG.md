@@ -1,3 +1,38 @@
+## v0.70.0 — RACE-TRACE: TOCTOU en estado persistente
+
+Tecnica nueva incorporada al arsenal estatico: la clase de bug
+que se gana con single-packet HTTP/2 (limites, cupones, stock,
+saldos). Ningun plugin WP aguenta una carrera cuando hace
+leer -> decidir -> escribir sin lock.
+
+core/race_trace.py:
+- Empareja read->write de estado persistente por funcion:
+  get_option/update_option, *_user_meta, *_post_meta, transients,
+  $wpdb SELECT->UPDATE, ->get_stock_quantity/set_stock_quantity,
+  ->get_usage_count/increase_usage_count, ->get_total/set_total.
+- VENTANA: detecta el guard (if) entre read y write que usa la
+  variable leida = check-then-act clasico.
+- Veredictos: CANDIDATO-RACE / RACE-ATOMICO (SQL col=col+1,
+  descartado) / MITIGADO-TRANSIENT (lock con transient) /
+  MITIGADO-LOCK (flock/LOCK_EX/get_lock) / DESCARTADO-LECTURA
+  (version/cache/flag sin valor) / DESCARTADO-VENTANA (contador
+  RMW sin guard).
+- Severidad: critica si el handler es nopriv (carrera ANONIMA),
+  alta para dinero/stock/cupon, media para limites.
+- Filtros de ruido v0.70.1: estado "otro" (versiones, caches,
+  flags) descartado; transients de cache sin clave sensible
+  descartados. astra 92->7 candidatos, beehive 16->3.
+
+gates_audit.py fix (v0.70.0):
+- _resolve_callback: array('Cls','m') devolvia 'Cls' (la clase)
+  como callback; el metodo se perdia y los handlers nopriv no
+  levantaban severidad. Ahora resuelve el ULTIMO string del
+  array. Impacto previo no cuantificado.
+
+Integracion PLUGIN-BATCH: rec["race_candidatos"] +
+rec["race_resumen"] en el escaneo de cada slug.
+Regresion RC-000157: 4/4 verdictos + nopriv boost, corpus 28/28.
+
 ## v0.69.0 — VISION-GATE: clasificador visual de challenges (RC-000155)
 
 Gemini como SENSOR, no como conductor. Mismas reglas del JUEZ

@@ -394,6 +394,31 @@ def seed_rc_000156() -> None:
         })
 
 
+def seed_rc_000157() -> None:
+    """RC-000157 (v0.70.0): RACE-TRACE, TOCTOU en estado persistente.
+    Ademas fija el bug de gates_audit: array('Cls','m') resolvia la
+    CLASE como callback (perdia el metodo -> nopriv sin boost)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000157" in cases:
+        return
+    _write_case({
+        "id": "RC-000157",
+        "module": "RACE-TRACE + GATES-AUDIT",
+        "problem": "check-then-act (TOCTOU) en estado persistente WP "
+                   "indetectado; y callbacks estaticos array('Cls','m') "
+                   "resolvian a la clase, no al metodo (nopriv perdido)",
+        "first_seen": "v0.70.0",
+        "fixed_in": "v0.70.0",
+        "repro": {
+            "fixture": "withdraw nopriv con wallet_balance RMW + guard",
+            "expected": {"withdraw_handler": "CANDIDATO-RACE/critica",
+                         "apply_coupon": "CANDIDATO-RACE/alta",
+                         "credit_points": "RACE-ATOMICO",
+                         "safe_transfer": "MITIGADO-TRANSIENT"},
+        },
+    })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -410,6 +435,7 @@ def run() -> int:
     seed_rc_000154()
     seed_rc_000155()
     seed_rc_000156()
+    seed_rc_000157()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -643,6 +669,67 @@ class Completamente_Otro_Nombre {
                 print(f"[{c['id']}] sanitization.efectiva={sano} "
                      f"(esperado True) -> {'PASS' if sano else 'FAIL'}")
                 if not sano:
+                    fails += 1
+        if c["id"] == "RC-000157":
+            import tempfile
+            from core.race_trace import audit as race_audit
+            repro = """<?php
+class RC157 {
+    function withdraw_handler() {
+        $u = get_current_user_id();
+        $balance = get_user_meta($u, 'wallet_balance', true);
+        if ($balance >= $_POST['amount']) {
+            update_user_meta($u, 'wallet_balance', $balance - $_POST['amount']);
+        }
+    }
+    function apply_coupon() {
+        $used = get_option('coupon_uses');
+        if ($used >= 100) { wp_die('limit'); }
+        update_option('coupon_uses', $used + 1);
+    }
+    function credit_points() {
+        global $wpdb;
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}users SET points = points + 1 WHERE ID = %d",
+            get_current_user_id()));
+    }
+    function safe_transfer() {
+        $lock = get_transient('myplugin_lock_transfer');
+        if ($lock) { return; }
+        set_transient('myplugin_lock_transfer', 1, 5);
+        $bal = get_option('account_balance');
+        if ($bal >= 10) { update_option('account_balance', $bal - 10); }
+    }
+}
+"""
+            loader = ("<?php\n"
+                      "add_action('wp_ajax_nopriv_withdraw', "
+                      "array('RC157', 'withdraw_handler'));\n"
+                      "add_action('wp_ajax_apply_coupon', "
+                      "array('RC157', 'apply_coupon'));\n")
+            with tempfile.TemporaryDirectory() as tmp:
+                open(os.path.join(tmp, "rc157.php"), "w").write(repro)
+                open(os.path.join(tmp, "loader.php"), "w").write(loader)
+                res = race_audit(tmp)
+                verd = {(h.get("funcion"), h["veredicto"])
+                        for h in res["hallazgos"]}
+                w_crit = [h for h in res["candidatos"]
+                          if h["funcion"] == "withdraw_handler"]
+                ok = (any(f == "withdraw_handler" and v == "CANDIDATO-RACE"
+                          for f, v in verd)
+                      and w_crit and w_crit[0]["severity"] == "critica"
+                      and w_crit[0].get("nopriv") is True
+                      and any(f == "apply_coupon" and v == "CANDIDATO-RACE"
+                              for f, v in verd)
+                      and any(f == "credit_points"
+                              and v == "RACE-ATOMICO" for f, v in verd)
+                      and any(f == "safe_transfer"
+                              and v == "MITIGADO-TRANSIENT" for f, v in verd)
+                      and res["resumen"]["candidatos"] == 2)
+                print(f"[{c['id']}] race-trace 4/4 verdictos "
+                      f"(nopriv boost incluido) -> "
+                      f"{'PASS' if ok else 'FAIL ' + str(verd)}")
+                if not ok:
                     fails += 1
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")
     return 1 if fails else 0
