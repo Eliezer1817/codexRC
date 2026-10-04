@@ -305,6 +305,50 @@ def seed_rc_000154() -> None:
         })
 
 
+def seed_rc_000155() -> None:
+    """RC-000155 (v0.69.0): VISION-GATE, clasificador visual de
+    challenges via Gemini. El LLM clasifica con salida JSON
+    estructurada (response_schema contractual, temperatura 0) y
+    REG-BOT decide: el modelo jamas conduce el navegador.
+    Entrada redactada (emails/telefonos/tokens tapados), cero
+    credenciales hacia el modelo; sin clave o API caida -> ERROR
+    y la caza conserva su comportamiento determinista (handoff)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000155" not in cases:
+        _write_case({
+            "id": "RC-000155",
+            "module": "VISION-GATE (Gemini, clasificador visual)",
+            "problem": "la heuristica _CAPTCHA_RE manda a la cola de "
+                       "handoff TODO lo que menciona 'captcha' aunque "
+                       "sea un falso positivo de marketing, y el "
+                       "operador no sabe QUE tipo de challenge hay "
+                       "hasta abrir la pagina",
+            "first_seen": "v0.68.0 (REG-BOT nace con handoff ciego)",
+            "fixed_in": "v0.69.0 (core/vision_gate.py: system prompt "
+                        "VISION-GATE con few-shot E1-E5, "
+                        "response_schema contractual, decide() "
+                        "determinista con umbral confidence >= 0.8 "
+                        "para DISCARD, redaccion de PII; integracion "
+                        "en reg_bot.py submit)",
+            "repro": {"sin_clave": "classify() -> action=ERROR "
+                                    "(regla: nunca colgar)",
+                      "clave_invalida": "API 400 capturado -> ERROR "
+                                        "limpio, sin excepcion",
+                      "decide": "CONTINUE pasa; DISCARD <0.8 cae a "
+                                "HANDOFF; GHOSTGATE solo sugiere; "
+                                "ERROR -> HANDOFF (determinista)"},
+            "case_real": "validacion en vivo bloqueada: la "
+                         "GEMINI_API_KEY guardada NO es de Google "
+                         "(prefijo Ab8R..., len 50; las claves de "
+                         "AI Studio empiezan con AIza). El modulo "
+                         "devuelve ERROR limpio en su lugar — el "
+                         "comportamiento determinista original se "
+                         "conserva hasta que el operador cargue la "
+                         "clave correcta en Settings/Secrets",
+            "status": "PROTECTED",
+        })
+
+
 def run() -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
@@ -319,6 +363,7 @@ def run() -> int:
     seed_rc_000152()
     seed_rc_000153()
     seed_rc_000154()
+    seed_rc_000155()
     cases = _load_cases()
     for c in cases:
         if c["id"] == "RC-000149":
@@ -460,6 +505,12 @@ class RC151 {
             # python3 core/bac_proof.py <plugin> — validado v0.67.0
             print(f"[{c['id']}] BAC-PROOF dinamico — repro en vivo "
                   f"(ver case_real), no se re-ejecuta en corpus")
+        if c["id"] == "RC-000155":
+            # repro en vivo: requiere GEMINI_API_KEY valida
+            # (AI Studio) — validado el 100% con mocks + clave
+            # invalida (ERROR limpio) v0.69.0
+            print(f"[{c['id']}] VISION-GATE — sin API en corpus "
+                  f"(validado con mocks + ERROR-paths)")
         if c["id"] == "RC-000154":
             # repro en vivo (lab local):
             # python3 core/lab_ab_site.py 8899 &

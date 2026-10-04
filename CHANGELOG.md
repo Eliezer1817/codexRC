@@ -1,3 +1,32 @@
+## v0.69.0 — VISION-GATE: clasificador visual de challenges (RC-000155)
+
+Gemini como SENSOR, no como conductor. Mismas reglas del JUEZ
+aplicadas a lo visual: el LLM clasifica, REG-BOT decide, y el
+modelo jamas toca el navegador.
+
+core/vision_gate.py:
+- Entrada: screenshot opcional + DOM redactado (regex tapa
+  emails/telefonos/tokens). Cero credenciales, cookies o secretos
+  hacia el modelo. El screenshot solo en checkpoints REG-BOT.
+- system prompt VISION-GATE: no inventar elementos, no afirmar
+  exito sin evidencia, salida EXCLUSIVAMENTE JSON. Few-shot E1-E5
+  (recaptcha v2, registro normal, SMS->descartar, interstitial CF,
+  geetest ambiguo).
+- response_schema contractual (challenge_detected, challenge_type,
+  confidence, state, action, reason) con temperatura 0.
+- Taxonomia: no_challenge | supported_checkpoint |
+  unsupported_checkpoint | ambiguous | requires_human.
+- decide() determinista (SIN LLM): CONTINUE pasa solo; DISCARD solo
+  con confidence >= 0.8 (regla telefono/KYC); GHOSTGATE solo
+  sugiere; el resto cae a la cola de handoff. Sin clave o API
+  caida -> ERROR y la caza conserva su comportamiento original.
+
+Integracion reg_bot.py: el submit con CAPTCHA-PENDING primero
+clasifica; falso positivo de heuristica -> continua solo; el
+veredicto queda en identity["vision"] con resumen en el log.
+
+Modelo por defecto gemini-2.0-flash (configurable via VISION_MODEL).
+
 ## v0.68.0 — REG-BOT + AB-DIFF universal: identidades no-WordPress (RC-000154)
 
 El concepto de la capa 4 (diff de sesiones) portado a CUALQUIER

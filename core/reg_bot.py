@@ -631,9 +631,20 @@ class RegBot:
             return None
         SessionHandler.capture(ident, session, r, r.text)
         if r.status_code in (403, 429) or _CAPTCHA_RE.search(r.text[:3000]):
-            self.log("  [REG-BOT] CAPTCHA-PENDING en submit (handoff)")
-            ident["verification_state"] = "captcha"
-            return ident
+            # VISION-GATE (v0.69.0): clasifica el checkpoint y REG-BOT
+            # decide. El LLM nunca conduce; sin clave -> comportamiento
+            # determinista original (handoff).
+            verdict = self._vision_gate(r.text)
+            if verdict:
+                ident["vision"] = verdict
+            if verdict and verdict.get("action") == "CONTINUE":
+                self.log("  [REG-BOT] VISION-GATE: falso positivo de "
+                         "heuristica -> continuar solo")
+            else:
+                self.log("  [REG-BOT] CAPTCHA-PENDING en submit "
+                         "(handoff)" + self._vision_log(verdict))
+                ident["verification_state"] = "captcha"
+                return ident
         # "usuario ya existe" -> reintento con otro alias (respuesta REAL)
         if re.search(r"(ya exist|already|taken|disponible|ocupado|exists)",
                      r.text[:4000], re.I):
@@ -656,6 +667,31 @@ class RegBot:
         SessionHandler.capture(ident, session, r, r.text)
         self.log("  [REG-BOT] {} -> {}".format(email, ident["verification_state"]))
         return ident
+
+    def _vision_gate(self, html):
+        """Clasifica el challenge via Gemini (VISION-GATE). Nunca
+        lanza: cualquier fallo devuelve None y la caza conserva su
+        comportamiento determinista."""
+        try:
+            from core import vision_gate
+        except ImportError:
+            return None
+        if not os.environ.get("GEMINI_API_KEY"):
+            return None
+        try:
+            return vision_gate.classify(html=html, url=self.site)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _vision_log(v):
+        """Resumen de una linea para el log del job."""
+        if not v:
+            return ""
+        return (" [VISION {} conf={:.2f} {}]".format(
+            v.get("challenge_type", "?"),
+            float(v.get("confidence", 0) or 0),
+            v.get("state", "?")))
 
     def _find_verify_form(self, session, r) -> Tuple[Optional[str], str]:
         """Busca en la respuesta del registro el formulario donde va
