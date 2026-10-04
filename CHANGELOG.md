@@ -1,3 +1,56 @@
+## v0.80.0 — SEMANTIC-CACHE: desacuerdos semanticos (fase 2 del estado compartido)
+
+Pregunta central: dado un diferencial o una convergencia de cache,
+CUAL es el desacuerdo semantico, es reproducible en segmento virgen,
+y cambia lo que recibe un consumidor inocente?
+
+EXTENSION DE v0.79 (patch aditivo: cache_correlation expone
+fingerprints e informe79 sin tocar su veredicto).
+
+CUATRO MODULOS:
+  semantic_channels: canales de observacion (respuesta directa,
+    estado de cache, atribucion) con genealogia por sonda; dos
+    canales solo cuentan si son mecanismos independientes
+    (caso de header: el contrato RFC 7230 3.2 NO es canal
+    independiente -> nunca correlation STRONG solo por el)
+  semantic_dimension: fase 2 localiza la dimension (colision
+    por segmento de path vs fragmentacion por header) y
+    descarta SELF-INDUCED en path virgen; correlation OBSERVED
+    solo si reproduce
+  semantic_models: VerdictRecord con veredicto, atributos,
+    condiciones, presupuesto (tope 30 req) y genealogia
+    exportable
+  semantic_judge: E1..E9 -> BENIGN / CONSISTENT / INCONSISTENT /
+    SUSPICIOUS / DEMO / UNKNOWN; DEMO exige 8 condiciones
+    conjuntas (reproducible + localizada + atribuida +
+    controles + baseline util + self-induced descartado +
+    correlacion + impacto reproducible)
+
+FALSOS POSITIVOS DE v0.79 CERRADOS:
+  collision_legitima (alias por diseno): v0.79 daba DEMO falso;
+    v0.80 da BENIGN via control negativo (B-solo ve lo mismo
+    legitimo, nada es ajeno) -> RC-000174
+  [MISS,HIT] vs [HIT,HIT]: era acuerdo en entrada compartida,
+    no desacuerdo -> CONSISTENT -> RC-000180
+
+LAB (labs/semantic_lab.py): 8 escenarios con cache-fingerprint
+de estado por respuesta + eco de segmentos. http.server
+normaliza el case de headers: el case crudo se lee de
+headers.as_string().
+
+REGLAS:
+  tolerancia != vulnerabilidad: INCONSISTENT sin impacto
+    observable jamas escala (RC-000177)
+  inconsistencia != vulnerabilidad: E7 con dos canales reales
+    y sin impacto -> maximo SUSPICIOUS (RC-000181)
+  baseline AMBIGUO -> UNKNOWN conservador, sin fase 2
+    (RC-000179)
+
+CLINICA: `python3 core/semantic_engine.py <url> [--timeout N]`.
+
+Validacion: 8/8 escenarios lab; corpus 53/53 (RC-000174..182,
+invariantes v0.72-v0.79 re-ejecutadas).
+
 ## v0.79.0 — CACHE-CORRELATION: el estado compartido como evidencia
 
 Pregunta central: ¿dos representaciones que deberian ser

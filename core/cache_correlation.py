@@ -137,6 +137,10 @@ def audit(cfg):
         pid: {"relation": rels[pid]["relation"],
               "diferencial": divs[pid]}
         for pid in pares}
+    # v0.80 (aditivo, no altera veredictos): huellas reales
+    # para el analisis de canales de SEMANTIC-CACHE
+    informe["fingerprints"] = {
+        "battery": fps, "repro": repro, "spec": fspec}
     reqs_ctl = 0
 
     # ---------- 3. convergencia P3-DI (cross-request)

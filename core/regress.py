@@ -776,6 +776,141 @@ def seed_rc_000173() -> None:
         {"invariantes": "RC-000164..167 igual PASS, 0 fallo"})
 
 
+def seed_rc_000174() -> None:
+    """RC-000174: collision legitima (alias por diseno). Dos
+    paths sirven el mismo recurso legitimamente: la
+    convergencia NO es contaminacion. v0.79 daba DEMO falso
+    aqui (sin control negativo); v0.80 debe dar BENIGN con
+    self_induced RULED_OUT por NEGATIVE_CONTROL."""
+    _seed_cache(
+        "RC-000174",
+        "una convergencia entre paths con el mismo contenido "
+        "legitimo (alias) podia escalar a DEMO sin control "
+        "negativo que demostrara que el contenido es ajeno",
+        {"collision_legitima":
+         "BENIGN/negative control: nada es ajeno"})
+
+
+def seed_rc_000175() -> None:
+    """RC-000175: collision problematica. Contamination
+    estructural reproducible en segmentos virgenes: DEMO con
+    las 8 condiciones conjuntas, impacto CROSS-CONSUMER."""
+    _seed_cache(
+        "RC-000175",
+        "una colision por segmento podia declararse DEMO "
+        "sin reproducirse en paths virgenes ni descartar "
+        "self-induced",
+        {"collision_problematica":
+         "DEMO/impact CROSS-CONSUMER, 8 condiciones"})
+
+
+def seed_rc_000176() -> None:
+    """RC-000176: fragmentation legitima (Vary: Cookie). La
+    diferencia esta legitimamente explicada: BENIGN, sin
+    fase 2."""
+    _seed_cache(
+        "RC-000176",
+        "una fragmentacion declarada por Vary podia tratarse "
+        "como inconsistencia observable",
+        {"fragmentation_legitima": "BENIGN/vary explica"})
+
+
+def seed_rc_000177() -> None:
+    """RC-000177: fragmentation problematica. Case crudo del
+    nombre de header (RFC 7230 3.2 lo define insensible):
+    INCONSISTENT estructural sin impacto observable; el
+    contrato RFC NO es canal independiente para STRONG."""
+    _seed_cache(
+        "RC-000177",
+        "una fragmentacion estructural podia escalar mas alla "
+        "de INCONSISTENT sin impacto observable al consumidor",
+        {"fragmentation_problematica":
+         "INCONSISTENT/correlation OBSERVED, sin impacto"})
+
+
+def seed_rc_000178() -> None:
+    """RC-000178: cross-semantic contamination. B recibe
+    contenido con SEMANTICA ajena (content-type distinto al
+    legitimo): DEMO con impacto SECURITY (E6)."""
+    _seed_cache(
+        "RC-000178",
+        "una contaminacion con semantica distinta podia quedar "
+        "en CROSS-CONSUMER sin detectar el mismatch de "
+        "content-type",
+        {"cross_contamination":
+         "DEMO/impact SECURITY (content-type ajeno)"})
+
+
+def seed_rc_000179() -> None:
+    """RC-000179: baseline ambiguo. Rotacion no caracterizada:
+    UNKNOWN conservador con causa citada, sin fase 2."""
+    _seed_cache(
+        "RC-000179",
+        "un baseline ambiguo podia seguir consumiendo "
+        "presupuesto en fase 2 en vez de concluir UNKNOWN",
+        {"ambiguous_baseline": "UNKNOWN/baseline AMBIGUO"})
+
+
+def seed_rc_000180() -> None:
+    """RC-000180: normalizacion legitima total. Edge y cache
+    tratan el case de acuerdo (entrada compartida): la
+    rareza de [MISS,HIT] vs [HIT,HIT] NO es desacuerdo, es
+    acuerdo en entrada compartida: CONSISTENT."""
+    _seed_cache(
+        "RC-000180",
+        "el patron normal de cache compartido (primero MISS, "
+        "segundo HIT) podia leerse como divergencia de estado",
+        {"normalization_legitima":
+         "CONSISTENT/refetch igual = acuerdo"})
+
+
+def seed_rc_000181() -> None:
+    """RC-000181: desacuerdo real entre capas SIN impacto.
+    Nucleos identicos, estados divergentes (uno persiste,
+    el otro jamas): E7 con dos canales de observacion
+    reales, reproducible en virgen: maximo SUSPICIOUS,
+    jamas DEMO (inconsistencia != vulnerabilidad)."""
+    _seed_cache(
+        "RC-000181",
+        "un desacuerdo observable sin impacto podia escalar a "
+        "DEMO por correlacion fuerte sola",
+        {"layer_disagreement":
+         "SUSPICIOUS/E7 correlation STRONG, impact NONE"})
+
+
+def seed_rc_000182() -> None:
+    """RC-000182: invariantes v0.79. SEMANTIC-CACHE extiende a
+    CACHE-CORRELATION sin alterar ningun veredicto historico.
+    Re-ejecuta RC-000168..173 via --only y exige 0 fallos."""
+    _seed_cache(
+        "RC-000182",
+        "la capa v0.80 (patch aditivo de fingerprints + fase "
+        "2) podia degradar los casos v0.79 del corpus",
+        {"invariantes":
+         "RC-000168..173 igual PASS, 0 fallo"}),
+
+
+_SEM_TABLE = {
+    "RC-000174": ("collision_legitima", "BENIGN",
+                  {"self_induced": "RULED_OUT",
+                   "self_induced_method": "NEGATIVE_CONTROL"}),
+    "RC-000175": ("collision_problematica", "DEMO",
+                  {"impact": "CROSS-CONSUMER",
+                   "correlation": "STRONG"}),
+    "RC-000176": ("fragmentation_legitima", "BENIGN", {}),
+    "RC-000177": ("fragmentation_problematica", "INCONSISTENT",
+                  {"correlation": "OBSERVED",
+                   "self_induced": "RULED_OUT"}),
+    "RC-000178": ("cross_contamination", "DEMO",
+                  {"impact": "SECURITY"}),
+    "RC-000179": ("ambiguous_baseline", "UNKNOWN", {}),
+    "RC-000180": ("normalization_legitima", "CONSISTENT", {}),
+    "RC-000181": ("layer_disagreement", "SUSPICIOUS",
+                  {"correlation": "STRONG",
+                   "self_induced": "RULED_OUT"}),
+}
+
+
 def run(only_ids=None) -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real).
@@ -811,6 +946,15 @@ def run(only_ids=None) -> int:
     seed_rc_000171()
     seed_rc_000172()
     seed_rc_000173()
+    seed_rc_000174()
+    seed_rc_000175()
+    seed_rc_000176()
+    seed_rc_000177()
+    seed_rc_000178()
+    seed_rc_000179()
+    seed_rc_000180()
+    seed_rc_000181()
+    seed_rc_000182()
     cases = _load_cases()
     for c in cases:
         if only_ids and c["id"] not in only_ids:
@@ -1842,6 +1986,69 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 finally:
                     for p in procs.values():
                         p.kill()
+        # ---- SEMANTIC-CACHE v0.80 (RC-000174..181)
+        if c["id"] in _SEM_TABLE:
+            from core.semantic_engine import audit as sem_audit
+            mode, exp, extra = _SEM_TABLE[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "semantic_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/semantic_lab.py "
+                      f"ausente -> SKIP (no FAIL)")
+            else:
+                port = 19200 + (int(c["id"][-3:]) - 174) * 2
+                proc = subprocess.Popen(
+                    [sys.executable, labp, str(port), mode],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1)
+                    rec = sem_audit({
+                        "url": f"http://127.0.0.1:{port}/",
+                        "timeout": 6.0})
+                    ok = rec["verdict"] == exp
+                    for k, v in extra.items():
+                        if rec["attributes"].get(k) != v:
+                            ok = False
+                    if exp == "UNKNOWN" and not any(
+                            "baseline" in str(u) for u in
+                            rec.get("unknown_causes", [])):
+                        ok = False
+                    tot = (rec.get("budget", {})
+                           .get("spent", {})
+                           .get("total", 99))
+                    if tot > 30:
+                        ok = False
+                    print(f"[{c['id']}] {mode}: "
+                          f"{rec['verdict']}/{tot} req"
+                          f"{' attrs OK' if extra else ''} "
+                          f"-> {'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    proc.kill()
+        if c["id"] == "RC-000182":
+            import subprocess as sp2
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            res = sp2.run(
+                [sys.executable,
+                 os.path.join(root, "core", "regress.py"),
+                 "--only",
+                 "RC-000168,RC-000169,RC-000170,RC-000171,"
+                 "RC-000172,RC-000173"],
+                capture_output=True, text=True, timeout=1200)
+            out = res.stdout or ""
+            ok = (res.returncode == 0
+                  and out.rstrip().splitlines()[-1].strip()
+                  .endswith("0 fallo(s)"))
+            print(f"[{c['id']}] invariantes v0.79: "
+                  f"re-ejecucion RC-000168..173 exit="
+                  f"{res.returncode} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")
     return 1 if fails else 0
 
