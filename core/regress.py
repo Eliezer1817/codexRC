@@ -686,10 +686,102 @@ def _esperar_labs(base_p, n, secs=15.0):
     return False
 
 
-def run() -> int:
+
+def _seed_cache(cid, problem, expected):
+    cases = {c["id"] for c in _load_cases()}
+    if cid in cases:
+        return
+    _write_case({
+        "id": cid,
+        "module": "CACHE-CORRELATION",
+        "problem": problem,
+        "first_seen": "v0.79.0",
+        "fixed_in": "v0.79.0",
+        "repro": {"expected": expected},
+    })
+
+
+def seed_rc_000168() -> None:
+    """RC-000168: consistent y ttl_variant. Estabilidad pura y
+    variacion temporal CARACTERIZADA (VARIANT, no AMBIGUO):
+    ambas deben dar STABLE sin nunca escalar."""
+    _seed_cache(
+        "RC-000168",
+        "un baseline con variacion temporal (Age avanza, nucleo "
+        "estable) podia confundirse con baseline ambiguo o con "
+        "diferencial cache",
+        {"consistent": "STABLE/baseline STABLE",
+         "ttl_variant": "STABLE/baseline VARIANT temporal"})
+
+
+def seed_rc_000169() -> None:
+    """RC-000169: divergent_equivalent. Par EQUIVALENT (RFC 7230
+    3.2, case del nombre de header) divergente reproducible con
+    controles criticos superados y senales de cache explicitas:
+    SUSPICIOUS, jamas DEMO (sin impacto de seguridad)."""
+    _seed_cache(
+        "RC-000169",
+        "un diferencial en par EQUIVALENT sin controles ni "
+        "binding podia escalar a DEMO por acumulacion",
+        {"divergent_equivalent": "SUSPICIOUS/E2+E3+E4"})
+
+
+def seed_rc_000170() -> None:
+    """RC-000170: personalized. Diferencia explicada por
+    Vary: Cookie + Set-Cookie: BENIGN con el control FAILED
+    como evidencia, no un finding."""
+    _seed_cache(
+        "RC-000170",
+        "una diferencia legitimamente explicada por "
+        "personalizacion (Vary/Cookie) no debe contar como "
+        "diferencial de cache",
+        {"personalized": "BENIGN/vary+cookies explican"})
+
+
+def seed_rc_000171() -> None:
+    """RC-000171: bot_ambiguous. Rotacion de cuerpos sin
+    caracterizar: baseline AMBIGUO -> UNKNOWN conservador, sin
+    poder discriminatorio no se concluye nada."""
+    _seed_cache(
+        "RC-000171",
+        "variacion no explicada (bot management) podia "
+        "interpretarse como diferencial o convergencia de cache",
+        {"bot_ambiguous": "UNKNOWN/baseline AMBIGUO"})
+
+
+def seed_rc_000172() -> None:
+    """RC-000172: convergent_distinct. Representaciones DISTINCT
+    compartiendo estado: el request inocente recibe respuesta
+    ajena, reproducible, con especificidad de path demostrada,
+    controles PASSED y baseline no ambiguo: DEMO por evidencia
+    E5/E6, nunca por convergencia aparente."""
+    _seed_cache(
+        "RC-000172",
+        "convergencia de nucleos entre paths distintos podia ser "
+        "DEMO sin especificidad de path (targets genericos "
+        "convergen trivialmente) y con exigencia de baseline "
+        "STABLE exacto en vez de no-ambiguo",
+        {"convergent_distinct": "DEMO/E5+E6 binding STRONG"})
+
+
+def seed_rc_000173() -> None:
+    """RC-000173: invariantes v0.72-v0.78. CACHE-CORRELATION no
+    debe transformar retroactivamente ningun caso historico en
+    DEMO ni degradar su PASS. Re-ejecuta RC-000164 a RC-000167
+    via --only y exige el mismo resultado."""
+    _seed_cache(
+        "RC-000173",
+        "un modulo nuevo de cache podia alterar el comportamiento "
+        "o los veredictos de los casos historicos del corpus",
+        {"invariantes": "RC-000164..167 igual PASS, 0 fallo"})
+
+
+def run(only_ids=None) -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
-    todo PASS, 1 si algo quedo sin proteccion (regresion real)."""
+    todo PASS, 1 si algo quedo sin proteccion (regresion real).
+    only_ids: conjunto de ids a correr (subconjunto); None = todos."""
     from core.evidence import build_chain
+    import subprocess
 
     seed_rc_000127()
     cases = _load_cases()
@@ -713,8 +805,16 @@ def run() -> int:
     seed_rc_000165()
     seed_rc_000166()
     seed_rc_000167()
+    seed_rc_000168()
+    seed_rc_000169()
+    seed_rc_000170()
+    seed_rc_000171()
+    seed_rc_000172()
+    seed_rc_000173()
     cases = _load_cases()
     for c in cases:
+        if only_ids and c["id"] not in only_ids:
+            continue
         if c["id"] == "RC-000149":
             import tempfile
             from core.gates_audit import scan_path
@@ -1414,6 +1514,187 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                 finally:
                     for p in procs.values():
                         p.kill()
+        if c["id"] == "RC-000168":
+            from core.cache_correlation import audit as caudit
+            cache_lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "cache_lab.py")
+            if not os.path.exists(cache_lab):
+                print(f"[{c['id']}] labs/cache_lab.py ausente -> SKIP (no FAIL)")
+            else:
+                mods168 = ["consistent", "ttl_variant"]
+                procs = {}
+                base168 = 19160
+                for i, m in enumerate(mods168):
+                    procs[m] = subprocess.Popen(
+                        [sys.executable, cache_lab,
+                         str(base168 + i * 2), m],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(base168, len(mods168))
+                    ok = True
+                    r1 = caudit({"url": f"http://127.0.0.1:{base168}/",
+                                 "timeout": 5.0})
+                    c1 = (r1["verdicto"] == "STABLE"
+                          and r1["baseline"]["classification"]
+                          == "STABLE")
+                    ok = ok and c1
+                    print(f"[{c['id']}] consistent: {r1['verdicto']}"
+                          f"/baseline {r1['baseline']['classification']}"
+                          f" -> {'PASS' if c1 else 'FAIL'}")
+                    r2 = caudit({"url": f"http://127.0.0.1:{base168 + 2}/",
+                                 "timeout": 5.0})
+                    c2 = (r2["verdicto"] == "STABLE"
+                          and r2["baseline"]["classification"]
+                          == "VARIANT")
+                    ok = ok and c2
+                    print(f"[{c['id']}] ttl_variant: {r2['verdicto']}"
+                          f"/baseline {r2['baseline']['classification']}"
+                          f" (temporal, no ambiguo) -> "
+                          f"{'PASS' if c2 else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    for pr in procs.values():
+                        pr.kill()
+        if c["id"] == "RC-000169":
+            from core.cache_correlation import audit as caudit
+            cache_lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "cache_lab.py")
+            if not os.path.exists(cache_lab):
+                print(f"[{c['id']}] labs/cache_lab.py ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, cache_lab, "19164",
+                     "divergent_equivalent"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(19164, 1)
+                    r = caudit({"url": "http://127.0.0.1:19164/",
+                                "timeout": 5.0})
+                    ev = r["evidence"]
+                    ok = (r["verdicto"] == "SUSPICIOUS"
+                          and ev["E2"] and ev["E3"] and ev["E4"]
+                          and not ev["E5"] and not ev["E6"])
+                    print(f"[{c['id']}] divergent_equivalent: "
+                          f"{r['verdicto']} "
+                          f"(E2={ev['E2']} E3={ev['E3']} "
+                          f"E4={ev['E4']} E5={ev['E5']} "
+                          f"E6={ev['E6']}) -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    pr.kill()
+        if c["id"] == "RC-000170":
+            from core.cache_correlation import audit as caudit
+            cache_lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "cache_lab.py")
+            if not os.path.exists(cache_lab):
+                print(f"[{c['id']}] labs/cache_lab.py ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, cache_lab, "19166",
+                     "personalized"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(19166, 1)
+                    r = caudit({"url": "http://127.0.0.1:19166/",
+                                "timeout": 5.0})
+                    ctl = r["controls"]["controls"]
+                    ok = (r["verdicto"] == "BENIGN"
+                          and "cookies_session" in
+                          r["controls"]["explican"]
+                          and "vary" in r["controls"]["explican"]
+                          and ctl["vary"]["status"] == "FAILED")
+                    print(f"[{c['id']}] personalized: {r['verdicto']} "
+                          f"(explican={r['controls']['explican']}) "
+                          f"-> {'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    pr.kill()
+        if c["id"] == "RC-000171":
+            from core.cache_correlation import audit as caudit
+            cache_lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "cache_lab.py")
+            if not os.path.exists(cache_lab):
+                print(f"[{c['id']}] labs/cache_lab.py ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, cache_lab, "19168",
+                     "bot_ambiguous"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(19168, 1)
+                    r = caudit({"url": "http://127.0.0.1:19168/",
+                                "timeout": 5.0})
+                    ok = (r["verdicto"] == "UNKNOWN"
+                          and r["baseline"]["classification"]
+                          == "AMBIGUO")
+                    print(f"[{c['id']}] bot_ambiguous: {r['verdicto']}"
+                          f"/baseline {r['baseline']['classification']}"
+                          f" -> {'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    pr.kill()
+        if c["id"] == "RC-000172":
+            from core.cache_correlation import audit as caudit
+            cache_lab = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "labs", "cache_lab.py")
+            if not os.path.exists(cache_lab):
+                print(f"[{c['id']}] labs/cache_lab.py ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, cache_lab, "19170",
+                     "convergent_distinct"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(19170, 1)
+                    r = caudit({"url": "http://127.0.0.1:19170/",
+                                "timeout": 5.0})
+                    ev = r["evidence"]
+                    corr = r["correlation"]
+                    ok = (r["verdicto"] == "DEMO"
+                          and corr["binding_evidence"] == "STRONG"
+                          and ev["E5"] and ev["E6"]
+                          and corr["especificidad_path"]
+                          and r["baseline"]["classification"]
+                          in ("STABLE", "VARIANT"))
+                    print(f"[{c['id']}] convergent_distinct: "
+                          f"{r['verdicto']} (binding STRONG, E5={ev['E5']} "
+                          f"E6={ev['E6']}, especificidad="
+                          f"{corr['especificidad_path']}, baseline "
+                          f"{r['baseline']['classification']}) -> "
+                          f"{'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+                finally:
+                    pr.kill()
+        if c["id"] == "RC-000173":
+            import subprocess as sp
+            root = os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__)))
+            res = sp.run(
+                [sys.executable, os.path.join(root, "core",
+                 "regress.py"), "--only",
+                 "RC-000164,RC-000165,RC-000166,RC-000167"],
+                capture_output=True, text=True, timeout=900)
+            out = res.stdout or ""
+            ok = (res.returncode == 0
+                  and "fallo(s), 0 fallo(s)" not in out
+                  and out.rstrip().splitlines()[-1].strip()
+                  .endswith("0 fallo(s)"))
+            print(f"[{c['id']}] invariantes v0.72-v0.78: "
+                  f"re-ejecucion RC-000164..167 exit={res.returncode} "
+                  f"-> {'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
         if c["id"] == "RC-000167":
             import subprocess
             from core.state_correlation import audit as saudit
@@ -1566,4 +1847,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    _only = None
+    if len(sys.argv) > 2 and sys.argv[1] == "--only":
+        _only = set(sys.argv[2].split(","))
+    sys.exit(run(_only))

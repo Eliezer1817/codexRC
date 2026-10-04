@@ -1,3 +1,97 @@
+## v0.79.0 — CACHE-CORRELATION: el estado compartido como evidencia
+
+Pregunta central: ¿dos representaciones que deberian ser
+equivalentes generan estados de cache distintos, o dos
+representaciones distintas terminan compartiendo un estado
+que no deberian compartir?
+
+REGLA FUNDAMENTAL: no se asume ni afirma conocer la cache key
+interna. CacheBindingEvidence expresa FUERZA DE EVIDENCIA
+EXTERNA compatible con binding/correlacion; cache_key(A) ==
+cache_key(B) es solo hipotesis. Escalera intacta: hipotesis !=
+observacion != evidencia != veredicto.
+
+CINCO MODULOS (core/cache_*.py):
+  semantic: relacion A<->B (EQUIVALENT/DISTINCT/UNKNOWN) con
+    ficha auditable; conjunto CERRADO de transformaciones
+    neutrales demostrables (T-IDENT, T-HEADER-CASE RFC 7230
+    3.2); lo no demostrable -> UNKNOWN, nunca EQUIVALENT
+    forzado
+  fingerprint: senales observables tri-estado
+    (OBSERVED/ABSENT/UNKNOWN); header ausente NO es cache miss;
+    Age/Date/timing son secundarias: NUNCA producen
+    diferencial solas
+  baseline: STABLE / VARIANT (solo variacion CARACTERIZADA:
+    temporal o load-balancing) / AMBIGUO / INVALID;
+    AMBIGUO e INVALID -> UNKNOWN conservador
+  controls: PASSED/FAILED/NOT_APPLICABLE con evidencia real
+    (cookies, authorization, vary, UA/accept, ttl_wait
+    re-sonda, dynamics/bot via baseline, geo honesta
+    NOT_APPLICABLE); nada decorativo
+  correlation: orquestador SemanticRelation -> Fingerprint ->
+    Baseline -> Controls -> Correlation -> Target Judge
+
+VEREDICTOS: STABLE / BENIGN / DIFFERENTIAL / SUSPICIOUS /
+UNKNOWN / DEMO. Juez determinista, no aditivo, sin
+confidence=0.85.
+
+EVIDENCIA E0-E6 (condiciones, no puntos): E0 observacion, E1
+reproducibilidad, E2 diferencial semantico, E3 cache binding,
+E4 diferencial downstream, E5 impacto cross-consumer, E6
+impacto de seguridad.
+
+DEMO es dificil por diseno: exige binding STRONG + E5/E6 +
+controles criticos PASSED + especificidad de path demostrada
++ baseline no ambiguo + atribucion reproducible. NUNCA por
+Age diferente, HIT/MISS, ausencia de headers, body diferente,
+dos requests distintos, convergencia aparente, inferencia de
+cache key, o E0+E1.
+
+Dos fixes surgidos de la validacion en lab y en vivo:
+  - especificidad de path: un target que sirve contenido
+    identico para paths distintos converge trivialmente
+    (aparente); la convergencia solo es atribuible si el
+    target demuestra servir contenido especifico por path
+  - binding honesto: convergencia reproducible SIN
+    atribucion es WEAK aparente, no STRONG; el diferencial
+    EQUIVALENT con senales explicitas se evalua antes que la
+    convergencia aparente
+  - DEMO acepta baseline STABLE o VARIANT caracterizado
+    ("no ambiguo"), no solo STABLE exacto
+
+LAB (labs/cache_lab.py): 6 escenarios deterministas:
+consistent, ttl_variant, personalized, bot_ambiguous,
+divergent_equivalent, convergent_distinct. El sistema
+diferencia estabilidad / diferencial real / personalizacion
+legitima / variacion temporal / baseline ambiguo / estado
+compartido indebido.
+
+CORPUS: RC-000168 (consistent STABLE + ttl_variant
+STABLE/baseline VARIANT) / RC-000169 (divergent_equivalent
+SUSPICIOUS) / RC-000170 (personalized BENIGN por Vary+Cookie)
+/ RC-000171 (bot_ambiguous UNKNOWN) / RC-000172
+(convergent_distinct DEMO por E5+E6) / RC-000173
+(invariantes v0.72-v0.78: re-ejecuta RC-000164..167 via el
+nuevo flag --only; nada retroactivamente DEMO). Corpus
+44/44. Renumero los cache en 168-173 porque RC-000167 ya
+existe como caso historico v0.78 (intacto).
+
+Robustez: import subprocess al inicio de run() (con --only
+los imports locales condicionales no habian corrido);
+_esperar_labs reutilizado para los labs de cache.
+
+En vivo (linktr.ee): BENIGN honesto (convergencia aparente
+por paginas identicas, binding WEAK aparente, sin
+atribucion); baseline VARIANT/AMBIGUO segun la corrida: sin
+poder discriminatorio no se concluye.
+
+Presupuesto: 17 requests por target, secuencial, cooldown
+0.4s, cuerpos limitados, sin loops agresivos.
+
+v0.80 queda FUERA de esta version (SEMANTIC-CACHE:
+collision, fragmentation, cross-semantic contamination se
+investigara CON la evidencia de v0.79).
+
 ## v0.78.0 — STATE-CORRELATION: un veredicto por target
 
 No agrega payloads. Une lo que v0.75 (contrato del edge),
