@@ -13,8 +13,10 @@ CLI:
   python3 core/hunt_wide.py --dias 90 --workers 6
   python3 core/hunt_wide.py --solo-pagables   # solo VDP con bounty
 """
+import glob
 import json
 import os
+import shutil
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -41,6 +43,50 @@ def _save_done(slugs) -> None:
     with open(DONE, "a") as f:
         for s in slugs:
             f.write(s + "\n")
+
+
+def _limpiar_codigo(slug: str) -> None:
+    """Sin hallazgos: borra todo lo descargado de ese slug en el
+    workdir de diff_hunt (celular no acumula codigo sano)."""
+    for pat in (f"{slug}_new", f"{slug}_old", f"{slug}*.zip"):
+        for path in glob.glob(os.path.join(diff_hunt.WORK, pat)):
+            if os.path.isdir(path):
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+
+
+def _guardar_reporte(p: dict, vivos: list, res: dict) -> str:
+    """Carpeta ordenada por fecha, un archivo .md por plugin:
+    que plugin, que hora (ISO), que blancos (installs activos) y
+    el detalle de cada hallazgo. Devuelve la ruta escrita."""
+    ahora = time.strftime("%Y-%m-%dT%H:%M:%S%z") or time.strftime("%Y-%m-%dT%H:%M:%S")
+    fecha = time.strftime("%Y-%m-%d")
+    ruta = _state.hechos("hallazgos", fecha, f"{p['slug']}.md")
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    lineas = [
+        f"# {p['slug']}",
+        "",
+        f"- Hora: {ahora}",
+        f"- Blancos (installs activos): {p.get('installs', 0):,}",
+        f"- Paga (VDP con bounty): {'si' if p.get('paga') else 'no'}",
+        f"- Version auditada: {res.get('version', '?')} "
+        f"(modo {res.get('modo', '?')})",
+        "",
+        f"## Hallazgos ({len(vivos)})",
+        "",
+    ]
+    for h in vivos:
+        lineas.append(
+            f"- [{h.get('severity', '?')}] {h.get('type', h.get('family', '?'))} "
+            f"`{h.get('file', '')}:{h.get('line', '')}` (_gate={h.get('_gate', '?')})"
+        )
+    with open(ruta, "w") as f:
+        f.write("\n".join(lineas) + "\n")
+    return ruta
 
 
 def _frescos(corpus: dict, dias: int) -> list:
@@ -205,12 +251,19 @@ def main() -> None:
                         h["paga"] = p["paga"]
                         h["vdp"] = p["vdp"]
                         hallazgos.append(h)
+                    # --- organizacion para revision humana + limpieza ---
+                    if vivos:
+                        ruta_reporte = _guardar_reporte(p, vivos, res)
+                    else:
+                        ruta_reporte = None
+                        _limpiar_codigo(p["slug"])
                 estado = f"{len(vivos)} vivos" if vivos else "limpio"
                 if res.get("error"):
                     estado = "fallo: " + str(res["error"])[:60]
                 print(f"[{i}/{len(cola)}] {p['slug']}: {estado}"
                       + (" 💥 PAGABLE" if vivos and p["paga"] else
-                         (" 💥" if vivos else "")))
+                         (" 💥" if vivos else ""))
+                      + (f" -> {ruta_reporte}" if vivos else " (borrado, limpio)"))
             except Exception as e:
                 fallos.append(p["slug"])
                 print(f"[{i}/{len(cola)}] {p['slug']}: fallo {e}")
