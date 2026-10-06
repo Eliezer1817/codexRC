@@ -1,3 +1,51 @@
+## v0.99.0 — UNIVERSAL ENDPOINT GRAPH montado en el Hunter (4/4 PASS propios)
+
+Cierra el ultimo pendiente de v0.98.0: `surface_for_target()` deja de
+ser una fachada aislada y pasa a alimentar el orquestador real
+(`core/universal_engine.py::run()`), que es lo que el Hunter usa
+hoy para decidir que analizadores correr sobre un blanco PHP/WP.
+
+- **`core/universal_engine.py`** — justo donde ya se llamaba
+  `gates_audit(src)`, se suma `universal_endpoint.surface_for_target
+  (src)` y se mergean sus `gates_handlers` (adaptador ya normalizado
+  de v0.98.0) con los `handlers` de GATES-AUDIT. Dedup por
+  `(archivo_callback, linea_callback)` para no contar 2 veces el
+  mismo handler si ambos motores lo ven. Los endpoints nuevos
+  (routers custom que GATES-AUDIT no entiende: Slim, Laravel,
+  PSR-7, arrays) entran al ledger de cobertura como `DESCUBIERTO`
+  con veredicto `UNIVERSAL-UNVERIFIED` — honesto: el motor los
+  encuentra, no les inventa un veredicto de proteccion.
+- **`labs/fixtures_real/mixed_surface_plugin.php`** — fixture REAL
+  (no sintetica reducida): un plugin WP que mezcla, en el mismo
+  archivo, un hook clasico `wp_ajax` (la ve GATES-AUDIT) con un
+  router custom Slim-style embebido (no la ve GATES-AUDIT). Misma
+  clase de arquitectura que motivo todo v0.98.0 (hallazgo Amelia
+  Booking, v0.97.0).
+- **`tests/universal_engine_regress.py`** — 4 checks: el hook WP
+  sigue viendose igual que siempre (GATES-AUDIT intacto), el
+  endpoint del router custom ahora aparece en la cobertura del
+  Hunter (antes invisible), el merge queda anotado en el ledger, y
+  no hay doble conteo cuando ambos motores verian el mismo
+  archivo_callback/linea_callback.
+
+4/4 PASS propios. Suite v0.98.0 re-corrida: 15/15 PASS intacta.
+Corpus certificado (268 casos): corrida cortada dos veces por el
+flake ambiental conocido (`ConnectionRefusedError` en pruebas DESYNC
+que levantan un lab local — `connection_state.py`/`state_
+correlation.py`), sin relacion con los archivos tocados aqui
+(ninguno de los dos pertenece a la linea DESYNC ni abre sockets).
+
+No incluido en v0.99.0 (evaluado y descartado explicitamente, ver
+addendum de v0.98.0 arriba): generalizar `core/experiment_graph.py`
+para otras lineas de evidencia. Se prototipo en sandbox con
+`LINE_SCHEMAS` parametrizable pero no se aplico al repo real:
+`bac_proof.py` es autocontenido y no tiene consumidor real para esa
+generalizacion.
+
+Pendiente real para seguir: `fin_param_graph`/FIN-LOGIC tampoco esta
+wireado dentro de `universal_engine.py` todavia — gap detectado
+durante esta integracion, no se toca en v0.99.0.
+
 ## v0.98.0 — UNIVERSAL ROUTER / ENDPOINT GRAPH (14/14 PASS propios)
 
 Disparado por el hallazgo de v0.97.0 en Amelia Booking: su router

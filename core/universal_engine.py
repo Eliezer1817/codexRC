@@ -255,6 +255,30 @@ def run(target: str) -> dict:
         # abilities + gates = superficie ajax/rest descubierta
         try:
             gates = gates_audit(src)
+            # v0.99.0: UNIVERSAL ENDPOINT GRAPH como superficie adicional.
+            # No reemplaza GATES-AUDIT (hooks clasicos de WP); suma
+            # endpoints de routers custom (Slim/Laravel/PSR-7/arrays)
+            # que GATES-AUDIT no entiende. Adaptador ya normalizado
+            # (to_gates_handlers, v0.98.0): mismo shape, dedup por
+            # archivo_callback+linea_callback para no reportar 2 veces
+            # el mismo handler si ambos motores lo ven.
+            try:
+                from core.universal_endpoint import surface_for_target
+                usurface = surface_for_target(src)
+                existentes = {(h.get("archivo_callback"),
+                              h.get("linea_callback"))
+                              for h in gates.get("handlers", [])}
+                nuevos = [h for h in usurface.get("gates_handlers", [])
+                          if (h.get("archivo_callback"),
+                              h.get("linea_callback"))
+                          not in existentes]
+                gates.setdefault("handlers", []).extend(nuevos)
+                led.add("superficie:universal-endpoint", ANALIZADO,
+                        f"{len(nuevos)} endpoint(s) nuevo(s) via "
+                        f"router discovery")
+            except Exception as e:
+                led.add("superficie:universal-endpoint", NO_ACCESIBLE,
+                        str(e)[:120])
             for g in gates.get("handlers", []):
                 estado = (ANALIZADO if g.get("veredicto") in
                           ("PROTEGIDO", "CANDIDATO-BAC")
