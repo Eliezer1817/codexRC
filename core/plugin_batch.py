@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sys
+import shutil
 import subprocess
 import tempfile
 import time
@@ -243,7 +244,12 @@ def main() -> None:
                     help="mostrar tambien hallazgos autocerrados (FP)")
     ap.add_argument("--workdir", default="/tmp/plugin_batch",
                     help="dir de descargas (cache)")
+    ap.add_argument("--conservar-todo", action="store_true",
+                    help="NO borrar plugins limpios tras escanear (por defecto SI "
+                         "se borran del disco para ahorrar espacio en el celular; "
+                         "los que tienen hallazgos NUNCA se borran)")
     args = ap.parse_args()
+    borrar_limpios = not args.conservar_todo
 
     slugs: List[str] = []
     for s in args.slugs:
@@ -301,6 +307,26 @@ def main() -> None:
             fp = f"  [FP:{h.get('_fp')}]" if h.get("_fp") else ""
             print(f"      [{h.get('severity', '?')}] {h.get('type', h.get('family', '?'))}"
                   f" {h.get('file', '')}:{h.get('line', '')}{fp}")
+
+        # --- limpieza automatica (ahorro de espacio en el celular) -----
+        # "limpio" = CERO de todo (ni candidatos propios, ni BAC, ni
+        # race/cspt/saml), no solo los criticos: si hay algo para
+        # revisar a mano, el codigo se conserva SIEMPRE.
+        es_limpio = (
+            rec.get("status") == "ok"
+            and r.get("propios", 0) == 0
+            and not rec.get("gates_candidatos")
+            and not rec.get("race_candidatos")
+            and not rec.get("cspt_candidatos")
+            and not rec.get("saml_candidatos")
+        )
+        rec["borrado_por_limpio"] = False
+        if es_limpio and borrar_limpios:
+            shutil.rmtree(os.path.join(args.workdir, slug), ignore_errors=True)
+            rec["borrado_por_limpio"] = True
+            print(f"      🗑️  limpio: borrado del disco, paso al siguiente")
+        elif not es_limpio:
+            print(f"      📌 conservado en disco (tiene algo para revisar)")
 
     if args.out:
         with open(args.out, "w") as f:
