@@ -28,3 +28,4 @@ memory/
 server.log
 .watcher.lock
 nohup.out
+.codexrc/intelligence/experiments/

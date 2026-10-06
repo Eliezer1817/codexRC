@@ -238,6 +238,24 @@ que **nunca se salta**:
 | `poi_reach` | POI-REACH: Object Injection con alcance (GATES) y gadget chain POP-CANDIDATE en el mismo plugin |
 | `magic_confusion` | MAGIC-CONFUSION: extensión vs contenido (magic bytes) en rutas de upload hacia Imagick, sin gate de contenido |
 
+### Superficie HTTP universal (ROUTER/ENDPOINT GRAPH v0.98.0)
+
+| Módulo | Función |
+|---|---|
+| `handler_resolver` | resuelve el cuerpo REAL de method/function/closure contando llaves (mismo criterio que `_line_in_handler`) |
+| `router_graph` | grafo ROUTER→ROUTE→HANDLER→PARAMETER/MIDDLEWARE con evidencia archivo+línea |
+| `universal_endpoint` | descubre y normaliza rutas de CUALQUIER router (WP hooks, Slim-like, PSR-7 custom, array router) a un modelo común; ZERO-FP: exige evidencia estructural de path, nunca un nombre de método aislado |
+
+Nace de una brecha real: GATES-AUDIT solo entiende hooks clásicos de
+WP, así que un router custom (caso Amelia Booking, v0.97.0) dejaba su
+API invisible para TAINT/AUTHZ/FIN-LOGIC. Este motor NO reemplaza
+GATES-AUDIT ni duplica AUTHZ-PROOF/FIN-LOGIC: los adaptadores
+`to_gates_handlers()`/`to_fin_param_sources()` entregan la MISMA
+superficie con la MISMA interfaz que ya consumen, venga de donde venga
+el router. `ENDPOINT-DISCOVERED` no es `VULNERABILITY`; `HANDLER-RESOLVED`
+no es `AUTHZ-PROTECTED`. Validado con `tests/universal_endpoint_regress.py`
+(14/14 PASS). Lab: `labs/router_lab.py`.
+
 ### Lógica de negocio (FIN-LOGIC v2)
 
 | Módulo | Función |

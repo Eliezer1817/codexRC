@@ -110,7 +110,8 @@ def _register_node(nodes: Dict[str, Dict[str, Any]], name: str,
 
 
 def build_graph(root: str,
-                 handlers: Optional[List[Dict[str, Any]]] = None
+                 handlers: Optional[List[Dict[str, Any]]] = None,
+                 extra_param_sources: Optional[List[Dict[str, Any]]] = None
                  ) -> Dict[str, Any]:
     if handlers is None:
         handlers = ga.audit(root).get("handlers", [])
@@ -119,6 +120,16 @@ def build_graph(root: str,
 
     nodes: Dict[str, Dict[str, Any]] = {}
     for f in params["findings"]:
+        _register_node(nodes, f["parametro"],
+                       {"tipo": f["tipo"], "confianza": f["confianza"]},
+                       "source", f["archivo"], f["linea"], f["endpoint"])
+
+    # v0.98.0 PUENTE UNIVERSAL ENDPOINT: fuentes de parametro ya
+    # clasificadas por un descubridor externo (UNIVERSAL ENDPOINT GRAPH)
+    # para handlers cuyo input NO llega por $_GET/$_POST directo
+    # (routers PSR-7 / Slim-like / custom: $request->getParsedBody()).
+    # ADITIVO: sin extra_param_sources el comportamiento es identico.
+    for f in (extra_param_sources or []):
         _register_node(nodes, f["parametro"],
                        {"tipo": f["tipo"], "confianza": f["confianza"]},
                        "source", f["archivo"], f["linea"], f["endpoint"])

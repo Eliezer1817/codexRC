@@ -1,3 +1,67 @@
+## v0.98.0 — UNIVERSAL ROUTER / ENDPOINT GRAPH (14/14 PASS propios)
+
+Disparado por el hallazgo de v0.97.0 en Amelia Booking: su router
+custom no entraba en la gramática de GATES-AUDIT (solo entiende hooks
+clásicos de WP), así que TAINT/AUTHZ/FIN-LOGIC nunca veían esa
+superficie. Esto NO fue "agregar soporte para Slim": es una capa
+intermedia de descubrimiento y normalización, independiente del
+router usado.
+
+- **core/handler_resolver.py** — resuelve el cuerpo REAL de un
+  method/function/closure/arrow-fn contando llaves desde la
+  declaración (misma filosofía que `_line_in_handler`, RC-000270).
+  `endpoint descubierto != handler resuelto`: si no hay evidencia,
+  HANDLER-UNRESOLVED, pero el endpoint se conserva.
+- **core/router_graph.py** — grafo ROUTER→ROUTE→HANDLER→
+  PARAMETER/MIDDLEWARE, cada edge con evidencia (archivo+línea).
+- **core/universal_endpoint.py** — motor principal: detecta llamadas
+  estructurales `->(get|post|put|patch|delete|options|any|map|match|
+  route)(` (instancia o estática, sin hardcodear Slim/Laravel/nada),
+  array routers (`$routes['POST']['/x'] = ...`) y arrays literales
+  (`'method'=>...,'path'=>...`). ZERO-FP: exige que el primer
+  argumento sea un path literal que empiece con `/` (o una expresión
+  dinámica que lo contenga) — descarta getters comunes como
+  `$request->get('name')` o `$cache->get('key')` sin evidencia
+  estructural de ruta. Normaliza `{id}`/`:id`/`<id>`/`$id` a `{id}`
+  conservando el crudo. Rutas dinámicas (`$prefix . '/x'`) quedan
+  LOW confidence sin inventar el path final. Dedup por
+  (método, path, handler) conservando `sources[]`.
+  También normaliza wp_ajax/wp_ajax_nopriv (vía GATES-AUDIT, sin
+  duplicarlo) al mismo modelo.
+- Adaptadores no invasivos: `to_gates_handlers()` entrega la misma
+  forma de "handlers" que ya consume `fin_param_graph.build_graph`,
+  y `to_fin_param_sources()` clasifica con el MISMO `fpi._classify`
+  los parámetros que el motor ya extrajo (`getParsedBody`/`getParam`/
+  `getAttribute`/superglobales) para alimentar FIN-LOGIC aunque el
+  handler no use `$_POST`/`$_GET` directo.
+- **core/fin_param_graph.py** — único cambio: parámetro opcional
+  `extra_param_sources` en `build_graph()` (default `None`, cero
+  impacto en las 141 llamadas existentes) para aceptar esas fuentes
+  externas ya clasificadas.
+- **labs/router_lab.py** — 9 fixtures deterministas: Slim-like,
+  PSR-7 custom (`->map`), array router, alias (2 rutas→1 handler),
+  middleware chain, handler no resoluble, ruta falsa (getter sin
+  evidencia de path), ruta dinámica, dedup por 2 fuentes, y un
+  fixture SINTÉTICO "amelia_like" (router propio + controller +
+  middleware) — NO es código real de Amelia, es la clase de
+  arquitectura observada.
+- **tests/universal_endpoint_regress.py** — 14/14 PASS: slim, psr7,
+  array, alias, middleware, unresolved, false-route rechazada,
+  dynamic-route (LOW, sin inventar path), dedup real (sources
+  fusionadas), amelia-like (GATES-AUDIT ve 0 endpoints ahí → UNIVERSAL
+  los descubre con handler resuelto), métricas sanas, y WP existente
+  sin romperse (GATES-AUDIT y UNIVERSAL coinciden en 1/1).
+
+Corpus certificado re-corrido completo tras la integración:
+**141/141 PASS, 0 fallos** (una corrida tuvo el flake conocido
+LAB-NO-UP de siempre; el reintento con caché intra-corpus cerró limpio).
+
+Pendiente (explícitamente fuera de alcance de v0.98.0): middleware vía
+`->middleware('auth')` encadenado tipo Laravel, resolución de paths
+dinámicos construidos en runtime, y el montaje dentro del Hunter
+(`surface_for_target()` es la fachada lista, pero el roadmap pide
+regresión + fixtures reales antes de integrarla al pipeline).
+
 ## v0.97.0 — BUSINESS LOGIC STATE ENGINE v2 (13/13 PASS propios)
 
 Motor nuevo, construido 100% en LAB (labs/fin_logic_lab.py), sin tocar
