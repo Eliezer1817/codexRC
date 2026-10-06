@@ -218,3 +218,39 @@ if __name__ == "__main__":
                   f"{e['reason'][:80]}")
     else:
         print("uso: --stats | --list")
+
+
+# ===================================================================
+# FP-MEMORIA generica (v0.97.0, BUSINESS LOGIC STATE ENGINE v2 FASE 9)
+# -------------------------------------------------------------------
+# learn() de arriba SIEMPRE calcula su propia huella con
+# fingerprint_of() (marcadores de codigo para injection/BAC). Para
+# motores con un modelo de huella DISTINTO (ej. FIN-LOGIC: nivel de
+# experimento + tipos de parametro + relacion + invariante, sin
+# nombres de archivo), se agrega esta variante que acepta la huella
+# YA CONSTRUIDA por el llamador. Reusa _load()/_fp_key()/lookup()
+# (el almacenamiento y el matching de huella NO cambian).
+# ===================================================================
+
+def learn_fingerprint(fingerprint: Dict[str, Any], refuted_by: str,
+                      reason: str, plugin: str = "",
+                      family: str = "") -> Optional[str]:
+    """Como learn(), pero la huella la trae el llamador (no se recalcula
+    con fingerprint_of()). Mismo dedupe, mismo archivo, mismo formato
+    de entrada: una sola memoria para todo el proyecto."""
+    if lookup(fingerprint):
+        return None  # ya pagado
+    entries = _load()
+    n = len(entries) + 1
+    entry = {
+        "id": f"FPM-{n:04d}",
+        "family": family or "generic",
+        "created": "2026-10-06",
+        "source": {"plugin": plugin, "refuted_by": refuted_by},
+        "fingerprint": fingerprint,
+        "fingerprint_sha": _fp_key(fingerprint),
+        "reason": reason,
+    }
+    with open(MEM_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return entry["id"]

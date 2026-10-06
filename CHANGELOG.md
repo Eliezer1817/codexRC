@@ -1,3 +1,563 @@
+## v0.97.0 — BUSINESS LOGIC STATE ENGINE v2 (13/13 PASS propios)
+
+Motor nuevo, construido 100% en LAB (labs/fin_logic_lab.py), sin tocar
+el Hunter certificado ni el corpus de 141 casos existente. Objetivo:
+cerrar la brecha de IDOR/lógica de negocio/validación de montos que
+Burp Suite Pro no cubre sin trafico en vivo.
+
+Diez fases:
+1. **fin_param_graph.py** — grafo relacional de parámetros (qué
+   variables se leen juntas en un mismo handler: price, qty, discount,
+   total...).
+2. **fin_invariants.py** — infiere invariantes aritméticas del código
+   (`total = price * qty - discount`) para poder violarlas a propósito.
+3. **fin_mutation_planner.py** — planificador de mutaciones en 3
+   niveles: L0 (campo único), L1 (combinación de campos), L2 (ruptura
+   de invariante).
+4. **fin_state_engine.py** — snapshot + diff de estado de un recurso
+   entre antes/después de una acción.
+5. **fin_state_transitions.py** — grafo estático de transiciones de
+   estado legítimas (pending→paid→refunded) vs forzadas.
+6. **fin_replay_engine.py** — detecta falta de idempotencia (repetir
+   una acción de recompensa/pago no debería repetir el beneficio).
+7. **fin_race_engine.py** — condiciones de carrera controladas
+   (doble canje de un mismo cupón en paralelo).
+8. **evidence.py** — `build_fin_chain`/`render_fin_chain`: cadena de
+   evidencia hermana de la de taint, para hallazgos de lógica pura.
+9. **fp_memory.py** — `learn_fingerprint()` aditivo: la memoria de FP
+   ya existente también aprende huellas de lógica de negocio.
+10. **tests/fin_logic_regress.py** — suite de regresión propia: por
+    cada nivel (L0/L1/L2/estado/replay/race) un caso vulnerable y un
+    caso seguro contra `labs/fin_logic_lab.py`. 13/13 PASS, corrida
+    dos veces sin flakes. Nunca `safe → IMPACT`.
+
+Lab extendido con 3 escenarios nuevos y sus controles seguros:
+`multi_field`, `invariant_subtotal`, `replay_claim`.
+
+Validado contra un blanco real (Amelia Booking, $1.400 bounty, 90k
+instalaciones): 0 hallazgos explotables — el único taint vivo era
+ruido de `vendor/phpmailer` (no alcanzable), y GATES-AUDIT reveló que
+el plugin usa un router custom (no hooks clásicos de WP), así que su
+superficie real de API queda fuera de la gramática actual. Pendiente:
+extender el detector de endpoints para routers custom tipo Slim/PSR-7
+antes de auditar plugins con esa arquitectura.
+
+## v0.96.1 — BLINDAJE POI-REACH: DOS FP ELIMINADOS (141/141 PASS)
+
+Causa: la primera corrida LestGo del DOSSIER-HUNT regalo un POI-REACH
+en weforms (10k installs) que era FP doble del propio modulo.
+
+- FP 1 (RC-000269): unserialize con allowed_classes => false esta
+  NEUTRALIZADO (no instancia objetos): el sink se descarta de raiz.
+  weforms trae el patch explicito en class-ajax.php:524.
+- FP 2 (RC-000270): nopriv de OTROS metodos del archivo NO otorga
+  alcance; queda como pista nopriv_file, jamas como POI-UNAUTH.
+- Fix adicional: _line_in_handler ahora mide el cuerpo REAL del
+  callback contando llaves (la heuristica de 800 lineas se comia
+  funciones vecinas y regalaba UNAUTH ajeno).
+- dossier_hunt: presupuesto de 150s por plugin (SIGALRM); gigantes
+  como booking-manager se cortan honestos con TIMEOUT.
+
+Corpus: 139 -> 141 casos, 2 nuevos, 0 FAIL. Motor listo para
+re-auditar los 588 blancos del dossier con numeros honestos.
+
+## v0.96.0 — DOSSIER Q4-2026: TRES CLASES NUEVAS (139/139 PASS)
+
+Investigacion de calibre integrada al motor (decision del operador:
+"Pon los 3 de una vez"). Todo nacio en LAB; nada toco al Hunter ni a
+los modulos existentes. Corpus: 131 -> 139 casos, 8 nuevos, 0 FAIL.
+
+- core/poi_reach.py — POI-REACH (leccion CVE-2026-2599): Object
+  Injection con ALCANCE y GADGET. Escalera: POI-DETECTED (taint de
+  TAINT-TRACE en unserialize) -> POI-UNAUTH (handler dictaminado por
+  GATES-AUDIT como superficie anonima) -> POI-CHAIN (POP-CANDIDATE:
+  clase con metodo magico y propiedades en el mismo plugin).
+  Veredicto POI-REACH exige los tres peldanos; sin alcance = POI-AUTH
+  honesto. Superficie export/download/csv anotada como prioridad.
+- core/magic_confusion.py — MAGIC-CONFUSION (leccion CVE-2026-65640,
+  WP Core <= 7.0.3): extension vs contenido. Propagacion punto fijo
+  de variables desde primitivas de entrada ($_FILES, wp_upload_bits,
+  download_url...) hasta sinks Imagick (readImage/readImageBlob/ping);
+  gate de contenido = wp_check_filetype_and_ext/finfo/getimagesize.
+  Sin gate: MAGIC-CONFUSION. Con gate: CONFUSION-GUARDED (cero FP).
+- labs/wcd404_lab.py + core/wcd404_probe.py — WCD-404-LEAK (status
+  code miente): 4 escenarios lab (lie_cached, lie_nocache,
+  honest_404, lie_expired) + probe con escalera BENIGN ->
+  STATUS-LIE-DETECTED (4xx cuyo cuerpo contiene marcadores
+  DECLARADOS de la cuenta propia) -> WCD-404-LEAK (cache HIT
+  cross-user observable, <=8 reqs read-only). Sin HIT: LEAK-NO-CACHE
+  honesto (caso linktr.ee). Blanco muerto: conn-dead sin crash.
+- Control negativo obligatorio en las 3 clases: los fixtures
+  sanitizados/gated/limpios NUNCA generan veredicto (RC-000262,
+  RC-000265, RC-000267).
+- Flakes ambientales del sandbox (puertos): corrida unica regla
+  reafirmada; huerfanos limpiados antes de certificar.
+
+## v0.95.0 — INTEGRACION AL HUNTER (corona montada)
+
+Decision del operador cumplida: con la corona en mano,
+la cadena completa queda disponible desde la fachada
+del Hunter.
+
+- core/crown_chain.py: orquestador de la escalera
+  completa con los motores del roadmap, SIN tocar
+  ningun modulo existente:
+  rung 1 DETECTION (cl0+h2+mc+crc, veredictos
+  propios, cero-FP cada uno) -> rung 2 REPRODUCTION
+  (2 genealogias x pase A/B) -> rung 3 STATE-EFFECT
+  (firma k consistente) -> rung 4 CROSS-CONNECTION
+  (contaminacion entre conexiones PROPIAS).
+- rung 5 SECURITY IMPACT: LIMITE HONESTO en vivo: NO
+  se envenena la respuesta de usuarios de terceros.
+  Rung demostrada SOLO en lab (impact_probe,
+  recurso protegido simulado). La escalera viva
+  jamas supera CROSS-CONNECTION-DEMO.
+- Modo lab: ensambla el paquete completo
+  (CHAIN-COMPLETE-LAB, k=2, 37/40 reqs). Modo live:
+  read-only, presupuesto declarado 60 reqs, sin senal
+  = NO-DESYNC honesto (la escalera no se abre).
+- Fachada core/hunter.py exporta CrownChain (PEP:
+  imports existentes intactos). Dependencias minimas
+  del CLI (requests, beautifulsoup4) restauradas en
+  el sandbox.
+- RC-000258..260 integrados (3 casos). Corpus: 131.
+
+## v0.94.0 — FP-ELIMINATION + EVIDENCE PACKAGE (CORONA)
+
+Las dos ultimas etapas del roadmap, de una vez: la
+garantia cero-FP se vuelve VERIFICABLE y la cadena
+completa se entrega FALSABLE.
+
+### v0.93.0 FP-ELIMINATION (core/fp_elimination.py)
+- TABLA DE CLASES DE SENAL: 8 clases observables del
+  oraculo, cada una con su regla y su estatus
+  reportable. Senal sin regla = FP potencial: el
+  modulo NO aprueba.
+- BATERIA DE CEBO: quiet_drain, benign_pin, pool_shift
+  (mispairing benigno), flaky_swap (1/2): NINGUNO
+  puede producir veredicto reportable. Si alguno
+  reporta: FP-LEAK (falso positivo REAL).
+- CONTROL POSITIVO: pool_swap DEBE reportar; sin el,
+  la bateria es vacua: UNSTABLE, sin claim.
+- Veredicto FP-ELIMINATED: 0/4 cebos reportables +
+  control positivo activo + reglas de no-escala del
+  disparo unico presentes en crc/repro/impact.
+  Presupuesto 25/26 reqs.
+
+### v0.94.0 EVIDENCE PACKAGE (core/evidence_package.py)
+- Paquete falsable de la cadena COMPLETA: rung 1+2
+  deteccion+k (CRC-STATE-EFFECT k=2) y reproduccion
+  (2 genealogias x pases A/B, firma identica);
+  rung 3 impacto cross-user (SECURITY-IMPACT-DEMO 2/2
+  con control limpio); rung 4 cita FP-GUARANTEE
+  (RC-000254).
+- LIMITES declarados: read-only, modo lab, recurso
+  protegido SIMULADO, presupuestos (37/40), escalera
+  sin saltos, cero-FP verificado.
+- Falsabilidad mecanica: comandos exactos de
+  reproduccion + hash sha256 del payload canonico;
+  verify_package() re-computa y DETECTA tampering.
+
+### LECCION CRITICA (huarfano): un lab cuyo spawn fallo
+en el bind no se entera nadie: _port_up exita contra
+CUALQUIER instancia que ya escuche el puerto, aunque
+sea huerfana de otra corrida. Los tests manuales con
+`$!` del subshell dejaron un pool_swap vivo en 19621 y
+las auditorias auditaron una INSTANCIA AJENA con estado
+acumulado (ronda 1 ALIGNED). Regla nueva en los 3
+motores + corpus: si el puerto YA escucha antes del
+spawn, es contaminacion: UNSTABLE/FAIL ruidoso. Nunca
+se audita lo que uno no spawnó.
+
+- RC-000254..257 integrados (4 casos). Corpus: 128.
+
+## v0.92.0 — IMPACT CORRELATION (etapa de IMPACT)
+
+El roadmap cierra el circulo: el desync reproducido
+(v0.91) hace dano a un usuario DISTINTO del atacante?
+
+Mecanica v0.92 (herencia del pool v0.89 + recurso
+protegido SIMULADO del lab):
+- el atacante (conn A) hace POST CL.0 con un request
+  smuggleado y CIERRA tras leer su propia respuesta:
+  la respuesta del smuggle queda PENDIENTE en la conn
+  del pool;
+- la victima (conn V, TCP DISTINTO) hereda la conn del
+  pool LIFO: su primer request recibe la respuesta del
+  smuggle del atacante (contaminacion cross-user).
+
+Oraculo observable: QUE respuesta recibe la victima.
+  ECHO <vtok>      -> ALIGNED
+  SECRET-IMPACT-*  -> SMUGGLED-PROTECTED (recibio la
+                      respuesta de un recurso protegido
+                      que jamas pidio)
+  ECHO <otro>/OK   -> MISPAIRED-BENIGN
+
+Escalera cero-FP: BENIGN -> IMPACT-CANDIDATE
+(mispairing benigno, o swap protegido 1/2: probable,
+NO reportable) -> SECURITY-IMPACT-DEMO (swap protegido
+2/2 rondas Y control limpio).
+
+- Control previo obligatorio: victima limpia antes de
+  envenenar; sin control alineado no hay claim.
+- Presupuesto: 1 control + 2 rondas x (1 POST + 1 GET
+  victima) = 5 reqs (techo declarado 6). Read-only: el
+  recurso protegido /admin/secret es dato SIMULADO del
+  lab, jamas un recurso de terceros.
+- LECCION FISICA del desync real: la cola deriva +1 por
+  ronda (la respuesta propia de la victima queda
+  pendiente); un pool sin limite de reuso acumula deriva
+  entre rondas y el swap 2/2 se vuelve imposible.
+  Solucion realista: conn heredada SUCIA se cierra tras
+  su uso (limite de reuso tras estado anomalo, estilo
+  keepalive_requests). El lab modela nginx, no una
+  fantasia.
+- RC-000248..253 integrados (6 casos). Corpus: 124.
+
+## v0.91.0 — REPRODUCTION ENGINE (etapa 21/22)
+
+Ultima etapa de MODULO antes de IMPACT / FP-ELIMINATION
+/ EVIDENCE PACKAGE. Responde UNA pregunta: la firma de
+un candidato STATE-EFFECT se reproduce a demanda?
+
+Escalera de impacto (nunca se salta): DESYNC OBSERVED
+-> REPRODUCIBLE (2 genealogias independientes) ->
+STATE EFFECT -> CROSS-CONNECTION -> SECURITY IMPACT.
+
+- Genealogia = estado del servidor INDEPENDIENTE: modo
+  lab instancia FRESCA de crc_lab por genealogia
+  (proceso, pool y puerto propios, 19511/19512); modo
+  vivo secuencia completa de conexiones nuevas.
+- Cada genealogia ejecuta pase A (deteccion) + pase B
+  (replay sobre la MISMA genealogia). El disparo unico
+  (flaky) NO escala.
+- Veredictos conservadores: REPRODUCIBLE (firma y k
+  identicos en A y B de TODAS las genealogias),
+  NON-REPRODUCIBLE (senal que no sostiene: no avanza),
+  NO-CANDIDATE (benign reproducible), UNSTABLE
+  (instancia muerta/control caido: sin claim).
+- Presupuesto: 2 genealogias x 2 pases x 8 reqs = 32
+  max. genealogies>2 se rechaza ANTES de gastar.
+- FIX RC-CONN-DEAD (lecciones live v0.90.1): el
+  _connect de _phase_conn en crc_probe estaba fuera
+  del try; un blanco muerto a mitad de fase crasheaba
+  el probe. Ahora devuelve "conn-dead" honesto y el
+  finally quedo blindado (s=None).
+- RC-000242..247 integrados (6 casos: reproducible,
+  flaky-no-escala, benign, edge-strict, puerto-tumba,
+  invariantes). Corpus: 118 casos.
+- Validacion: puerto-tumba -> la genealogia viva
+  detecto k=2 pero la muerta pesa: UNSTABLE honesto,
+  nunca se promedia una instancia muerta.
+
+## v0.90.1 — VALIDACION EN VIVO (linktr.ee) + TLS
+
+- Validacion en vivo de los 4 probes desync contra
+  linktr.ee (read-only, 23 requests totales, LestGo del
+  operador):
+  * cl0 (v0.87) -> BENIGN: el edge parseo el smuggle
+    como pipelining benigno (S-REDIR). Oraculo de
+    timing funciona en vivo SIN reflejo.
+  * h2 (v0.88) -> UNSTABLE, mc (v0.89) y crc (v0.90)
+    -> UNKNOWN: los oraculos de eco requieren que el
+    blanco REFLEJE datos del request; sin reflejo se
+    detienen conservadores. NINGUN falso positivo
+    contra el edge real (CF): cero-FP confirmado en
+    campo.
+- TLS en probes para vivo: h2 con ALPN h2; mc/crc con
+  ssl wrap por esquema https; cl0 ya lo tenia.
+- FIX RC-PUERTO-ESQUEMA: mc/crc conectaban al puerto 80
+  aunque la URL fuera https -> UNREACHABLE falso en
+  vivo. Ahora port = 443 si use_tls, 80 si no (el lab
+  usa puertos explicitos: sin cambio de comportamiento).
+- Corpus re-verificado con el codigo final: 112/112
+  PASS (los flakes repetidos eran labs muertos por
+  carga del sandbox; resueltos con cache intra-corpus).
+- Limitacion documentada: los oraculos de eco (h2, mc,
+  crc) solo dan veredicto definitivo contra blancos
+  que reflejan datos del request en la respuesta
+  (search, 404 con path, API echo). Sin reflejo su
+  techo es el conservador UNKNOWN/UNSTABLE.
+
+## v0.90.0 — CROSS-REQUEST CORRELATION
+
+Reconstruccion de la cola del origin por CORRELACION
+entre requests (etapa 21/22). Un POST CL.0 lleva DOS
+requests smuggleadas (T1, T2: GETs propios con tokens
+unicos): si el origin procesa el residual como cola, la
+coleccion de respuestas de los followups queda
+desplazada por k MEDIBLE:
+
+  k=0  [ECHO-fb,     ECHO-fc,    ECHO-fd]   alineado
+  k=1  [SMUGGLE-T1,  ECHO-fb,    ECHO-fc]   shift 1
+  k=2  [SMUGGLE-T1,  SMUGGLE-T2, ECHO-fb]   shift 2
+
+- labs/crc_lab.py: 5 escenarios deterministas
+  (quiet_drain, edge_strict, seq_desync k=2,
+  partial_drain k=1, flaky_forward sin repro). Edge con
+  apareamiento UNA respuesta por request; origin H1
+  interno con parser residual de cola.
+- core/crc_probe.py: auditor crc_audit() con oraculo de
+  PERMUTACION: la firma del desync es la correlacion
+  CONSISTENTE (eco propio desplazado EXACTAMENTE por el
+  numero de ecos del smuggle: fi == si_count). Patron
+  disperso NO escala. k queda medible en evidencia.
+- Auto-control por atribucion (sin baseline): eco
+  propio en pos 0 = control de fase; sin eco propio ni
+  del smuggle -> UNKNOWN (cero-FP).
+- Escalera: BENIGN -> CRC-DETECTED (1/2, NO reportable)
+  -> CRC-DESYNC (repro 2/2) -> CRC-STATE-EFFECT (k
+  consistente y reproducible).
+- Contratos pre-registrados (ExperimentGraph), 1
+  variante x 2 fases x 4 reqs = max 8 requests,
+  read-only (smuggles = GETs propios).
+- RC-000236..241 (6 casos). Corpus: 112/112 PASS (0
+  FAIL). Etapa 21/22 del roadmap a la corona.
+- Leccion de implementacion: la correlacion es ENTRE
+  REQUESTS de la MISMA conexion (no entre conexiones
+  como v0.89): la fase completa (POST + 3 followups)
+  corre en UNA conexion. Un flake de sandbox (lab
+  muerto bajo carga) se resolvio con el cache
+  intra-corpus, sin tocar el codigo.
+
+## v0.89.0 — MULTI-CONNECTION
+
+Contaminacion CRUZADA entre conexiones como etapa
+MULTI-CONNECTION del roadmap (efecto de segundo orden).
+El edge mantiene un POOL LIFO de conexiones keep-alive
+al origin (como nginx upstream keepalive): la conexion
+atacante A hace POST CL.0 con prefijo smuggleado y
+CIERRA; la origin conn envenenada vuelve al pool y la
+conexion victima B (TCP distinto) la HEREDA: su primer
+followup recibe el eco del smuggle de A.
+
+- labs/mc_lab.py: 5 escenarios deterministas
+  (benign_pin, quiet_drain, pool_desync, edge_strict,
+  flaky_pool). Origin H1 interno con parser residual
+  (consume content-length y procesa el smuggle como
+  request invisible). Edge con apareamiento UNA respuesta
+  por request reenviado: las respuestas pendientes del
+  smuggle quedan en la origin conn, no se drenan al
+  cliente que cerro. Flaky: reusar UNA conn sucia en la
+  vida del lab (salud intermitente).
+- core/mc_probe.py: auditor mc_audit() con oraculo de
+  ATRIBUCION por CONEXION (nada inferido): B recibe su
+  eco en pos 0 -> alineado; B recibe SMUGGLE-ECHO de
+  material ajeno -> el origin proceso bytes de OTRA
+  conexion; ademas eco propio desplazado -> coleccion
+  desplazada (STATE-EFFECT). La contaminacion cuenta
+  CUALQUIER eco del smuggle (una fase puede heredar el
+  eco stale de la anterior: igual observable).
+- Auto-control por atribucion (sin baseline separado):
+  el eco propio del followup en pos 0 es el control de
+  cada fase; sin eco propio ni del smuggle -> UNKNOWN
+  (no BENIGN, cero-FP).
+- Escalera determinista: BENIGN -> MC-DETECTED (1/2,
+  probable, NO reportable) -> MC-DESYNC (repro 2/2) ->
+  MC-STATE-EFFECT (ademas coleccion desplazada).
+- Contratos pre-registrados (ExperimentGraph), 1
+  variante x 2 fases x 4 reqs (A: 1 POST smuggleado; B:
+  3 GETs) = presupuesto max 8 requests, read-only
+  (smuggle = GET propio con token unico).
+- RC-000229..235 (7 casos): pinning 1:1, drenaje, pool
+  LIFO -> STATE-EFFECT 2/2, RST estricto, flaky sin
+  repro -> DETECTED (no reportable), invariantes de
+  presupuesto, y typo h2 (Informe -> informe: NameError
+  latente si el ExperimentGraph estaba activo).
+- Lecciones de implementacion (fase LAB): (1) el buffer
+  de recepcion del origin viaja CON la conexion del
+  pool, no con el handler: los bytes mas alla de una
+  respuesta mueren con el handler y la poison desaparece
+  (leccion v0.88 aplicada al pool); (2) las conexiones
+  de health-check TAMBIEN entran al pool: con FIFO, B
+  hereda una limpia y la determinismo se rompe; LIFO
+  (reuso mas reciente primero) hace la herencia
+  determinista; (3) grace de ciclo de vida 0.15s tras
+  cerrar A antes de que B herede (no es oraculo de
+  timing: es dejar que el edge libere la conn al pool).
+- Corpus: 106/106 PASS (0 FAIL). Etapa 20/22 del
+  roadmap a la corona.
+
+## v0.88.0 — H2-TRANSLATION
+
+Parser differential h2->h1 como etapa PARSER
+DIFFERENTIAL del roadmap. Un edge HTTP/2 (prefacio +
+HPACK literal + frames sobre sockets crudos, sin
+librerias) traduce a un origin H1 interno; dos bugs
+de traduccion clasicos: h2.CL (reenvio de DATA mas
+alla del content-length) e inyeccion H1 por HPACK
+leniente (valor con CRLF copiado verbatim).
+
+- labs/h2_lab.py: 5 escenarios deterministas
+  (benign_strict, quiet_benign, h2cl_desync,
+  hdr_injection, flaky_translation). La coleccion de
+  respuestas del origin se mapea FIFO a los streams
+  H2: con desync, el stream del followup recibe el
+  eco del smuggle.
+- core/h2_probe.py: auditor h2_audit() con bateria
+  h2cl|hinj. Oraculo observable: ATRIBUCION de
+  respuestas por stream (nada inferido): fb recibe su
+  eco -> alineado; fb recibe SMUGGLE-ECHO -> el
+  origin proceso bytes que el edge no contabiliza;
+  RST/GOAWAY del edge -> frontera estricta (BENIGN,
+  no error de red).
+- Escalera determinista cero-FP: BENIGN -> H2-DETECTED
+  (1/2, probable, NO reportable) -> H2-DESYNC (repro
+  2/2) -> H2-STATE-EFFECT (coleccion desplazada).
+- Contratos pre-registrados (ExperimentGraph), 2
+  baselines (C0 control, C1 POST vacio alineado),
+  presupuesto max 8 requests, read-only (smuggle = GET
+  propio con token unico).
+- RC-000223..228 (6 casos): frontera estricta BENIGN-
+  EDGE, drenaje benigno, h2.CL -> STATE-EFFECT,
+  inyeccion HPACK -> STATE-EFFECT, flaky sin repro ->
+  DETECTED (no reportable), invariantes de framing.
+- Lecciones de implementacion (fase LAB): el header del
+  frame H2 son 9 bytes (length 3 + type 1 + flags 1 +
+  sid 4): un sid de 3 bytes corrompe TODO el framing;
+  el buffer de lectura debe ser PERSISTENTE por
+  conexion (HEADERS+DATA llegan en un mismo segmento
+  TCP y ningun byte se descarta).
+- Corpus: 99/99 PASS (0 FAIL). Etapa 19/22 del roadmap
+  a la corona.
+
+## v0.87.0 — CL.0-SINGLE-TIER
+
+Request smuggling CL.0 como etapa DESYNC DIFFERENTIAL
+del roadmap, con la disciplina heredada de la linea
+DESYNC: contratos pre-registrados en el
+ExperimentGraph, juez determinista, cero-FP por
+diseno y presupuesto de 8 requests.
+
+- core/cl0_probe.py: auditor cl0_audit(). Tecnica:
+  POST con 'Content-Length: 0' cuyo stream lleva un
+  prefijo smuggleado inofensivo (GET propio con token
+  unico, jamas recursos de terceros); si el front no
+  contabiliza el prefijo y el backend lo procesa, la
+  cola de respuestas queda desplazada.
+- Oraculo observable (nada inferido), tres fases:
+  T1 ventana de silencio tras POST+smuggle: una
+  respuesta temprana demuestra que el FRONT parseo el
+  prefijo (pipelining benigno, NO desync).
+  T2 eco tras el followup: la respuesta del smuggle
+  aparece solo cuando llega el request legitimo ->
+  MISMATCH de contabilidad observable.
+  S doble followup con tokens distintos: si la ultima
+  respuesta porta el token del PRIMER followup, la
+  cola esta desplazada (STATE EFFECT observable).
+- Regla cero-FP explicita: el eco del token SOLO no
+  es desync. Sin diferencial de timing observable, el
+  veredicto no escala.
+- Escalera determinista: BENIGN -> CL0-DETECTED (eco
+  1/2, probable, NO reportable) -> CL0-DESYNC (repro
+  2/2) -> CL0-STATE-EFFECT (shift observable 2/2).
+  (+ UNSTABLE / UNREACHABLE / UNKNOWN). RST tras el
+  POST = frontera del edge estricta -> BENIGN con
+  precedencia sobre el error de red.
+- Presupuesto: baseline C1 (POST vacio + followup
+  secuencial, 2 reqs; sin par legible -> UNSTABLE,
+  conclusiones prohibidas) + 1 variante x (P + R)
+  x 3 reqs = max 8. Bateria de 2 candidatos
+  (S-REDIR '/', S-404 '/cl0-nonexistent-404');
+  MAX_VARIANTS=1 dispara solo el primero viable.
+- Clases de evidencia: E-CL0-SIGNAL / E-CL0-STATE con
+  genealogia (run_id, pid, fase) en el grafo.
+- labs/cl0_lab.py: 5 escenarios deterministicos sobre
+  sockets crudos simulando el stack front+origin EN
+  UN PROCESO con cola de respuestas: benign_strict
+  (pipelining durante T1), edge_safe_rst (RST con
+  SO_LINGER), cl0_desync (raw-forwarder con cola
+  off-by-one), flaky_desync (desync solo en la primera
+  conexion con smuggle), quiet_benign (drain
+  residual). Deteccion de 'glued' (smuggle pegado al
+  POST en el mismo paquete) para no confundir
+  pipelining legitimo con smuggle.
+- Bug real detectado en fase LAB (RC-000217):
+  _post_cl0 formateaba bytes con %s e inyectaba el
+  repr literal b'' como prefijo smuggleado,
+  corrompiendo el framing de TODA la sonda. Fix:
+  serializacion explicita a str antes de formatear.
+  Es exactamente el tipo de defecto que el corpus
+  existe para impedir que vuelva.
+- Validacion: matriz 5/5 escenarios lab; corpus
+  93/93 (RC-000217..222, invariantes de presupuesto,
+  precedencia RST, escalera y bytes-repr).
+
+## v0.86.0 — WCD-CACHE-KEY
+
+Web Cache Deception como familia nativa del motor, con la
+disciplina de la linea DESYNC: contratos pre-registrados
+en el ExperimentGraph, juez determinista, cero-FP por
+diseno y presupuesto de 8 requests.
+
+- core/wcd_bait.py: auditor wcd_audit(). Bateria de
+  4 disfraces (D-SEMI ';' + .css, D-DDOT '/..;/', D-QM
+  '%3F', D-HASH '%23') sobre un endpoint autenticado;
+  presupuesto 2 baseline + 2 variantes x 3 = max 8 reqs.
+- Contrato del baseline: A0 sesion@base debe contener el
+  marcador autenticado (sin marcador: NO-MARKER, no hay
+  linea base observable); D0 anon@base NO debe verlo.
+  Si D0 ya lo ve -> OPEN-ENDPOINT: candidato BAC,
+  familia distinta, NO es WCD y el presupuesto no se
+  gasta en variantes.
+- Escalera determinista por variante:
+  A sesion+disfraz (leak?), B sesion+disfraz (HIT repro?),
+  C anon+disfraz (contaminacion?).
+  BENIGN -> LEAK-NO-CACHE (leak sin almacenamiento
+  positivo: probable pero NO reportable) -> WCD-CACHE
+  (HIT/Age observable) -> WCD-DEMO (contaminacion anon
+  observable + controles PASSED). Vary sobre Cookie o
+  Set-Cookie en la respuesta descalifican el DEMO.
+- Clases de evidencia: E-WCD-LEAK / E-WCD-CACHE /
+  E-WCD-CONTAM con genealogia en el grafo (run_id,
+  pid, conexion) y journal append-only.
+- labs/wcd_lab.py: 5 escenarios deterministicos con
+  ThreadingHTTPServer simulando edge+origin (cache
+  keyed por path normalizado, router confuso que
+  recorta en delimitadores): benign (19184),
+  leak_nocache (19185), cache_vary (19186, HIT con
+  Vary: Cookie), contamination (19187, cache que
+  ignora cookies), open_endpoint (19188).
+- RC-000211..216: disfraz sin leak -> BENIGN; leak sin
+  almacenamiento no reportable; HIT con Vary: Cookie no
+  escala a DEMO; contaminacion anon con controles
+  PASSED -> WCD-DEMO; endpoint abierto NO es WCD
+  (reqs=2, presupuesto intacto); invariantes de
+  bateria/presupuesto. Corpus: 87 casos.
+
+- Robustez del corpus: RC-000161/RC-000162 migrados de
+  sleep fijo (1.0s/1.2s) a la espera activa
+  _esperar_labs ya usada por los casos DESYNC nuevos;
+  bajo carga el lab podia no escuchar todavia cuando
+  la auditoria conectaba (ConnectionRefused) y el corpus
+  abortaba antes de las WCD-RC. Corrida completa:
+  87 casos, 0 fallos.
+
+FASE LAB: probado solo contra laboratorios locales.
+La integracion al Hunter (nodo del pipeline + UI) queda
+pendiente de la aprobacion del operador tras esta fase.
+
+En vivo (linktr.ee, 05/10/2026, LestGo del operador,
+cuenta ninja via mail.tm + GHOSTGATE para el CF del
+login Descope): endpoint autenticado /admin/links,
+marcador = username. Baseline STABLE (A0 con marcador,
+D0 anon -> login). Bateria: D-SEMI/D-QM/D-HASH ->
+BENIGN (SPA 404 y body crudo sin marcador via
+view-source). D-DDOT ('/admin/links/..;/x.css') ->
+LEAK observable 2/2 (el origin sirve el dashboard
+autenticado ante el disfraz, confusion de router
+real) pero SIN almacenamiento positivo en el edge:
+anon + disfraz recibe login (sin contaminacion) y las
+respuestas admin via 'cache-control: private,
+no-store' + 'x-lt-cache: E-PASS'. VEREDICTO:
+LEAK-NO-CACHE (probable, NO reportable). Presupuesto
+respetado (~27 reqs en total incluido el registro).
+Nota GHOSTGATE: 'Just a minute' del CF se resolvio
+solo; el modal 'Your Privacy Choices' bloqueaba el
+paso intermedio del registro y hubo que cerrarlo.
+El reset de contexto no limpia cookies de la sesion
+viva: hay que stop + sesion nueva para el anon real.
+
 ## v0.85.0 — PIPE-CROSS
 
 El Hunter automatico (/api/scan) ahora invoca la auditoria

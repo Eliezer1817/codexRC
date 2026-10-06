@@ -11,7 +11,7 @@ Este modulo mantiene snapshots del mapa VDP y detecta:
 
 CLI:
   python3 core/vdp_fresh.py --snapshot          # guarda linea base
-  python3 core/vdp_fresh.py --diff vdp_mapa.json
+  python3 core/vdp_fresh.py --diff data/vdp_mapa.json
       compara el mapa NUEVO contra el snapshot -> vdp_nuevos.json
   python3 core/vdp_fresh.py --estado            # resumen del snapshot
 
@@ -24,7 +24,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
-SNAPSHOT = os.path.join(ROOT, "vdp_snapshot.json")
+SNAPSHOT = os.path.join(ROOT, "data", "vdp_snapshot.json")
 NUEVOS = os.path.join(ROOT, "vdp_nuevos.json")
 
 
@@ -37,12 +37,12 @@ def _cargar(path: str) -> dict:
 
 def snapshot(path: str = None) -> dict:
     """Guarda el mapa VDP actual como linea base con fecha."""
-    path = path or os.path.join(ROOT, "vdp_mapa.json")
+    path = path or os.path.join(ROOT, "data", "vdp_mapa.json")
     mapa = _cargar(path)
     snap = {"fecha": _hoy(), "total": len(mapa), "mapa": mapa}
     with open(SNAPSHOT, "w") as f:
         json.dump(snap, f, indent=1)
-    print(f"snapshot: {len(mapa)} VDP guardados -> vdp_snapshot.json")
+    print(f"snapshot: {len(mapa)} VDP guardados -> data/vdp_snapshot.json")
     return snap
 
 
@@ -104,7 +104,7 @@ def main() -> None:
     ap.add_argument("--snapshot", action="store_true")
     ap.add_argument("--diff", metavar="MAPA_NUEVO")
     ap.add_argument("--estado", action="store_true")
-    ap.add_argument("--mapa", default=os.path.join(ROOT, "vdp_mapa.json"))
+    ap.add_argument("--mapa", default=os.path.join(ROOT, "data", "vdp_mapa.json"))
     args = ap.parse_args()
     if args.snapshot:
         snapshot(args.mapa)

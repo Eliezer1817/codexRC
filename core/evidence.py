@@ -527,3 +527,107 @@ def _cli() -> None:
 
 if __name__ == "__main__":
     _cli()
+
+
+# ===================================================================
+# FIN-EVIDENCE-CHAIN (v0.97.0): BUSINESS LOGIC STATE ENGINE v2, FASE 8
+# -------------------------------------------------------------------
+# Extension del motor de evidencia para hallazgos de LOGICA DE NEGOCIO
+# (FIN-LOGIC v2). No reemplaza build_chain/render_chain (eso sigue
+# siendo para taint/injection): es una cadena HERMANA con la misma
+# disciplina (estructurada, determinista, hasheada) pero con los
+# eslabones que pide el modelo de experimentos de FIN-LOGIC:
+#
+#   SOURCE -> PARAMETER -> RELATION -> INVARIANT -> MUTATION ->
+#   CONTROL -> STATE DIFF -> REPEAT -> IMPACT
+#
+# Cada eslabon es opcional segun el nivel del experimento (L0 no tiene
+# RELATION ni INVARIANT; L2 si). Lo que nunca falta: MUTATION,
+# STATE DIFF e IMPACT (el veredicto final con su motivo).
+# ===================================================================
+
+def build_fin_chain(experiment: Dict[str, Any],
+                    resultado: Dict[str, Any]) -> Dict[str, Any]:
+    """Arma la cadena de evidencia de UN experimento de FIN-LOGIC v2.
+
+    `experiment`: el dict que produjo fin_mutation_planner (level,
+    params, hypothesis, endpoint, source_edge/invariant_id si aplica).
+    `resultado`: lo que de verdad paso al ejecutarlo (control, mutacion,
+    diff de estado, repeticion, veredicto final) -- lo arma quien
+    orquesta el experimento (fin_logic_probe).
+    """
+    chain: Dict[str, Any] = {
+        "experiment_id": experiment.get("experiment_id"),
+        "level": experiment.get("level"),
+        "source": {
+            "endpoint": experiment.get("endpoint"),
+            "parametros_mutados": sorted(experiment.get("params", {})),
+        },
+        "parameter": {
+            "tipo": experiment.get("tipo"),
+            "params": experiment.get("params"),
+        },
+        "relation": experiment.get("source_edge"),
+        "invariant": ({"invariant_id": experiment.get("invariant_id"),
+                      "expression": experiment.get("expression")}
+                     if experiment.get("invariant_id") else None),
+        "mutation": {
+            "hypothesis": experiment.get("hypothesis"),
+            "payload_name": experiment.get("payload_name"),
+            "params_enviados": experiment.get("params"),
+        },
+        "control": resultado.get("control"),
+        "state_diff": resultado.get("state_diff"),
+        "repeat": resultado.get("repeat"),
+        "impact": {
+            "veredicto": resultado.get("veredicto"),
+            "evidencia": resultado.get("evidencia"),
+        },
+    }
+    chain["evidence_hash"] = _fin_evidence_hash(chain)
+    return chain
+
+
+def _fin_evidence_hash(chain: Dict[str, Any]) -> str:
+    """Hash determinista de trazabilidad (misma filosofia que
+    _evidence_hash, adaptado a los eslabones de FIN-LOGIC)."""
+    partes = [
+        str(chain["source"]),
+        str(chain["parameter"]),
+        str(chain["relation"]),
+        str(chain["invariant"]),
+        str(chain["mutation"]),
+        str(chain["control"]),
+        str(chain["state_diff"]),
+        str(chain["repeat"]),
+        str(chain["impact"].get("veredicto")),
+    ]
+    return hashlib.sha256("|".join(partes).encode()).hexdigest()[:16]
+
+
+def render_fin_chain(ch: Dict[str, Any]) -> str:
+    """Texto legible de una cadena FIN-LOGIC, mismo espiritu que
+    render_chain() para hallazgos de taint."""
+    out = [f"Experimento {ch.get('level')} {ch.get('experiment_id')}"]
+    out.append("SOURCE")
+    out.append(f"  -> endpoint: {ch['source'].get('endpoint')}")
+    out.append(f"  -> parametros: {ch['source'].get('parametros_mutados')}")
+    if ch.get("relation"):
+        out.append("RELATION")
+        out.append(f"  -> {ch['relation'].get('relation')}: "
+                   f"{ch['relation'].get('evidence')}")
+    if ch.get("invariant"):
+        out.append("INVARIANT")
+        out.append(f"  -> {ch['invariant'].get('expression')}")
+    out.append("MUTATION")
+    out.append(f"  -> {ch['mutation'].get('params_enviados')}")
+    out.append(f"  -> hipotesis: {ch['mutation'].get('hypothesis', '')[:100]}")
+    if ch.get("control"):
+        out.append(f"CONTROL -> {ch['control']}")
+    if ch.get("state_diff"):
+        out.append(f"STATE DIFF -> {ch['state_diff'].get('resumen')}")
+    if ch.get("repeat"):
+        out.append(f"REPEAT -> {ch['repeat']}")
+    out.append(f"IMPACT -> {ch['impact'].get('veredicto')}: "
+               f"{ch['impact'].get('evidencia', '')}")
+    return "\n".join(out)

@@ -1,0 +1,283 @@
+<html><head><meta charset='utf-8'>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.4; }
+h1 { font-size: 20pt; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 6px; }
+h2 { font-size: 15pt; color: #16213e; margin-top: 22px; }
+h3 { font-size: 12pt; color: #0f3460; }
+code { background: #f0f0f0; padding: 1px 4px; font-family: Courier, monospace; }
+pre { background: #f0f0f0; padding: 8px; font-size: 8.5pt; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 9pt; text-align: left; }
+blockquote { border-left: 3px solid #aaa; margin: 8px 0; padding-left: 10px; color: #444; }
+</style>
+</head><body><h1>CodexRC — Documentación Maestra</h1>
+<h3>De punta a punta: qué es, qué hace, cómo está armado y en qué versión está hoy</h3>
+<blockquote>
+<p>Generado el 06/10/2026 a partir del código fuente real del repositorio
+(README.md, ARCHITECTURE.md, AGENTS.md, CHANGELOG.md de 2222 líneas y
+los 102 módulos de <code>core/</code>). No contiene información inventada: cada
+dato sale de un archivo existente, citado donde corresponde.</p>
+</blockquote>
+<hr />
+<h2>1. Qué es CodexRC, en una frase</h2>
+<p><strong>Motor de auditoría y caza de vulnerabilidades web</strong>, con backend local,
+evidencia determinista, veredictos falsables, y campañas masivas sobre
+plugins de WordPress y blancos autorizados. No es un escáner que dice
+"podría ser vulnerable": construye una cadena de evidencia
+(<code>SOURCE → FLOW → AUTH → SANITIZATION → SINK → CORRELATION</code>) evaluada por
+"abogados" deterministas (nunca una IA que opina), y solo reporta cuando
+esa cadena está completa y es reproducible.</p>
+<h3>Las 5 reglas de oro (filosofía, de <code>README.md</code>)</h3>
+<ol>
+<li><strong>Sin evidencia no hay hallazgo.</strong> Toda cadena se evalúa, nunca se
+   infiere por intuición.</li>
+<li><strong>Mejor 4 hallazgos que ejecutan de verdad que 20 que solo se
+   reflejan.</strong> VERITAS re-verifica cada candidato en navegador real con
+   un canario inerte antes de sellarlo.</li>
+<li><strong>El ruido muere en el motor, no a mano.</strong> Guardas semánticas,
+   refutación por dominancia y corpus de regresión eliminan falsos
+   positivos solos, con registro del porqué.</li>
+<li><strong>La tolerancia del edge no es vulnerabilidad.</strong> Solo el <em>mismatch</em>
+   observable edge/origin escala; la escalera de impacto nunca se salta
+   (DETECTED sin reproducción no avanza).</li>
+<li><strong>La caza respeta el blanco.</strong> Sondas read-only A→B, canarios
+   inertes, jitter, presupuestos de requests declarados por módulo, y
+   parada al primer impacto confirmado. En vivo jamás se envenena la
+   respuesta de un usuario tercero.</li>
+</ol>
+<hr />
+<h2>2. Arquitectura general (6 subsistemas)</h2>
+<p>Fuente: <code>ARCHITECTURE.md</code>. El layout físico es:</p>
+<pre><code>backend/app.py     Único entrypoint HTTP (Flask): rutas /api/*, jobs,
+                    watchdog, auth de Arsenal.
+core/*.py           102 módulos, una responsabilidad cada uno (sin
+                    subcarpetas: organización por archivo plano).
+frontend/*.html     3 UIs autocontenidas (index, hunter, arsenal).
+hechos/             Memoria de &quot;ya auditado&quot; — NUNCA se vacía o se
+                    re-audita todo desde cero por error.
+reports/            Informes JSON/PDF/TXT generados por job.
+docs/               Especificaciones y esta documentación.
+</code></pre>
+<h3>2.1 Motor de caza (corazón)</h3>
+<p><code>hunter.py</code> es una <strong>fachada</strong> que re-exporta Spider, DeepHunter,
+XSSHunter, BlindXSS y XSSPro desde sus módulos <code>hunter_*.py</code>. Los
+consumidores (backend, CLI, async_lane) solo conocen la fachada, nunca
+los módulos internos directamente. <code>brain.py</code>, <code>self_tune.py</code> y
+<code>pipeline.py</code> orquestan decisiones.</p>
+<h3>2.2 Autenticación (<code>auth.py</code>, ~60KB)</h3>
+<p>Matrix universal: combina bases × rutas × payloads. La sesión heredada
+se guarda por origen (nunca pisa sesiones de otro blanco). Incluye
+<code>ghostgate.py</code> (evasión de Cloudflare vía navegador real, nombre fijado
+por el operador) y <code>waf_guard.py</code> (jitter + cooldown con memoria
+persistente).</p>
+<h3>2.3 Verificación anti-falsos-positivos (lo que hace confiable al motor)</h3>
+<p>Cadena de evidencia en orden:
+- <code>taint_trace.py</code> — TAINT-TRACE: sigue fuente→sink intra-archivo.
+- <code>gates_audit.py</code> — GATES-AUDIT: dictamina si un handler AJAX/REST está
+  protegido (nonce/capability).
+- <code>evidence.py</code> — EVIDENCE-CHAIN: arma la cadena completa y la evalúa
+  con jueces deterministas (nunca un LLM).
+- <code>fp_autoclose.py</code> — cierra falsos positivos ya conocidos.
+- <code>pattern_match.py</code> — CVE-MATCH con patrones ponderados contra una
+  baseline histórica.
+- <code>veritas.py</code> — navegador real contra falsos positivos, con
+  degradación elegante si no hay Chromium.
+- <code>observe.py</code> / <code>regress.py</code> — CODEX-OBSERVE / CODEX-REGRESS: el
+  corpus de regresión (141 casos a la fecha de este documento).
+- <code>escalada.py</code> — sigue el hallazgo crítico con 4 pasos automáticos,
+  solo sobre piezas verificadas.</p>
+<h3>2.4 Caza masiva (plugins de WordPress)</h3>
+<p><code>wide_corpus.py</code> arma el universo (todo plugin de wordpress.org con
+≥5.000 instalaciones). <code>hunt_wide.py</code> es el runner incremental
+(crash-safe, nunca re-audita lo ya hecho). <code>diff_hunt.py</code> audita solo
+código nuevo entre versiones. <code>plugin_batch.py</code>, <code>retro_hunt.py</code>,
+<code>vendor_farm.py</code> y <code>cve_matcher.py</code> completan la batería. <code>dossier_hunt.py</code>
+es el driver más reciente (Q4-2026), enfocado en las clases nuevas
+POI-REACH y MAGIC-CONFUSION.</p>
+<h3>2.5 Ingeniería inversa (binarios/APKs)</h3>
+<p><code>bin_audit.py</code> (secretos en ELF), <code>re_engine.py</code> (parseo puro Python de
+DEX/JAR/ELF) y <code>decompile.py</code> (bytecode DEX → pseudocódigo). Todo en
+Python puro para correr sin compilar en entornos como Termux/armv7l.</p>
+<h3>2.6 Backend + UI</h3>
+<p>Rutas Flask con jobs bajo lock, watchdog de procesos zombie
+(<code>zombies.py</code>). Seguridad: bind solo a loopback por defecto, logs sin
+secretos (passwords/tokens/cookies nunca se registran), Arsenal con
+modo EXTREMO que exige contraseña y token de desbloqueo temporal.</p>
+<hr />
+<h2>3. La escalera cero-falsos-positivos (cómo se decide un veredicto)</h2>
+<p>Principio transversal a todos los módulos nuevos (v0.85+): <strong>cada
+peldaño exige el anterior</strong>, nunca se salta un escalón. Ejemplo genérico
+de la familia desync/HTTP:</p>
+<pre><code>BENIGN  →  X-DETECTED  →  X-DESYNC  →  X-STATE-EFFECT  →  💥 SECURITY-IMPACT-DEMO
+</code></pre>
+<p>Y para Object Injection (<code>poi_reach.py</code>):</p>
+<pre><code>POI-DETECTED (unserialize con taint sin sanitizar)
+   → POI-UNAUTH (el sink vive en superficie anónima)
+      → POI-CHAIN (hay gadget con método mágico alcanzable)
+         → POI-REACH (💥 candidato reportable)
+</code></pre>
+<p>Sin alcance anónimo, el veredicto honesto queda en <strong>POI-AUTH</strong>: es una
+pista, no un hallazgo reportable.</p>
+<p>Solo dos símbolos están reservados para parar todo y avisar al
+operador: <strong>💥</strong> (hallazgo explotable real) y 🚨/😱 (hallazgo crítico).
+Todo lo demás es ruido que el motor filtra solo.</p>
+<hr />
+<h2>4. Línea de tiempo de versiones (resumen)</h2>
+<p>CodexRC lleva <strong>78 versiones documentadas</strong> en el CHANGELOG (desde
+v0.40 "Verificación del sistema" hasta v0.96.1). El detalle completo,
+versión por versión, está en
+<a href="./version_timeline.md"><code>version_timeline.md</code></a> (generado automáticamente
+del CHANGELOG real). Hitos mayores:</p>
+<table>
+<thead>
+<tr>
+<th>Versión</th>
+<th>Hito</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v0.40 – v0.53</td>
+<td>Cimientos: verificación, vendor-farm, plugin-batch, gates-audit, diff-hunt, evidence-chain, VDP-1300, UI-Renaissance</td>
+</tr>
+<tr>
+<td>v0.57.x</td>
+<td>AUTH matrix universal, auditoría de seguridad propia, triaje masivo de falsos positivos (BAC/SQLi)</td>
+</tr>
+<tr>
+<td>v0.62.x</td>
+<td>REVERSE-WEB, MULTI-IA (coordinación entre operadores), VDP-FRESH watcher cada 6h</td>
+</tr>
+<tr>
+<td>v0.67 – v0.81</td>
+<td>BAC-PROOF (IDOR dinámico en WP-LAB), ADAPTIVE-HUNT (capa epistémica), ARSENAL de 2 niveles</td>
+</tr>
+<tr>
+<td>v0.82 – v0.84</td>
+<td>Grafo de experimentos, selección por EDV, correlación cross-layer</td>
+</tr>
+<tr>
+<td>v0.85 – v0.96.1</td>
+<td><strong>La corona 👑</strong>: cadena completa de detección de desync HTTP (CL.0 → H2 → multi-conexión → cross-request → reproducción → impacto → FP-elimination → evidence package), integración al Hunter (<code>crown_chain.py</code>), y el dossier Q4-2026 (POI-REACH, MAGIC-CONFUSION)</td>
+</tr>
+</tbody>
+</table>
+<h3>4.1 La corona (v0.85 → v0.96.1), paso a paso</h3>
+<p>Esta es la cadena de detección de HTTP request smuggling / desync que
+se construyó módulo por módulo, cada uno con su propio corpus de
+regresión y validación en LAB antes de integrarse:</p>
+<ol>
+<li><strong>v0.85 PIPE-CROSS</strong> — nodo cross_layer en el pipeline de escaneo.</li>
+<li><strong>v0.86 WCD-CACHE-KEY</strong> — envenenamiento de caché vía clave mal
+   normalizada.</li>
+<li><strong>v0.87 CL.0-SINGLE-TIER</strong> — smuggling de un solo salto.</li>
+<li><strong>v0.88 H2-TRANSLATION</strong> — edge HTTP/2 real traducido a H1 interno;
+   oráculo de atribución por stream.</li>
+<li><strong>v0.89 MULTI-CONNECTION</strong> — una conexión envenena el pool y otra
+   (TCP distinto) hereda el eco.</li>
+<li><strong>v0.90 CROSS-REQUEST CORRELATION</strong> — dos smuggles en la misma
+   conexión, desplazamiento <code>k</code> medible y consistente.</li>
+<li><strong>v0.91 REPRODUCTION ENGINE</strong> — exige firma y <code>k</code> idénticos en dos
+   pases independientes (A y B) antes de llamarlo reproducible.</li>
+<li><strong>v0.92 IMPACT CORRELATION</strong> — ¿el desync daña a un usuario <em>distinto</em>
+   del atacante? Recurso simulado, atribución ALIGNED /
+   SMUGGLED-PROTECTED / MISPAIRED-BENIGN.</li>
+<li><strong>v0.93 FP-ELIMINATION</strong> — batería de 4 cebos que nunca deben
+   reportar + control positivo obligatorio.</li>
+<li><strong>v0.94 EVIDENCE PACKAGE</strong> — paquete falsable con hash SHA-256
+    canónico, comandos de reproducción y límites declarados.</li>
+<li><strong>v0.95 INTEGRACIÓN AL HUNTER</strong> — <code>crown_chain.py</code> orquesta los 5
+    peldaños (DETECTION → REPRODUCTION → STATE-EFFECT →
+    CROSS-CONNECTION → SECURITY IMPACT) sin tocar los módulos
+    originales.</li>
+<li><strong>v0.96.0 / v0.96.1 DOSSIER Q4-2026</strong> — tres clases nuevas:
+    POI-REACH (Object Injection con alcance), MAGIC-CONFUSION
+    (confusión de extensión/contenido hacia Imagick), y el
+    blindaje que cerró 2 falsos positivos reales encontrados en el
+    primer barrido en vivo contra <code>weforms</code>.</li>
+</ol>
+<hr />
+<h2>5. Catálogo completo de módulos</h2>
+<p>Los 102 archivos de <code>core/</code> están indexados con su versión de origen y
+descripción real (extraída del encabezado de cada archivo) en
+<strong><a href="./modulos_index.csv"><code>modulos_index.csv</code></a></strong> — abrilo en Excel/Sheets
+para filtrar por versión o buscar por palabra clave.</p>
+<p>Agrupados por función (ver sección 2 para el detalle narrativo):</p>
+<ul>
+<li><strong>Detección de desync/HTTP</strong>: <code>cl0_probe</code>, <code>h2_probe</code>, <code>mc_probe</code>,
+  <code>crc_probe</code>, <code>edgesync</code>, <code>wcd_bait</code>, <code>wcd404_probe</code>, <code>cache_*</code> (bait,
+  baseline, controls, correlation, fingerprint, semantic).</li>
+<li><strong>Reproducción/impacto</strong>: <code>repro_engine</code>, <code>race_proof</code>, <code>race_trace</code>,
+  <code>chain</code>, <code>crown_chain</code>, <code>impact_probe</code>, <code>state_correlation</code>.</li>
+<li><strong>Anti-FP / evidencia</strong>: <code>fp_elimination</code>, <code>fp_autoclose</code>, <code>fp_memory</code>,
+  <code>evidence</code>, <code>evidence_package</code>, <code>veritas</code>, <code>ghostgate</code>, <code>waf_guard</code>.</li>
+<li><strong>Autenticación / IDOR / BAC</strong>: <code>auth</code>, <code>bac_proof</code>, <code>gates_audit</code>,
+  <code>poi_reach</code>, <code>normalization_audit</code>.</li>
+<li><strong>Inyección</strong>: <code>sqli_bait</code>, <code>ssti_bait</code>, <code>graphql_bait</code>,
+  <code>magic_confusion</code>.</li>
+<li><strong>XSS</strong>: <code>hunter_xss</code>, <code>hunter_xsspro</code>, <code>hunter_blind</code>, <code>cspt_scan</code>.</li>
+<li><strong>Caza masiva WordPress</strong>: <code>wide_corpus</code>, <code>hunt_wide</code>, <code>diff_hunt</code>,
+  <code>plugin_batch</code>, <code>dossier_hunt</code>, <code>retro_hunt</code>, <code>vendor_farm</code>,
+  <code>cve_matcher</code>.</li>
+<li><strong>Ingeniería inversa</strong>: <code>bin_audit</code>, <code>re_engine</code>, <code>decompile</code>.</li>
+<li><strong>Investigación/estrategia</strong>: <code>research_memory</code>, <code>experiment_catalog</code>,
+  <code>experiment_graph</code>, <code>experiment_selector</code>, <code>hypothesis_graph</code>,
+  <code>adaptive_hunt</code>, <code>self_tune</code>, <code>brain</code>.</li>
+<li><strong>Infraestructura/soporte</strong>: <code>pipeline</code>, <code>zombies</code>, <code>cfg</code>,
+  <code>connection_state</code>, <code>tech_detect</code>, <code>recon</code>, <code>taint_trace</code>,
+  <code>report_export</code>, <code>vision_gate</code>, <code>semantic_*</code>.</li>
+</ul>
+<hr />
+<h2>6. Estado actual del motor (a la fecha de este documento)</h2>
+<ul>
+<li><strong>Versión</strong>: v0.96.1 "BLINDAJE POI-REACH".</li>
+<li><strong>Corpus de regresión</strong>: 141/141 casos, 0 fallos (certificado hoy).</li>
+<li><strong>Auditoría de 588 plugins</strong>: ejecutada completa (0 💥 confirmados,
+  6 candidatos POI-AUTH detectados). <em>Nota de transparencia: el JSON
+  detallado con esos 6 candidatos se perdió en una limpieza de archivos
+  temporales; el motor que los generó sigue intacto y puede re-correr
+  el barrido cuando el operador dé la orden "LestGo".</em></li>
+<li><strong>Lo que el motor NO hace todavía de forma automática</strong>: no dispara
+  ataques de IDOR/lógica de negocio por sí solo. Hoy detecta candidatos
+  (Fase 1: lectura estática de endpoints vía <code>gates_audit</code>/<code>poi_reach</code>)
+  y valida BAC/IDOR dinámicamente contra un WP-LAB local
+  (<code>bac_proof.py</code>, con usuarios Admin/Suscriptor/Anónimo), pero no
+  arma automáticamente los payloads de lógica financiera (montos
+  negativos, decimales truncados, sobreescritura de estado de pago).
+  Esa pieza (el "Destructor de Lógica Financiera") es la que se definió
+  construir a continuación.</li>
+</ul>
+<hr />
+<h2>7. Roadmap inmediato (decidido en esta conversación)</h2>
+<p>Objetivo: hacer que CodexRC sea mejor que Burp Suite Pro en control de
+acceso (IDOR) y lógica de negocio, su único punto débil real.</p>
+<ol>
+<li>Ya tenemos: extracción estática de endpoints
+   (<code>gates_audit</code>/<code>poi_reach</code>) + disparo multi-rol dinámico
+   (<code>bac_proof.py</code>, Admin/Suscriptor/Anónimo contra WP-LAB).</li>
+<li>Falta: módulo de <strong>inferencia de parámetros</strong> (leer qué variables
+   lee cada handler: <code>$_POST['ticket_id']</code>, <code>$_GET['user_id']</code>, etc.) y
+   autocompletarlas con valores de prueba.</li>
+<li>Falta: <strong>Destructor de Lógica Financiera</strong> — detectar variables tipo
+   <code>price</code>/<code>amount</code>/<code>qty</code>/<code>discount</code>/<code>total</code> y aplicarles la batería de
+   ataques (negativos, decimales truncados, arrays, sobreescritura de
+   estado <code>status=paid</code>).</li>
+</ol>
+<hr />
+<h2>8. Documentos relacionados</h2>
+<ul>
+<li><a href="../README.md"><code>README.md</code></a> — filosofía, instalación, uso rápido.</li>
+<li><a href="../ARCHITECTURE.md"><code>ARCHITECTURE.md</code></a> — mapa técnico para editar sin romper.</li>
+<li><a href="../AGENTS.md"><code>AGENTS.md</code></a> — manual operativo para IAs que operan el repo.</li>
+<li><a href="../CHANGELOG.md"><code>CHANGELOG.md</code></a> — historial completo, versión por versión (2222 líneas).</li>
+<li><a href="./version_timeline.md"><code>version_timeline.md</code></a> — timeline condensado de las 78 versiones.</li>
+<li><a href="./modulos_index.csv"><code>modulos_index.csv</code></a> — índice de los 102 módulos (abrir en Excel).</li>
+<li><a href="./AUDITORIA_FALSOS_POSITIVOS.md"><code>AUDITORIA_FALSOS_POSITIVOS.md</code></a> — metodología anti-FP detallada.</li>
+<li><a href="./DOSSIER_INVESTIGACION_2026Q4.md"><code>DOSSIER_INVESTIGACION_2026Q4.md</code></a> — investigación de las clases nuevas del Q4 2026.</li>
+</ul>
+<h2 style="page-break-before: always;">Apéndice — Índice completo de los 102 módulos</h2>
+<table border="1" cellpadding="4" cellspacing="0" style="width:100%; font-size:8pt;">
+<tr style="background:#eee;"><th>Módulo</th><th>Versión</th><th>Descripción</th></tr>
+<tr><td>__init__</td><td></td><td>codexRC core package</td></tr><tr><td>ab_diff</td><td>v0.68.0</td><td>AB-DIFF universal (v0.68.0)</td></tr><tr><td>adaptive_hunt</td><td>v0.81.0</td><td>ADAPTIVE-HUNT (v0.81.0): la capa epistemica.</td></tr><tr><td>arsenal</td><td>v0.55.0</td><td>ARSENAL v0.55.0 — dos niveles: BASICO (verde, sin candado) y EXTREMO (rojo, contrasena).</td></tr><tr><td>async_lane</td><td>v0.23.0</td><td>SLIPSTREAM (carril async, v0.23.0)</td></tr><tr><td>auth</td><td></td><td>Authentication Module (Termux friendly)</td></tr><tr><td>bac_proof</td><td>v0.67.0</td><td>BAC-PROOF (v0.67.0, AUTHZ-PROOF capa 4)</td></tr><tr><td>bin_audit</td><td></td><td>BIN-AUDIT: analisis binario/nativo, mas alla del navegador.</td></tr><tr><td>brain</td><td></td><td>CEREBRO: la capa de inteligencia determinista del Hunter.</td></tr><tr><td>cache_bait</td><td></td><td>CACHE-BAIT: bateria dedicada de cache poisoning y cache deception.</td></tr><tr><td>cache_baseline</td><td>v0.79.0</td><td>CACHE-BASELINE (v0.79.0): clasifica el baseline del target.</td></tr><tr><td>cache_controls</td><td>v0.79.0</td><td>CACHE-CONTROLS (v0.79.0): explicaciones alternativas ANTES</td></tr><tr><td>cache_correlation</td><td>v0.79.0</td><td>CACHE-CORRELATION (v0.79.0): el orquestador.</td></tr><tr><td>cache_fingerprint</td><td>v0.79.0</td><td>CACHE-FINGERPRINT (v0.79.0): huella SOLO de senales</td></tr><tr><td>cache_semantic</td><td>v0.79.0</td><td>CACHE-SEMANTIC (v0.79.0): relacion entre Request A y Request B.</td></tr><tr><td>cfg</td><td>v0.58.1</td><td>SEMANTIC CORE (v0.58.1) — Nivel 1: CFG intra-funcion + dominancia.</td></tr><tr><td>chain</td><td></td><td>ENCADENAR HALLAZGOS: el valor real esta en las CADENAS, no en piezas.</td></tr><tr><td>cl0_probe</td><td>v0.87.0</td><td>v0.87.0 CL.0-SINGLE-TIER (Request Smuggling CL.0)</td></tr><tr><td>connection_state</td><td>v0.77.0</td><td>CONNECTION-STATE AUDIT (v0.77.0): ¿deja una peticion ambigua</td></tr><tr><td>cov_bait</td><td></td><td>COV-BAIT v2: caza guiada por COBERTURA DE CODIGO + MOTOR DE MUTACION.</td></tr><tr><td>crc_probe</td><td>v0.90.0</td><td>v0.90.0 CROSS-REQUEST CORRELATION</td></tr><tr><td>cross_layer</td><td>v0.84.0</td><td>v0.84.0 CROSS-LAYER CORRELATION</td></tr><tr><td>crown_chain</td><td>v0.95.0</td><td>v0.95.0 CROWN CHAIN — INTEGRACION AL HUNTER</td></tr><tr><td>cspt_scan</td><td>v0.71.0</td><td>CSPT-SCAN (v0.71.0): Client-Side Path Traversal.</td></tr><tr><td>cve_matcher</td><td></td><td>CVE Matcher Module</td></tr><tr><td>decompile</td><td>v0.36</td><td>DECOMPILE: descompilacion parcial nivel 3 (bytecode DEX -&gt; pseudocodigo).</td></tr><tr><td>deep_scan</td><td></td><td>Deep Scan Module</td></tr><tr><td>desync_hunt</td><td>v0.83.0</td><td>DESYNC-HUNT (v0.83.0): investigacion DESYNC sobre el</td></tr><tr><td>diff_hunt</td><td>v0.45.0</td><td>DIFF-HUNT (v0.45.0)</td></tr><tr><td>dossier_hunt</td><td>v0.96.1</td><td>DOSSIER-HUNT (v0.96.1) — caza con las clases Q4-2026</td></tr><tr><td>edge_profile</td><td>v0.75.0</td><td>EDGE-PROFILE (v0.75.0): caracteriza el CONTRATO del edge.</td></tr><tr><td>edgesync</td><td>v0.74.0</td><td>EDGESYNC-HUNT (v0.74.0): SONDA-DE-CORRELACION.</td></tr><tr><td>escalada</td><td>v0.28</td><td>ESCALADA: que hacer DESPUES del aviso critico.</td></tr><tr><td>evidence</td><td>v0.47.0</td><td>EVIDENCE-CHAIN + ABOGADOS (v0.47.0)</td></tr><tr><td>evidence_package</td><td>v0.94.0</td><td>v0.94.0 EVIDENCE PACKAGE</td></tr><tr><td>experiment_catalog</td><td>v0.81.0</td><td>CATALOGO DE EXPERIMENTOS (v0.81.0): sondas HTTP de solo</td></tr><tr><td>experiment_graph</td><td>v0.83.0</td><td>EXPERIMENT-GRAPH (v0.83.0): grafo dirigido de</td></tr><tr><td>experiment_selector</td><td>v0.82</td><td>SELECTOR DE EXPERIMENTOS (v0.82): grafo de experimentos.</td></tr><tr><td>fp_autoclose</td><td>v0.44.0</td><td>FP-AUTO-CLOSE (v0.44.0)</td></tr><tr><td>fp_elimination</td><td>v0.93.0</td><td>v0.93.0 FP-ELIMINATION</td></tr><tr><td>fp_memory</td><td>v0.66.0</td><td>FP-MEMORIA (v0.66.0, AUTHZ-PROOF capa 5)</td></tr><tr><td>gates_audit</td><td>v0.43.0</td><td>GATES-AUDIT (v0.43.0)</td></tr><tr><td>ghostgate</td><td></td><td>Modulo GHOSTGATE (Cloudflare relay, Termux friendly)</td></tr><tr><td>graphql_bait</td><td></td><td>GRAPHQL: bateria dedicada contra endpoints GraphQL ocultos.</td></tr><tr><td>h2_probe</td><td>v0.88.0</td><td>v0.88.0 H2-TRANSLATION (Parser Differential)</td></tr><tr><td>hunt_wide</td><td>v0.48.0</td><td>v0.48.0 WIDE-HUNT: caza sobre el corpus COMPLETO wordpress.org (&gt;=5k installs).</td></tr><tr><td>hunter</td><td>v0.57.5</td><td>Hunter (FACHADA, v0.57.5)</td></tr><tr><td>hunter_base</td><td></td><td>Motor de descubrimiento (arana + inventario de parametros) y corpus de</td></tr><tr><td>hunter_blind</td><td></td><td>from typing import Any, Callable, Dict, List, Optional, Set, Tuple</td></tr><tr><td>hunter_deep</td><td>v0.57.2</td><td>Caza profunda multi-vector. Extraida de hunter.py (v0.57.2).</td></tr><tr><td>hunter_spider</td><td>v0.57.2</td><td>Arana de descubrimiento: mapa paginas/params/endpoints. Extraida de</td></tr><tr><td>hunter_xss</td><td></td><td>from typing import Any, Callable, Dict, List, Optional, Set, Tuple</td></tr><tr><td>hunter_xsspro</td><td>v0.20.0</td><td>from typing import Any, Callable, Dict, List, Optional, Set, Tuple</td></tr><tr><td>hypothesis_graph</td><td>v0.81.0</td><td>HYPOTHESIS-GRAPH (v0.81.0): hipotesis explicativas de una</td></tr><tr><td>impact_probe</td><td>v0.92.0</td><td>v0.92.0 IMPACT CORRELATION</td></tr><tr><td>lab_ab_site</td><td>v0.68.0</td><td>LAB-AB-SITE (v0.68.0): sitio NO-WordPress de prueba</td></tr><tr><td>magic_confusion</td><td>v0.96.0</td><td>MAGIC-CONFUSION (v0.96.0): extension vs contenido en rutas de media.</td></tr><tr><td>mc_probe</td><td>v0.89.0</td><td>v0.89.0 MULTI-CONNECTION (Efecto de Segundo Orden)</td></tr><tr><td>normalization_audit</td><td>v0.76.0</td><td>NORMALIZATION-AUDIT (v0.76.0): que representacion recibe el</td></tr><tr><td>observe</td><td></td><td>CODEX-OBSERVE (Fase 1, alcance reducido).</td></tr><tr><td>path_bait</td><td></td><td>PATH-BAIT: bateria dedicada de LFI / path traversal (PAGA en Patchstack).</td></tr><tr><td>pattern_match</td><td></td><td>CVE-MATCH: aprendizaje de patrones globales sobre codigo PHP.</td></tr><tr><td>pipeline</td><td></td><td>Pipeline Orchestrator</td></tr><tr><td>plugin_batch</td><td>v0.42.0</td><td>PLUGIN-BATCH (v0.42.0)</td></tr><tr><td>poi_reach</td><td>v0.96.1</td><td>POI-REACH (v0.96.1): Object Injection con alcance y gadget chain.</td></tr><tr><td>race_proof</td><td>v0.71.0</td><td>RACE-PROOF (v0.71.0): ejecutor dinamico de carreras TOCTOU.</td></tr><tr><td>race_trace</td><td>v0.70.0</td><td>RACE-TRACE (v0.70.0)</td></tr><tr><td>re_engine</td><td></td><td>REVERSE: ingenieria inversa nivel 2 (sobre BIN-AUDIT).</td></tr><tr><td>recon</td><td></td><td>Basic Recon Module</td></tr><tr><td>reg_bot</td><td>v0.68.0</td><td>REG-BOT (v0.68.0, AB-DIFF universal)</td></tr><tr><td>regress</td><td></td><td>CODEX-REGRESS (alcance reducido: Regression Corpus + ejecucion).</td></tr><tr><td>report_export</td><td></td><td>Reportes exportables del Hunter: TXT, JSON y PDF.</td></tr><tr><td>repro_engine</td><td>v0.91</td><td>REPRODUCTION ENGINE v0.91 — etapa 21 del roadmap</td></tr><tr><td>research_memory</td><td>v0.81.1</td><td>RESEARCH-MEMORY (v0.81.1): memoria de investigacion por</td></tr><tr><td>retro_hunt</td><td>v0.51.0</td><td>RETRO-HUNT (v0.51.0) — CodexRC</td></tr><tr><td>saml_audit</td><td>v0.71.0</td><td>SAML-DEFENSE (v0.71.0): auditor SAML/XML de PHP.</td></tr><tr><td>self_tune</td><td></td><td>AUTOCORRECCION: el Hunter recuerda que rindio y ajusta su propio gasto.</td></tr><tr><td>semantic_channels</td><td>v0.80</td><td>Canales de observacion de SEMANTIC-CACHE (v0.80).</td></tr><tr><td>semantic_core</td><td>v0.58.0</td><td>SEMANTIC CORE (v0.58.0) — Nivel 0: identidad canonica de recursos.</td></tr><tr><td>semantic_dimension</td><td>v0.80</td><td>Fase 2 de SEMANTIC-CACHE: localizacion de dimension y</td></tr><tr><td>semantic_engine</td><td>v0.80</td><td>SEMANTIC-CACHE (v0.80): motor de desacuerdos semanticos.</td></tr><tr><td>semantic_judge</td><td>v0.80</td><td>Juez determinista de SEMANTIC-CACHE (v0.80).</td></tr><tr><td>semantic_models</td><td>v0.80</td><td>Modelos de datos de SEMANTIC-CACHE (v0.80).</td></tr><tr><td>sqli_bait</td><td></td><td>SQLI-BAIT: deteccion avanzada de inyeccion SQL en la superficie de la app.</td></tr><tr><td>ssa</td><td></td><td>SSA-lite: grafo de versiones def-use para TAINT-TRACE.</td></tr><tr><td>ssti_bait</td><td></td><td>SSTI-BAIT: bateria dedicada de inyeccion de plantillas con FINGERPRINT.</td></tr><tr><td>state</td><td></td><td>Estado individual por operador/IA.</td></tr><tr><td>state_correlation</td><td>v0.78.0</td><td>STATE-CORRELATION (v0.78.0): un veredicto por target, no por</td></tr><tr><td>stealth_bait</td><td></td><td>STEALTH-BAIT: caza de superficie oculta para blancos blindados.</td></tr><tr><td>taint_trace</td><td></td><td>TAINT-TRACE: analisis de flujo de datos (taint) sobre codigo fuente PHP.</td></tr><tr><td>tech_detect</td><td></td><td>Basic Technology Detection (html.parser)</td></tr><tr><td>universal_engine</td><td>v0.52.0</td><td>UNIVERSAL-ENGINE (v0.52.0) — CodexRC</td></tr><tr><td>vdp_fresh</td><td>v0.61.0</td><td>v0.61.0 VDP-FRESH: cazar los VDP RECIEN AGREGADOS a Patchstack.</td></tr><tr><td>vdp_watcher</td><td>v0.62.6</td><td>VDP-FRESH WATCHER (v0.62.6).</td></tr><tr><td>vendor_farm</td><td></td><td>VENDOR-FARM: descubre familias de plugins de UN MISMO vendor con</td></tr><tr><td>veritas</td><td></td><td>VERITAS: verificacion de XSS con navegador real (Chrome headless).</td></tr><tr><td>vision_gate</td><td>v0.69.0</td><td>VISION-GATE (v0.69.0): clasificador visual de challenges via Gemini.</td></tr><tr><td>waf_guard</td><td>v0.24.0</td><td>GHOST-SHIELD (evasion WAF con memoria, v0.24.0)</td></tr><tr><td>wcd404_probe</td><td>v0.96.0</td><td>WCD-404-PROBE (v0.96.0): el oraculo de la cache que guarda 404s.</td></tr><tr><td>wcd_bait</td><td>v0.86.0</td><td>v0.86.0 WCD-CACHE-KEY (Web Cache Deception)</td></tr><tr><td>wide_corpus</td><td>v0.48.0</td><td>v0.48.0 WIDE-CORPUS: corpus de caza = TODOS los plugins wordpress.org</td></tr><tr><td>zombies</td><td></td><td>ZOMBIE-KILL — mata procesos zombis y duplicados del backend CodexRC.</td></tr>
+</table>
+</body></html>

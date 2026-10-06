@@ -33,8 +33,8 @@ sys.path.insert(0, os.path.join(HERE, ".."))
 from core import plugin_batch  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
-CORPUS = os.path.join(ROOT, "wide_corpus.json")
-VDP = os.path.join(ROOT, "vdp_mapa.json")
+CORPUS = os.path.join(ROOT, "data", "wide_corpus.json")
+VDP = os.path.join(ROOT, "data", "vdp_mapa.json")
 DONE = os.path.join(ROOT, "hechos", "retro_done.txt")
 OUT = os.path.join(ROOT, "hechos", "retro_results.json")
 

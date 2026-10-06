@@ -497,9 +497,15 @@ def build_baseline(corpus: str) -> Dict[str, Any]:
 
 # ------------------------------------------------------------------ escaneo
 
+_DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DEFAULT_BASELINE = os.path.join(_DATA_DIR, "pattern_baseline.json")
+
+
 def scan_path(path: str, top: int = 20,
-              baseline_file: str = "pattern_baseline.json"
+              baseline_file: str = None
               ) -> List[Dict[str, Any]]:
+    baseline_file = baseline_file or DEFAULT_BASELINE
     bl = {}
     if os.path.exists(baseline_file):
         try:
@@ -531,7 +537,7 @@ if __name__ == "__main__":
         sys.exit(1)
     if args[0] == "--baseline":
         st = build_baseline(args[1])
-        json.dump(st, open("pattern_baseline.json", "w"), indent=2)
+        json.dump(st, open(DEFAULT_BASELINE, "w"), indent=2)
         print(json.dumps(st, indent=2))
         sys.exit(0)
     p, asjson, n = args[0], "--json" in args, 20

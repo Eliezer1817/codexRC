@@ -901,7 +901,7 @@ def api_hunt_status():
     out = {"wide": {}, "retro": {}}
     w = out["wide"]
     try:
-        corpus = json.load(open(ROOT / "wide_corpus.json"))
+        corpus = json.load(open(ROOT / "data" / "wide_corpus.json"))
         w["total_corpus"] = corpus.get("total") or len(corpus.get("plugins", []))
     except Exception:
         w["total_corpus"] = 3260
@@ -909,7 +909,7 @@ def api_hunt_status():
     w["ultimos"] = _tail(ROOT / "hechos" / "wide_hunt.log" if (ROOT / "hechos" / "wide_hunt.log").exists() else ROOT / "hechos" / "wide_hunt_results.json.jsonl")
     r = out["retro"]
     try:
-        corpus_r = json.load(open(ROOT / "wide_corpus.json"))
+        corpus_r = json.load(open(ROOT / "data" / "wide_corpus.json"))
         cooldown = "2026-06-01"
         r["total_cola"] = sum(
             1 for p in corpus_r.get("plugins", [])

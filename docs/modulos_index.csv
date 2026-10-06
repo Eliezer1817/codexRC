@@ -1,0 +1,103 @@
+modulo,version_introducida,descripcion
+__init__,,codexRC core package
+ab_diff,v0.68.0,AB-DIFF universal (v0.68.0)
+adaptive_hunt,v0.81.0,ADAPTIVE-HUNT (v0.81.0): la capa epistemica.
+arsenal,v0.55.0,"ARSENAL v0.55.0 — dos niveles: BASICO (verde, sin candado) y EXTREMO (rojo, contrasena)."
+async_lane,v0.23.0,"SLIPSTREAM (carril async, v0.23.0)"
+auth,,Authentication Module (Termux friendly)
+bac_proof,v0.67.0,"BAC-PROOF (v0.67.0, AUTHZ-PROOF capa 4)"
+bin_audit,,"BIN-AUDIT: analisis binario/nativo, mas alla del navegador."
+brain,,CEREBRO: la capa de inteligencia determinista del Hunter.
+cache_bait,,CACHE-BAIT: bateria dedicada de cache poisoning y cache deception.
+cache_baseline,v0.79.0,CACHE-BASELINE (v0.79.0): clasifica el baseline del target.
+cache_controls,v0.79.0,CACHE-CONTROLS (v0.79.0): explicaciones alternativas ANTES
+cache_correlation,v0.79.0,CACHE-CORRELATION (v0.79.0): el orquestador.
+cache_fingerprint,v0.79.0,CACHE-FINGERPRINT (v0.79.0): huella SOLO de senales
+cache_semantic,v0.79.0,CACHE-SEMANTIC (v0.79.0): relacion entre Request A y Request B.
+cfg,v0.58.1,SEMANTIC CORE (v0.58.1) — Nivel 1: CFG intra-funcion + dominancia.
+chain,,"ENCADENAR HALLAZGOS: el valor real esta en las CADENAS, no en piezas."
+cl0_probe,v0.87.0,v0.87.0 CL.0-SINGLE-TIER (Request Smuggling CL.0)
+connection_state,v0.77.0,CONNECTION-STATE AUDIT (v0.77.0): ¿deja una peticion ambigua
+cov_bait,,COV-BAIT v2: caza guiada por COBERTURA DE CODIGO + MOTOR DE MUTACION.
+crc_probe,v0.90.0,v0.90.0 CROSS-REQUEST CORRELATION
+cross_layer,v0.84.0,v0.84.0 CROSS-LAYER CORRELATION
+crown_chain,v0.95.0,v0.95.0 CROWN CHAIN — INTEGRACION AL HUNTER
+cspt_scan,v0.71.0,CSPT-SCAN (v0.71.0): Client-Side Path Traversal.
+cve_matcher,,CVE Matcher Module
+decompile,v0.36,DECOMPILE: descompilacion parcial nivel 3 (bytecode DEX -> pseudocodigo).
+deep_scan,,Deep Scan Module
+desync_hunt,v0.83.0,DESYNC-HUNT (v0.83.0): investigacion DESYNC sobre el
+diff_hunt,v0.45.0,DIFF-HUNT (v0.45.0)
+dossier_hunt,v0.96.1,DOSSIER-HUNT (v0.96.1) — caza con las clases Q4-2026
+edge_profile,v0.75.0,EDGE-PROFILE (v0.75.0): caracteriza el CONTRATO del edge.
+edgesync,v0.74.0,EDGESYNC-HUNT (v0.74.0): SONDA-DE-CORRELACION.
+escalada,v0.28,ESCALADA: que hacer DESPUES del aviso critico.
+evidence,v0.47.0,EVIDENCE-CHAIN + ABOGADOS (v0.47.0)
+evidence_package,v0.94.0,v0.94.0 EVIDENCE PACKAGE
+experiment_catalog,v0.81.0,CATALOGO DE EXPERIMENTOS (v0.81.0): sondas HTTP de solo
+experiment_graph,v0.83.0,EXPERIMENT-GRAPH (v0.83.0): grafo dirigido de
+experiment_selector,v0.82,SELECTOR DE EXPERIMENTOS (v0.82): grafo de experimentos.
+fp_autoclose,v0.44.0,FP-AUTO-CLOSE (v0.44.0)
+fp_elimination,v0.93.0,v0.93.0 FP-ELIMINATION
+fp_memory,v0.66.0,"FP-MEMORIA (v0.66.0, AUTHZ-PROOF capa 5)"
+gates_audit,v0.43.0,GATES-AUDIT (v0.43.0)
+ghostgate,,"Modulo GHOSTGATE (Cloudflare relay, Termux friendly)"
+graphql_bait,,GRAPHQL: bateria dedicada contra endpoints GraphQL ocultos.
+h2_probe,v0.88.0,v0.88.0 H2-TRANSLATION (Parser Differential)
+hunt_wide,v0.48.0,v0.48.0 WIDE-HUNT: caza sobre el corpus COMPLETO wordpress.org (>=5k installs).
+hunter,v0.57.5,"Hunter (FACHADA, v0.57.5)"
+hunter_base,,Motor de descubrimiento (arana + inventario de parametros) y corpus de
+hunter_blind,,"from typing import Any, Callable, Dict, List, Optional, Set, Tuple"
+hunter_deep,v0.57.2,Caza profunda multi-vector. Extraida de hunter.py (v0.57.2).
+hunter_spider,v0.57.2,Arana de descubrimiento: mapa paginas/params/endpoints. Extraida de
+hunter_xss,,"from typing import Any, Callable, Dict, List, Optional, Set, Tuple"
+hunter_xsspro,v0.20.0,"from typing import Any, Callable, Dict, List, Optional, Set, Tuple"
+hypothesis_graph,v0.81.0,HYPOTHESIS-GRAPH (v0.81.0): hipotesis explicativas de una
+impact_probe,v0.92.0,v0.92.0 IMPACT CORRELATION
+lab_ab_site,v0.68.0,LAB-AB-SITE (v0.68.0): sitio NO-WordPress de prueba
+magic_confusion,v0.96.0,MAGIC-CONFUSION (v0.96.0): extension vs contenido en rutas de media.
+mc_probe,v0.89.0,v0.89.0 MULTI-CONNECTION (Efecto de Segundo Orden)
+normalization_audit,v0.76.0,NORMALIZATION-AUDIT (v0.76.0): que representacion recibe el
+observe,,"CODEX-OBSERVE (Fase 1, alcance reducido)."
+path_bait,,PATH-BAIT: bateria dedicada de LFI / path traversal (PAGA en Patchstack).
+pattern_match,,CVE-MATCH: aprendizaje de patrones globales sobre codigo PHP.
+pipeline,,Pipeline Orchestrator
+plugin_batch,v0.42.0,PLUGIN-BATCH (v0.42.0)
+poi_reach,v0.96.1,POI-REACH (v0.96.1): Object Injection con alcance y gadget chain.
+race_proof,v0.71.0,RACE-PROOF (v0.71.0): ejecutor dinamico de carreras TOCTOU.
+race_trace,v0.70.0,RACE-TRACE (v0.70.0)
+re_engine,,REVERSE: ingenieria inversa nivel 2 (sobre BIN-AUDIT).
+recon,,Basic Recon Module
+reg_bot,v0.68.0,"REG-BOT (v0.68.0, AB-DIFF universal)"
+regress,,CODEX-REGRESS (alcance reducido: Regression Corpus + ejecucion).
+report_export,,"Reportes exportables del Hunter: TXT, JSON y PDF."
+repro_engine,v0.91,REPRODUCTION ENGINE v0.91 — etapa 21 del roadmap
+research_memory,v0.81.1,RESEARCH-MEMORY (v0.81.1): memoria de investigacion por
+retro_hunt,v0.51.0,RETRO-HUNT (v0.51.0) — CodexRC
+saml_audit,v0.71.0,SAML-DEFENSE (v0.71.0): auditor SAML/XML de PHP.
+self_tune,,AUTOCORRECCION: el Hunter recuerda que rindio y ajusta su propio gasto.
+semantic_channels,v0.80,Canales de observacion de SEMANTIC-CACHE (v0.80).
+semantic_core,v0.58.0,SEMANTIC CORE (v0.58.0) — Nivel 0: identidad canonica de recursos.
+semantic_dimension,v0.80,Fase 2 de SEMANTIC-CACHE: localizacion de dimension y
+semantic_engine,v0.80,SEMANTIC-CACHE (v0.80): motor de desacuerdos semanticos.
+semantic_judge,v0.80,Juez determinista de SEMANTIC-CACHE (v0.80).
+semantic_models,v0.80,Modelos de datos de SEMANTIC-CACHE (v0.80).
+sqli_bait,,SQLI-BAIT: deteccion avanzada de inyeccion SQL en la superficie de la app.
+ssa,,SSA-lite: grafo de versiones def-use para TAINT-TRACE.
+ssti_bait,,SSTI-BAIT: bateria dedicada de inyeccion de plantillas con FINGERPRINT.
+state,,Estado individual por operador/IA.
+state_correlation,v0.78.0,"STATE-CORRELATION (v0.78.0): un veredicto por target, no por"
+stealth_bait,,STEALTH-BAIT: caza de superficie oculta para blancos blindados.
+taint_trace,,TAINT-TRACE: analisis de flujo de datos (taint) sobre codigo fuente PHP.
+tech_detect,,Basic Technology Detection (html.parser)
+universal_engine,v0.52.0,UNIVERSAL-ENGINE (v0.52.0) — CodexRC
+vdp_fresh,v0.61.0,v0.61.0 VDP-FRESH: cazar los VDP RECIEN AGREGADOS a Patchstack.
+vdp_watcher,v0.62.6,VDP-FRESH WATCHER (v0.62.6).
+vendor_farm,,VENDOR-FARM: descubre familias de plugins de UN MISMO vendor con
+veritas,,VERITAS: verificacion de XSS con navegador real (Chrome headless).
+vision_gate,v0.69.0,VISION-GATE (v0.69.0): clasificador visual de challenges via Gemini.
+waf_guard,v0.24.0,"GHOST-SHIELD (evasion WAF con memoria, v0.24.0)"
+wcd404_probe,v0.96.0,WCD-404-PROBE (v0.96.0): el oraculo de la cache que guarda 404s.
+wcd_bait,v0.86.0,v0.86.0 WCD-CACHE-KEY (Web Cache Deception)
+wide_corpus,v0.48.0,v0.48.0 WIDE-CORPUS: corpus de caza = TODOS los plugins wordpress.org
+zombies,,ZOMBIE-KILL — mata procesos zombis y duplicados del backend CodexRC.

@@ -21,8 +21,15 @@ from core.hunter_xss import XSSHunter
 from core.hunter_blind import BlindXSS
 from core.hunter_xsspro import XSSPro
 
+# CORONA (05/10/2026): la cadena completa del roadmap
+# desync (deteccion -> repro -> state-effect ->
+# cross-connection -> impacto) queda disponible desde
+# la fachada del Hunter. Los modulos NO se tocaron:
+# crown_chain solo orquesta.
+from core.crown_chain import hunt_chain as CrownChain
+
 __all__ = [
     "Log", "SKIP_EXT", "JS_SINK_RE", "JS_SOURCE_RE", "JS_ENDPOINT_RE",
     "FORM_INPUT_TYPES", "_norm", "Spider", "DeepHunter",
-    "XSSHunter", "BlindXSS", "XSSPro",
+    "XSSHunter", "BlindXSS", "XSSPro", "CrownChain",
 ]

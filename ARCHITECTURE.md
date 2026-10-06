@@ -69,7 +69,7 @@ Cadena de evidencia, en orden:
   archivos con mismo basename pisaban el analisis del otro).
 - `fp_autoclose.py`: cierra falsos positivos conocidos.
 - `pattern_match.py` CVE-MATCH: patrones ponderados, no firmas fijas;
-  cada hallazgo cita la baseline global (pattern_baseline.json).
+  cada hallazgo cita la baseline global (data/pattern_baseline.json).
 - `veritas.py`: navegador REAL contra falsos positivos. Si chrome falta,
   `available()` = False y todo lo demas sigue (nunca crash).
 - `observe.py` / `regress.py` (CODEX-OBSERVE / CODEX-REGRESS): corpus de

@@ -295,7 +295,8 @@ REST_RE = re.compile(r"register_rest_route\s*\(", re.I)
 PERM_TRUE_RE = re.compile(r"permission_callback['\"]?\s*=>\s*"
                           r"(__return_true|'__return_true')")
 FUNC_RE = re.compile(
-    r"(?:public|protected|private|static|\s)*\s*function\s+(\w+)\s*\(")
+    r"(?:public\s+|protected\s+|private\s+|static\s+|"
+    r"abstract\s+|final\s+)*function\s+(\w+)\s*\(")
 
 
 def _php_files(root: str) -> List[str]:
@@ -502,14 +503,49 @@ def scan_path(root: str) -> Dict[str, Any]:
     return audit(root)
 
 
-def _line_in_handler(rec: Dict[str, Any], file_: str, line: int) -> Optional[Dict[str, Any]]:
-    """True si file:line cae dentro del cuerpo dictaminado de un handler."""
+def _line_in_handler(rec: Dict[str, Any], file_: str, line: int,
+                    root: str = ".") -> Optional[Dict[str, Any]]:
+    """True si file:line cae dentro del cuerpo REAL del callback.
+
+    Leccion RC-000270: la heuristica de 800 lineas se comia
+    funciones vecinas y regalaba POI-UNAUTH de otros handlers
+    (nopriv publico + sink en funcion admin del mismo archivo).
+    Cuerpo honesto: conteo de llaves desde la declaracion.
+    """
     if rec.get("archivo_callback") != file_:
         return None
     start = rec.get("linea_callback", 0)
-    # cuerpo heuristico: hasta 800 lineas
-    if start <= line <= start + 800:
-        return rec
+    if line < start:
+        return None
+    path = (file_ if os.path.isabs(file_)
+            else os.path.join(root, file_))
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as fh:
+            lines = fh.readlines()
+    except OSError:
+        return None
+    # declaracion: 'function' en la linea del callback (+/-1)
+    decl = None
+    for off in (0, -1, 1):
+        idx = start - 1 + off
+        if 0 <= idx < len(lines) and "function" in lines[idx]:
+            decl = idx
+            break
+    if decl is None:
+        return None
+    depth = 0
+    opened = False
+    for idx in range(decl, min(decl + 2000, len(lines))):
+        t = re.sub(r"'[^']*'|\"[^\"]*\"", "", lines[idx])
+        t = re.sub(r"//[^\n]*", "", t)
+        t = re.sub(r"/\*.*?\*/", "", t)
+        opens, closes = t.count("{"), t.count("}")
+        depth += opens - closes
+        if opens and not opened:
+            opened = True
+        if opened and depth <= 0:
+            # cierre real de la funcion: 1-based end = idx+1
+            return rec if decl + 1 <= line <= idx + 1 else None
     return None
 
 

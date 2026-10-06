@@ -12,8 +12,9 @@ suyo:
     python3 core/hunt_wide.py --shard 0/2    # ademas: repartir corpus
     python3 core/hunt_wide.py --shard 1/2
 
-Regla: el repo guarda CODIGO y datos publicos (vdp_mapa.json,
-wide_corpus.json); CODEXRC_HOME guarda HECHOS propios (hechos/,
+Regla: el repo guarda CODIGO y datos publicos (data/:
+vdp_mapa.json, wide_corpus.json); CODEXRC_HOME guarda HECHOS
+propios (hechos/,
 resultados). Dos IAs con distintos CODEXRC_HOME no comparten la
 cola de "ya auditados" ni se duplican hallazgos.
 """

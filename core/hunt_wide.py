@@ -24,8 +24,8 @@ sys.path.insert(0, os.path.join(HERE, ".."))
 from core import diff_hunt  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
-CORPUS = os.path.join(ROOT, "wide_corpus.json")
-VDP = os.path.join(ROOT, "vdp_mapa.json")
+CORPUS = os.path.join(ROOT, "data", "wide_corpus.json")
+VDP = os.path.join(ROOT, "data", "vdp_mapa.json")
 from core import state as _state
 DONE = _state.hechos("hunt_wide_done.txt")
 

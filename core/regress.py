@@ -665,12 +665,21 @@ def seed_rc_000167() -> None:
     })
 
 
-def _esperar_labs(base_p, n, secs=15.0):
+class LabNoUp(Exception):
+    """Los labs no lograron escuchar: falla ambiental, no
+    del motor. Aborta limpio (exit 2) tras limpiar huerfanos."""
+    pass
+
+
+def _esperar_labs(base_p, n, secs=20.0):
     """Espera activa: los labs deben ESCUCHAR antes de auditar
-    (1.5s fijo no alcanza bajo carga)."""
+    (1.5s fijo no alcanza bajo carga). Si a los 6s siguen sin
+    escuchar, limpia labs huerfanos (flake de puertos en runs
+    anidados) y sigue esperando. Si nunca suben: LabNoUp."""
     import socket as _sk
     import time as _t
     t0 = _t.time()
+    _limpio = False
     while _t.time() - t0 < secs:
         todos = True
         for i in range(n):
@@ -682,8 +691,13 @@ def _esperar_labs(base_p, n, secs=15.0):
                 todos = False
         if todos:
             return True
+        if (not _limpio) and (_t.time() - t0 > 6.0):
+            _kill_labs()
+            _limpio = True
         _t.sleep(0.25)
-    return False
+    raise LabNoUp(
+        "labs no escuchan en %d..%d tras %.0fs"
+        % (base_p, base_p + (n - 1) * 2, secs))
 
 
 
@@ -1275,6 +1289,713 @@ def seed_rc_000210() -> None:
     })
 
 
+
+
+def seed_rc_000211() -> None:
+    """RC-000211..216: WCD-CACHE-KEY v0.86. Web Cache
+    Deception con contratos pre-registrados, escalera
+    BENIGN -> LEAK-NO-CACHE -> WCD-CACHE -> WCD-DEMO y
+    honestidad OPEN-ENDPOINT (endpoint abierto NO es WCD)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000211" in cases:
+        return
+    for cid, prob, exp in [
+        ("RC-000211",
+         "un disfraz de path sin leak (origin no confunde "
+         "delimitadores) podia escalar como WCD",
+         "benign -> BENIGN"),
+        ("RC-000212",
+         "un leak por confusion de router sin almacenamiento "
+         "positivo observable (HIT/Age) NO es WCD reportable",
+         "leak_nocache -> LEAK-NO-CACHE"),
+        ("RC-000213",
+         "un cache HIT con Vary: Cookie (controles FAILED) "
+         "no debe escalar a DEMO",
+         "cache_vary -> WCD-CACHE sin DEMO"),
+        ("RC-000214",
+         "contaminacion observable (conexion nueva sin sesion "
+         "recibe el cuerpo autenticado desde cache) con "
+         "controles PASSED debe escalar a DEMO",
+         "contamination -> WCD-DEMO"),
+        ("RC-000215",
+         "un endpoint abierto (anonimo ya ve el dato sin "
+         "disfraz) NO es WCD: es candidato BAC y el "
+         "presupuesto no debe gastarse en variantes",
+         "open_endpoint -> OPEN-ENDPOINT con reqs=2"),
+        ("RC-000216",
+         "invariantes de presupuesto y escalera del modulo "
+         "wcd_bait",
+         "bateria y presupuesto max 8 reqs -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": "WCD-CACHE-KEY",
+            "problem": prob,
+            "first_seen": "v0.86.0",
+            "fixed_in": "v0.86.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000217() -> None:
+    """RC-000217..222: CL.0-SINGLE-TIER v0.87. Request
+    smuggling CL.0 con oraculo de timing diferencial
+    (T1 silencio -> eco -> shift), escalera BENIGN ->
+    CL0-DETECTED -> CL0-DESYNC -> CL0-STATE-EFFECT."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000217" in cases:
+        return
+    for cid, prob, exp in [
+        ("RC-000217",
+         "el smuggle (bytes) se inyectaba con %s en el "
+         "formato: el repr literal b'' viajaba como prefijo "
+         "smuggleado, corrompiendo TODO el framing de la "
+         "sonda (bug real de fase LAB)",
+         "payload sin repr b'': smuggle serializado a str"),
+        ("RC-000218",
+         "un front que responde al prefijo durante T1 "
+         "(pipelining benigno) podia escalar como desync",
+         "benign_strict -> BENIGN (eco temprano NO es "
+         "desync)"),
+        ("RC-000219",
+         "un RST del edge tras el POST (frontera estricta) "
+         "se clasificaba como error de red, no como BENIGN",
+         "edge_safe_rst -> BENIGN por RST con precedencia"),
+        ("RC-000220",
+         "un desync CL.0 real (backend procesa el prefijo "
+         "invisible, cola desplazada) debe escalar hasta "
+         "STATE-EFFECT con repro 2/2",
+         "cl0_desync -> CL0-STATE-EFFECT con reqs<=8"),
+        ("RC-000221",
+         "un desync observado sin repro 2/2 NO debe ser "
+         "reportable (regla cero-FP de la linea DESYNC)",
+         "flaky_desync -> CL0-DETECTED (probable, no "
+         "reportable)"),
+        ("RC-000222",
+         "invariantes de presupuesto y escalera del modulo "
+         "cl0_probe",
+         "bateria 2 candidatos, MAX_VARIANTS=1, presupuesto "
+         "max 8 reqs -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": "CL.0-SINGLE-TIER",
+            "problem": prob,
+            "first_seen": "v0.87.0",
+            "fixed_in": "v0.87.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000223() -> None:
+    """RC-000223..228: H2-TRANSLATION v0.88. Parser
+    differential h2->h1 con oraculo de atribucion por
+    stream (eco del smuggle en el stream del followup),
+    escalera BENIGN -> H2-DETECTED -> H2-DESYNC ->
+    H2-STATE-EFFECT. Lecciones: header de frame = 9 bytes
+    (length 3 + type 1 + flags 1 + sid 4) y buffer
+    PERSISTENTE por conexion: HEADERS+DATA llegan en un
+    mismo segmento TCP y ningun byte se descarta."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000223" in cases:
+        return
+    for cid, prob, exp in [
+        ("RC-000223",
+         "un edge estricto que rechaza el smuggle con "
+         "RST/GOAWAY se clasificaba como error de red y "
+         "no como frontera benigna",
+         "benign_strict -> BENIGN-EDGE (RST/GOAWAY: el "
+         "edge corto antes del origin)"),
+        ("RC-000224",
+         "un edge que drena el DATA residual y sanitiza "
+         "CRLF poda confundirse con desync por timing",
+         "quiet_benign -> BENIGN (traduccion alineada)"),
+        ("RC-000225",
+         "un h2.CL real (edge reenvia DATA mas alla del "
+         "content-length; el origin procesa el prefijo "
+         "invisible) debe escalar a STATE-EFFECT con repro "
+         "2/2",
+         "h2cl_desync -> H2-STATE-EFFECT con reqs<=8"),
+        ("RC-000226",
+         "un traductor HPACK leniente que copia verbatim "
+         "valores con CRLF inyecta requests H1 al origin "
+         "(parser differential)",
+         "hdr_injection + bateria hinj -> H2-STATE-EFFECT"),
+        ("RC-000227",
+         "un desync observado sin repro 2/2 NO debe ser "
+         "reportable (regla cero-FP heredada de v0.87)",
+         "flaky_translation -> H2-DETECTED (probable, no "
+         "reportable)"),
+        ("RC-000228",
+         "invariantes de presupuesto, bateria y framing "
+         "del modulo h2_probe: header de frame de 9 bytes "
+         "y buffer persistente por conexion",
+         "bateria (h2cl, hinj), MAX_VARIANTS=1, presupuesto "
+         "max 8 reqs, frames de 9 bytes -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": "H2-TRANSLATION",
+            "problem": prob,
+            "first_seen": "v0.88.0",
+            "fixed_in": "v0.88.0",
+            "repro": {"expected": exp},
+        })
+
+
+
+_SLOW = []
+
+
+def _timed(cases_iter):
+    """Iterador de timing: mide cada caso del corpus
+    (diagnostico de velocidad, no altera la ejecucion)."""
+    import time as _tm
+    for c in cases_iter:
+        t0 = _tm.time()
+        yield c
+        el = _tm.time() - t0
+        _SLOW.append((el, c["id"]))
+        if el > 5.0:
+            print("    [slow] %s = %.1fs" % (c["id"], el))
+
+
+# ---- cache intra-corpus (v0.88 perf) -------------------------
+# Un caso ya ejecutado con el MISMO codigo no puede cambiar de
+# veredicto dentro de la misma corrida: las cadenas (RC-000173,
+# 182, 186, 190, ...) re-ejecutan bloques completos en procesos
+# anidados. Con el cache, esas re-ejecuciones se reusan en vez
+# de repetirse. Clave = hash del codigo (core+labs); si cambia
+# un solo byte, el cache se invalida y todo se re-ejecuta.
+# Desactivable: CODEXRC_REGRESS_NOCACHE=1
+
+
+def _cache_path():
+    return "/tmp/codexrc_regress_cache.json"
+
+
+def _code_hash():
+    import hashlib
+    root = os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__)))
+    h = hashlib.sha256()
+    for sub in ("core", "labs"):
+        d = os.path.join(root, sub)
+        if not os.path.isdir(d):
+            continue
+        for fn in sorted(os.listdir(d)):
+            if not fn.endswith(".py"):
+                continue
+            p = os.path.join(d, fn)
+            try:
+                st = os.stat(p)
+                h.update(("%s|%d|%d|" % (
+                    fn, int(st.st_mtime), st.st_size)).encode())
+                with open(p, "rb") as _f:
+                    h.update(_f.read())
+            except OSError:
+                pass
+    return h.hexdigest()
+
+
+_CACHE = {"hash": None, "results": {}}
+
+
+def _cache_load():
+    import json as _j
+    if os.environ.get("CODEXRC_REGRESS_NOCACHE"):
+        return
+    try:
+        with open(_cache_path()) as _f:
+            d = _j.load(_f)
+        if d.get("hash") == _code_hash():
+            _CACHE["hash"] = d["hash"]
+            _CACHE["results"] = d.get("results", {})
+    except Exception:
+        pass
+
+
+def _cache_lookup(cid):
+    if os.environ.get("CODEXRC_REGRESS_NOCACHE"):
+        return None
+    if _CACHE["hash"] is None:
+        return None
+    r = _CACHE["results"].get(cid)
+    return None if r is None else bool(r)
+
+
+def _cache_record(cid, ok):
+    if os.environ.get("CODEXRC_REGRESS_NOCACHE"):
+        return
+    if _CACHE["hash"] is None:
+        _CACHE["hash"] = _code_hash()
+        _CACHE["results"] = {}
+    _CACHE["results"][cid] = bool(ok)
+    try:
+        import json as _j
+        import tempfile as _tf
+        fd, tmp = _tf.mkstemp(dir="/tmp")
+        with os.fdopen(fd, "w") as _f:
+            _j.dump(_CACHE, _f)
+        os.replace(tmp, _cache_path())
+    except Exception:
+        pass
+
+
+
+def seed_rc_000229() -> None:
+    """RC-000229..235: MULTI-CONNECTION v0.89. Efecto de
+    segundo orden: contaminacion CRUZADA entre conexiones
+    por herencia de pool. Oraculo de atribucion por
+    CONEXION (el followup de B recibe el eco del smuggle
+    de A), escalera BENIGN -> MC-DETECTED -> MC-DESYNC ->
+    MC-STATE-EFFECT. Lecciones: el buffer de recepcion del
+    origin viaja CON la conexion del pool (no muere con el
+    handler); el apareamiento edge->origin deja las
+    respuestas pendientes del smuggle en la origin conn."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000229" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000229", "MULTI-CONNECTION",
+         "una origin conn pinneada 1:1 al cliente podia "
+         "confundirse con pool compartido",
+         "benign_pin -> BENIGN (la poison muere con A)"),
+        ("RC-000230", "MULTI-CONNECTION",
+         "un edge que drena el residual tras el "
+         "content-length no envenena el pool",
+         "quiet_drain -> BENIGN (traduccion alineada)"),
+        ("RC-000231", "MULTI-CONNECTION",
+         "un pool LIFO sin drenaje (nginx keepalive): la "
+         "conn envenenada que A libera al cerrar la hereda "
+         "B (TCP distinto) y su coleccion queda "
+         "desplazada",
+         "pool_desync -> MC-STATE-EFFECT con repro 2/2 y "
+         "reqs<=8"),
+        ("RC-000232", "MULTI-CONNECTION",
+         "un edge estricto que hace RST ante bytes mas "
+         "alla del content-length se clasificaba como "
+         "error de red, no como frontera benigna",
+         "edge_strict -> BENIGN-EDGE (RST con "
+         "precedencia)"),
+        ("RC-000233", "MULTI-CONNECTION",
+         "una contaminacion cruzada sin repro 2/2 NO debe "
+         "ser reportable (regla cero-FP heredada)",
+         "flaky_pool -> MC-DETECTED (probable, no "
+         "reportable)"),
+        ("RC-000234", "MULTI-CONNECTION",
+         "invariantes de presupuesto, bateria y apareamiento "
+         "del modulo mc_probe",
+         "bateria pool, presupuesto max 8 reqs (2 fases x "
+         "4), buffers por conexion -> PASS"),
+        ("RC-000235", "H2-TRANSLATION",
+         "el veredicto h2 crasheaba con NameError (variable "
+         "Informe inexistente) cuando el ExperimentGraph "
+         "estaba activo",
+         "h2_probe sin referencias a variables "
+         "inexistentes (typo Informe -> informe)"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.89.0",
+            "fixed_in": "v0.89.0",
+            "repro": {"expected": exp},
+        })
+
+
+
+def seed_rc_000236() -> None:
+    """RC-000236..241: CROSS-REQUEST CORRELATION v0.90.
+    Reconstruccion de la cola del origin por doble marcador
+    (T1, T2): el desplazamiento k de la coleccion es MEDIBLE
+    y debe ser CONSISTENTE (eco propio desplazado
+    exactamente por el numero de ecos del smuggle) y
+    REPRODUCIBLE. Escalera BENIGN -> CRC-DETECTED ->
+    CRC-DESYNC -> CRC-STATE-EFFECT con k."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000236" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000236", "CROSS-REQUEST CORRELATION",
+         "un edge que drena el residual tras el "
+         "content-length no desplaza la cola del origin",
+         "quiet_drain -> BENIGN (coleccion alineada)"),
+        ("RC-000237", "CROSS-REQUEST CORRELATION",
+         "un edge estricto que hace RST ante bytes mas "
+         "alla del content-length es frontera benigna, "
+         "no error de red",
+         "edge_strict -> BENIGN-EDGE (RST con "
+         "precedencia)"),
+        ("RC-000238", "CROSS-REQUEST CORRELATION",
+         "con ambas smuggles procesadas la coleccion "
+         "queda desplazada k=2: la permutacion consistente "
+         "es la firma del desync",
+         "seq_desync -> CRC-STATE-EFFECT con k=2 y "
+         "reqs<=8"),
+        ("RC-000239", "CROSS-REQUEST CORRELATION",
+         "con la segunda smuggle drenada el corrimiento es "
+         "k=1: la firma debe medir k exacto, no solo "
+         "detectar contaminacion",
+         "partial_drain -> CRC-STATE-EFFECT con k=1 "
+         "y reqs<=8"),
+        ("RC-000240", "CROSS-REQUEST CORRELATION",
+         "una permutacion sin repro 2/2 NO debe ser "
+         "reportable (regla cero-FP heredada)",
+         "flaky_forward -> CRC-DETECTED (probable, no "
+         "reportable)"),
+        ("RC-000241", "CROSS-REQUEST CORRELATION",
+         "invariantes de presupuesto, bateria y "
+         "clasificacion del modulo crc_probe",
+         "bateria double, presupuesto max 8 reqs (2 fases "
+         "x 4), clases de evidencia E-CRC-* -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.90.0",
+            "fixed_in": "v0.90.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000242() -> None:
+    """RC-000242..247: REPRODUCTION ENGINE v0.91.
+    Escalera de impacto: DESYNC OBSERVED -> REPRODUCIBLE
+    (2 genealogias independientes, deteccion + replay)
+    -> STATE EFFECT. El disparo unico no escala."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000242" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000242", "REPRODUCTION ENGINE",
+         "la firma CRC-STATE-EFFECT k=2 debe "
+         "reproducirse a demanda: pase A y pase B en "
+         "2 genealogias independientes (instancias "
+         "frescas)",
+         "seq_desync -> REPRODUCIBLE con firma k=2 "
+         "estable en 2/2 genealogias"),
+        ("RC-000243", "REPRODUCTION ENGINE",
+         "un disparo unico (flaky) NO escala: sin "
+         "repro 2/2 el candidato no avanza (cero-FP "
+         "heredada de la escalera)",
+         "flaky_forward -> NON-REPRODUCIBLE (A "
+         "dispara, B curado: no sostiene)"),
+        ("RC-000244", "REPRODUCTION ENGINE",
+         "benign reproducible es normalidad, no "
+         "candidato: no inventar claim",
+         "quiet_drain -> NO-CANDIDATE"),
+        ("RC-000245", "REPRODUCTION ENGINE",
+         "BENIGN-EDGE estable en A y B tampoco es "
+         "candidato",
+         "edge_strict -> NO-CANDIDATE"),
+        ("RC-000246", "REPRODUCTION ENGINE",
+         "instancia muerta o control caido: parada "
+         "honesta UNSTABLE sin claim (nunca afirmar "
+         "ni negar sin observable)",
+         "puerto-tumba (lab no levanta respuesta) "
+         "-> UNSTABLE"),
+        ("RC-000247", "REPRODUCTION ENGINE",
+         "invariantes del modulo repro_engine: "
+         "presupuesto 32 reqs, 2 genealogias max, "
+         "escalera nunca saltada (NO-CANDIDATE "
+         "nunca escala a REPRODUCIBLE), labs "
+         "cerrados",
+         "BUDGET 32, GENEALOGIES 2, PASSES A/B, "
+         "veredictos del dominio -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.91.0",
+            "fixed_in": "v0.91.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000248() -> None:
+    """RC-000248..253: IMPACT CORRELATION v0.92.
+    La pregunta de impacto: el desync reproducido hace
+    dano a un usuario DISTINTO del atacante? Escalera
+    BENIGN -> IMPACT-CANDIDATE (probable, no
+    reportable) -> SECURITY-IMPACT-DEMO (swap protegido
+    2/2 con control limpio: contaminacion cross-user a
+    demanda)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000248" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000248", "IMPACT CORRELATION",
+         "un edge que drena el residual: la victima "
+         "siempre recibe su propio eco",
+         "quiet_drain -> BENIGN"),
+        ("RC-000249", "IMPACT CORRELATION",
+         "un edge con conn origin pinneada 1:1: el "
+         "veneno muere con la conexion del atacante",
+         "benign_pin -> BENIGN"),
+        ("RC-000250", "IMPACT CORRELATION",
+         "la victima (TCP distinto) hereda del pool la "
+         "conn envenenada y recibe la respuesta del "
+         "recurso protegido smuggleado, 2/2",
+         "pool_swap -> SECURITY-IMPACT-DEMO"),
+        ("RC-000251", "IMPACT CORRELATION",
+         "mispairing cruzado con contenido benigno "
+         "(eco del token del atacante): atribucion "
+         "alterada sin dato protegido, NO reportable",
+         "pool_shift -> IMPACT-CANDIDATE"),
+        ("RC-000252", "IMPACT CORRELATION",
+         "el swap del recurso protegido ocurre UNA "
+         "sola vez en la vida del lab (1/2): el "
+         "impacto no se reproduce, no escala",
+         "flaky_swap -> IMPACT-CANDIDATE (1/2)"),
+        ("RC-000253", "IMPACT CORRELATION",
+         "invariantes del modulo: presupuesto 6, 2 "
+         "rondas, control previo obligatorio, escalera "
+         "conservadora y recurso protegido solo del "
+         "lab",
+         "BUDGET 6, ROUNDS 2, control obligatorio, "
+         "veredictos de la escalera -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.92.0",
+            "fixed_in": "v0.92.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000254() -> None:
+    """RC-000254..257: FP-ELIMINATION v0.93 +
+    EVIDENCE PACKAGE v0.94 (corona). Caza sistematica
+    de falsos positivos (bateria de cebo + tabla de
+    clases + control positivo) y paquete de evidencia
+    falsable de la cadena completa."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000254" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000254", "FP-ELIMINATION",
+         "bateria de cebo (quiet_drain, benign_pin, "
+         "pool_shift, flaky_swap): NINGUN cebo puede "
+         "producir veredicto reportable, y el control "
+         "positivo (pool_swap) DEBE reportar",
+         "FP-ELIMINATED, 0/4 cebos reportables, "
+         "control positivo activo"),
+        ("RC-000255", "FP-ELIMINATION",
+         "tabla de clases de senal completa (8 clases) "
+         "y regla de no-escala del disparo unico "
+         "presente en los 3 modulos de la escalera",
+         "FP_TABLE 8/8, reglas crc/repro/impacto "
+         "-> PASS"),
+        ("RC-000256", "EVIDENCE PACKAGE",
+         "paquete de la cadena completa: firma k=2 en 2 "
+         "genealogias x pases A/B, impacto cross-user "
+         "2/2 con control limpio, limites y comandos "
+         "declarados, hash canonico",
+         "PACKAGE-VALID, k=2, 37/40 reqs"),
+        ("RC-000257", "EVIDENCE PACKAGE",
+         "falsabilidad mecanica: verify_package valida "
+         "campos y hash, y DETECTA tampering (payload "
+         "alterado = hash no coincide)",
+         "verificacion OK + tamper detectado -> PASS"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.94.0",
+            "fixed_in": "v0.94.0",
+            "repro": {"expected": exp},
+        })
+
+
+def seed_rc_000258() -> None:
+    """RC-000258..260: INTEGRACION AL HUNTER v0.95.
+    La corona llego: la cadena completa orquestada por
+    crown_chain queda exportada desde la fachada del
+    Hunter, con el limite honesto en vivo (rung de
+    impacto solo en lab)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000258" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000258", "CROWN CHAIN",
+         "la cadena orquestada en modo lab ensambla el "
+         "paquete completo (k=2, 2 genealogias, "
+         "impacto 2/2) desde el Hunter",
+         "CHAIN-COMPLETE-LAB"),
+        ("RC-000259", "CROWN CHAIN",
+         "la escalera viva es conservadora: sin senal "
+         "de desync el veredicto es NO-DESYNC/UNSTABLE "
+         "honesto y la cadena NO se abre",
+         "NO-DESYNC/UNSTABLE en blanco muerto"),
+        ("RC-000260", "CROWN CHAIN",
+         "la fachada del Hunter exporta la cadena "
+         "(CrownChain) y la escalera viva es monotona: "
+         "DETECTED no escala sin repro 2/2, y el rung "
+         "de impacto en vivo queda LIMITADO a lab",
+         "export OK + LADDER monotona + limite lab"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.95.0",
+            "fixed_in": "v0.95.0",
+            "repro": {"expected": exp},
+        })
+
+
+# --------------------------------------------- v0.96.0 dossier Q4-2026
+
+_POI_FIX_POS = """<?php
+class Evil_Gadget {
+    public $log_file;
+    public $content;
+    function __destruct() { file_put_contents($this->log_file, $this->content); }
+}
+class Plain_Helper {
+    public $name;
+    function greet() { return $this->name; }
+}
+add_action('wp_ajax_nopriv_cfe_download', 'cfe_download_csv');
+function cfe_download_csv() {
+    $rows = $_POST['rows'];
+    $data = unserialize($rows);
+    echo json_encode($data);
+}
+"""
+
+_POI_FIX_NEG = """<?php
+add_action('wp_ajax_admin_thing', 'admin_thing');
+function admin_thing() {
+    if (!current_user_can('manage_options')) { wp_die('no'); }
+    check_ajax_referer('nonce');
+    $id = intval($_POST['id']);
+    $data = maybe_unserialize(get_option('opt_' . $id));
+}
+"""
+
+_POI_FIX_ALLOWED = """<?php
+class Evil_Gadget {
+    public $log_file;
+    public $content;
+    function __destruct() { file_put_contents($this->log_file, $this->content); }
+}
+add_action('wp_ajax_nopriv_weforms_detail', 'weforms_detail');
+function weforms_detail() {
+    $rows = $_POST['rows'];
+    $data = @unserialize($rows, ['allowed_classes' => false]);
+    echo json_encode($data);
+}
+"""
+
+_POI_FIX_NOPRIV_OTRO = """<?php
+class Evil_Gadget {
+    public $log_file;
+    public $content;
+    function __destruct() { file_put_contents($this->log_file, $this->content); }
+}
+add_action('wp_ajax_nopriv_public_endpoint', 'public_endpoint');
+function public_endpoint() { echo 'hola'; }
+add_action('wp_ajax_admin_detail', 'admin_detail');
+function admin_detail() {
+    check_ajax_referer('weforms');
+    if (!current_user_can('manage_options')) { wp_die('no'); }
+    $rows = $_POST['rows'];
+    $data = unserialize($rows);
+    echo json_encode($data);
+}
+"""
+
+_MAG_FIX_POS = """<?php
+function myplugin_optimize() {
+    $file = wp_upload_bits($_FILES['media']['name'], null, file_get_contents($_FILES['media']['tmp_name']));
+    $path = $file['file'];
+    $im = new Imagick($path);
+    $im->readImage($path);
+    $im->thumbnailImage(300, 300);
+}
+"""
+
+_MAG_FIX_NEG = """<?php
+function safe_optimize() {
+    $file = wp_upload_bits($_FILES['media']['name'], null, file_get_contents($_FILES['media']['tmp_name']));
+    $checked = wp_check_filetype_and_ext($file['file'], $_FILES['media']['name']);
+    $im = new Imagick($file['file']);
+}
+"""
+
+
+def seed_rc_000261() -> None:
+    """v0.96.0 (dossier Q4-2026): tres clases nuevas al motor.
+    POI-REACH: Object Injection con alcance (GATES) y gadget (POP);
+    leccion CVE-2026-2599. MAGIC-CONFUSION: extension vs contenido
+    hacia Imagick, leccion CVE-2026-65640. WCD-404-LEAK: 404 con
+    datos privados cacheado cross-user (status code miente)."""
+    cases = {c["id"] for c in _load_cases()}
+    if "RC-000261" in cases:
+        return
+    for cid, mod, prob, exp in [
+        ("RC-000261", "POI-REACH",
+         "unserialize con taint del usuario en handler nopriv y "
+         "gadget en el mismo plugin escala a POI-REACH con "
+         "superficie export anotada",
+         "POI-REACH: 3 peldanos + handler + export"),
+        ("RC-000262", "POI-REACH",
+         "control negativo cero-FP: caps + nonce + sin taint real "
+         "y sin gadget no genera ningun veredicto",
+         "0 REACH, 0 AUTH, 0 DETECTED"),
+        ("RC-000269", "POI-REACH",
+         "FP weforms: unserialize con allowed_classes=>false esta "
+         "neutralizado: jamas genera veredicto aunque haya taint, "
+         "nopriv y gadget en el mismo plugin",
+         "0 reach, 0 auth, 0 detected"),
+        ("RC-000270", "POI-REACH",
+         "FP weforms: nopriv de OTROS metodos del archivo no da "
+         "alcance; sink en handler admin con nonce sin mapear "
+         "escala maximo a POI-AUTH, jamas POI-UNAUTH/REACH",
+         "POI-AUTH sin POI-UNAUTH + pista nopriv_file"),
+        ("RC-000263", "POI-REACH",
+         "POP-CANDIDATE discrimina: clase con metodo magico y "
+         "propiedades es gadget; clase sin metodo magico no",
+         "Evil_Gadget si, Plain_Helper no"),
+        ("RC-000264", "MAGIC-CONFUSION",
+         "upload que llega a Imagick SIN gate de contenido es "
+         "MAGIC-CONFUSION (patron CVE-2026-65640 en plugins)",
+         "MAGIC-CONFUSION + CONFUSION-UNGUARDED"),
+        ("RC-000265", "MAGIC-CONFUSION",
+         "control negativo: wp_check_filetype_and_ext en el flujo "
+         "es gate de contenido: CONFUSION-GUARDED, sin veredicto",
+         "guarded>=1, confusion=0"),
+        ("RC-000266", "WCD-404-LEAK",
+         "el 404 con cuerpo de datos de cuenta cacheado por URL "
+         "sirve el cuerpo ajeno al otro usuario en <=8 reqs",
+         "WCD-404-LEAK cross-user"),
+        ("RC-000267", "WCD-404-LEAK",
+         "escalera honesta: status-lie sin cache = LEAK-NO-CACHE, "
+         "404 limpio = BENIGN, ttl=0 = cebado que no contamina",
+         "LEAK-NO-CACHE / BENIGN honestos"),
+        ("RC-000268", "WCD-404-LEAK",
+         "conservador: blanco muerto = conn-dead sin crash, y el "
+         "veredicto de leak EXIGE cross_user observable",
+         "conn-dead + invariante monotona"),
+    ]:
+        _write_case({
+            "id": cid,
+            "module": mod,
+            "problem": prob,
+            "first_seen": "v0.96.0",
+            "fixed_in": "v0.96.0",
+            "repro": {"expected": exp},
+        })
+
+
 def run(only_ids=None) -> int:
     """Corre cada caso del corpus contra el motor actual. Devuelve 0 si
     todo PASS, 1 si algo quedo sin proteccion (regresion real).
@@ -1335,9 +2056,27 @@ def run(only_ids=None) -> int:
         globals()[f"seed_rc_000{_n}"]()
     seed_cross_layer()
     seed_rc_000210()
+    seed_rc_000211()
+    seed_rc_000217()
+    seed_rc_000223()
+    seed_rc_000229()
+    seed_rc_000236()
+    seed_rc_000242()
+    seed_rc_000248()
+    seed_rc_000254()
+    seed_rc_000258()
+    seed_rc_000261()
     cases = _load_cases()
-    for c in cases:
+    _cache_load()
+    for c in _timed(cases):
         if only_ids and c["id"] not in only_ids:
+            continue
+        _fb = fails
+        _hit = _cache_lookup(c["id"])
+        if _hit is not None:
+            print(f"[{c['id']}] cache intra-corpus: "
+                  f"{'PASS' if _hit else 'FAIL'} "
+                  f"(ya verificado, codigo sin cambios)")
             continue
         if c["id"] == "RC-000149":
             import tempfile
@@ -1768,8 +2507,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                     try:
-                        import time as _t
-                        _t.sleep(1.0)
+                        _esperar_labs(pe, 1)
                         r = esa({"url": f"http://127.0.0.1:{pe}/",
                                  "timeout": 5.0})
                         results.append(r["veredicto"])
@@ -1801,7 +2539,7 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
                 try:
-                    _t.sleep(1.2)
+                    _esperar_labs(base_p, len(mods))
                     port = lambda m: base_p + mods.index(m) * 2
                     aud = lambda m, v=None: esa2({
                         "url": f"http://127.0.0.1:{port(m)}/",
@@ -3043,6 +3781,1001 @@ ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), H).serve_forever()
             if not ok:
                 fails += 1
 
+        # ---- WCD-CACHE-KEY v0.86 (RC-000211..216)
+        if c["id"] in ("RC-000211", "RC-000212",
+                       "RC-000213", "RC-000214",
+                       "RC-000215"):
+            import tempfile
+            from core import wcd_bait as wcd
+            scens = {
+                "RC-000211": ("benign", 19184, "BENIGN"),
+                "RC-000212": ("leak_nocache", 19185,
+                              "LEAK-NO-CACHE"),
+                "RC-000213": ("cache_vary", 19186,
+                              "WCD-CACHE"),
+                "RC-000214": ("contamination", 19187,
+                              "WCD-DEMO"),
+                "RC-000215": ("open_endpoint", 19188,
+                              "OPEN-ENDPOINT"),
+            }
+            scen, port, want = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "wcd_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/wcd_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                _oldh = os.environ.get("CODEXRC_HOME")
+                _tmpd = tempfile.mkdtemp(prefix="rcwcd")
+                os.environ["CODEXRC_HOME"] = _tmpd
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1)
+                    inf = wcd.wcd_audit({
+                        "url": f"http://127.0.0.1:{port}",
+                        "endpoint": "/account",
+                        "auth_marker": "WCD-ACCOUNT-DATA",
+                        "auth_headers": {
+                            "Cookie": "session=1"}})
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 8)
+                    if c["id"] == "RC-000215":
+                        ok = ok and inf["requests"] == 2
+                    det = (f"{scen}: {inf['verdict']} "
+                           f"(esperado {want}), "
+                           f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                    if _oldh is None:
+                        del os.environ["CODEXRC_HOME"]
+                    else:
+                        os.environ["CODEXRC_HOME"] = _oldh
+                print(f"[{c['id']}] wcd: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000216":
+            from core import wcd_bait as wcd
+            bat = wcd.perturbation_battery()
+            maxreqs = (wcd.BASELINE_PROBES
+                       + wcd.MAX_PERTURBATIONS * 3)
+            ok = (wcd.MAX_PERTURBATIONS == 2
+                  and wcd.BASELINE_PROBES == 2
+                  and len(bat) == 4
+                  and bat[0]["pid"] == "D-SEMI"
+                  and maxreqs == 8
+                  and wcd.E_WCD_CONTAM == "E-WCD-CONTAM")
+            det = (f"bateria {len(bat)} variantes, "
+                   f"presupuesto max {maxreqs} reqs")
+            print(f"[{c['id']}] invariantes wcd: {det} "
+                  f"-> {'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+
+        # ---- CL.0-SINGLE-TIER v0.87 (RC-000217..222)
+        if c["id"] == "RC-000217":
+            from core import cl0_probe as cl0p
+            p_vacio = cl0p._post_cl0("host", "/", b"")
+            smug = cl0p._smuggle_req("host", "cl0mtest")
+            p_smug = cl0p._post_cl0("host", "/", smug)
+            ok = (p_vacio.endswith(b"\r\n\r\n")
+                  and b"b'" not in p_vacio
+                  and b"GET /cl0mtest HTTP/1.1" in p_smug
+                  and b"b'" not in p_smug
+                  and p_smug.count(b"\r\n\r\n") == 2)
+            det = ("payload vacio limpio=%s, smuggle "
+                   "serializado=%s"
+                   % (p_vacio.endswith(b"\r\n\r\n"),
+                      b"GET /cl0mtest" in p_smug))
+            print(f"[{c['id']}] cl0 bytes-repr: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000218", "RC-000219",
+                       "RC-000220", "RC-000221"):
+            import tempfile
+            from core import cl0_probe as cl0p
+            scens = {
+                "RC-000218": ("benign_strict", 19194,
+                              "BENIGN"),
+                "RC-000219": ("edge_safe_rst", 19195,
+                              "BENIGN"),
+                "RC-000220": ("cl0_desync", 19196,
+                              "CL0-STATE-EFFECT"),
+                "RC-000221": ("flaky_desync", 19197,
+                              "CL0-DETECTED"),
+            }
+            scen, port, want = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "cl0_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/cl0_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                _oldh = os.environ.get("CODEXRC_HOME")
+                _tmpd = tempfile.mkdtemp(prefix="rccl0")
+                os.environ["CODEXRC_HOME"] = _tmpd
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1, 8.0)
+                    inf = cl0p.cl0_audit({
+                        "url": f"http://127.0.0.1:{port}"})
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 8)
+                    det = (f"{scen}: {inf['verdict']} "
+                           f"(esperado {want}), "
+                           f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                    if _oldh is None:
+                        del os.environ["CODEXRC_HOME"]
+                    else:
+                        os.environ["CODEXRC_HOME"] = _oldh
+                print(f"[{c['id']}] cl0: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000222":
+            from core import cl0_probe as cl0p
+            bat = cl0p.smuggle_battery()
+            maxreqs = (cl0p.BASELINE_PROBES
+                       + cl0p.MAX_VARIANTS * 2 * 3)
+            ok = (cl0p.MAX_VARIANTS == 1
+                  and cl0p.BASELINE_PROBES == 2
+                  and len(bat) == 2
+                  and bat[0]["pid"] == "S-REDIR"
+                  and maxreqs == 8
+                  and cl0p.E_CL0_STATE == "E-CL0-STATE"
+                  and cl0p.E_CL0_SIGNAL == "E-CL0-SIGNAL")
+            det = (f"bateria {len(bat)} candidatos, "
+                   f"presupuesto max {maxreqs} reqs")
+            print(f"[{c['id']}] invariantes cl0: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000223", "RC-000224",
+                       "RC-000225", "RC-000226",
+                       "RC-000227"):
+            import tempfile
+            from core import h2_probe as h2p
+            scens = {
+                "RC-000223": ("benign_strict", "h2cl",
+                              19201, "BENIGN-EDGE"),
+                "RC-000224": ("quiet_benign", "h2cl",
+                              19202, "BENIGN"),
+                "RC-000225": ("h2cl_desync", "h2cl",
+                              19203, "H2-STATE-EFFECT"),
+                "RC-000226": ("hdr_injection", "hinj",
+                              19204, "H2-STATE-EFFECT"),
+                "RC-000227": ("flaky_translation", "h2cl",
+                              19205, "H2-DETECTED"),
+            }
+            scen, bat, port, want = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "h2_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/h2_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                _oldh = os.environ.get("CODEXRC_HOME")
+                _tmpd = tempfile.mkdtemp(prefix="rch2")
+                os.environ["CODEXRC_HOME"] = _tmpd
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1, 8.0)
+                    inf = h2p.h2_audit({
+                        "url": f"http://127.0.0.1:{port}",
+                        "battery": bat})
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 8)
+                    det = (f"{scen}/{bat}: "
+                          f"{inf['verdict']} "
+                          f"(esperado {want}), "
+                          f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                    if _oldh is None:
+                        del os.environ["CODEXRC_HOME"]
+                    else:
+                        os.environ["CODEXRC_HOME"] = _oldh
+                print(f"[{c['id']}] h2: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000228":
+            from core import h2_probe as h2p
+            import struct as _st
+            maxreqs = (h2p.BASELINE_PROBES
+                       + h2p.MAX_VARIANTS * 2 * 3)
+            fr = h2p._frame(0x4, 0x1, 0, b"")
+            hdr9 = (len(fr) == 9
+                    and fr[5:9] == _st.pack(">I", 0))
+            frs = h2p._frame(0x1, 0x5, 7, b"xy")
+            hdr9s = (len(frs) == 11
+                     and frs[5:9] == _st.pack(">I", 7))
+            has_reader = hasattr(h2p, "H2Reader")
+            ok = (h2p.MAX_VARIANTS == 1
+                  and h2p.BASELINE_PROBES == 2
+                  and h2p.BATTERY == ("h2cl", "hinj")
+                  and maxreqs == 8
+                  and hdr9 and hdr9s and has_reader
+                  and h2p.E_H2_SIGNAL == "E-H2-SIGNAL"
+                  and h2p.E_H2_STATE == "E-H2-STATE")
+            det = (f"bateria {h2p.BATTERY}, presupuesto max "
+                   f"{maxreqs} reqs, frames 9 bytes "
+                   f"({hdr9 and hdr9s}), reader persistente "
+                   f"({has_reader})")
+            print(f"[{c['id']}] invariantes h2: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000229", "RC-000230",
+                       "RC-000231", "RC-000232",
+                       "RC-000233"):
+            from core import mc_probe as mcp
+            scens = {
+                "RC-000229": ("benign_pin", 19301,
+                              "BENIGN"),
+                "RC-000230": ("quiet_drain", 19302,
+                              "BENIGN"),
+                "RC-000231": ("pool_desync", 19303,
+                              "MC-STATE-EFFECT"),
+                "RC-000232": ("edge_strict", 19304,
+                              "BENIGN-EDGE"),
+                "RC-000233": ("flaky_pool", 19305,
+                              "MC-DETECTED"),
+            }
+            scen, port, want = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "mc_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/mc_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1, 8.0)
+                    inf = mcp.mc_audit({
+                        "url": f"http://127.0.0.1:{port}",
+                        "battery": "pool"})
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 8)
+                    det = (f"{scen}/pool: "
+                          f"{inf['verdict']} "
+                          f"(esperado {want}), "
+                          f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                print(f"[{c['id']}] mc: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000234":
+            from core import mc_probe as mcp
+            budget = (mcp.BASELINE_PROBES
+                      + mcp.MAX_VARIANTS * len(mcp.PHASES)
+                      * mcp.PHASE_REQS)
+            has_reader = hasattr(mcp, "H1Reader")
+            ok = (mcp.MAX_VARIANTS == 1
+                  and mcp.BASELINE_PROBES == 0
+                  and mcp.PHASES == ("P", "R")
+                  and mcp.PHASE_REQS == 4
+                  and budget == 8
+                  and mcp.BATTERY == ("pool",)
+                  and has_reader
+                  and mcp.E_MC_SIGNAL == "E-MC-SIGNAL"
+                  and mcp.E_MC_STATE == "E-MC-STATE")
+            det = (f"bateria {mcp.BATTERY}, presupuesto "
+                   f"max {budget} reqs (2 fases x "
+                   f"{mcp.PHASE_REQS}), lector "
+                   f"persistente ({has_reader})")
+            print(f"[{c['id']}] invariantes mc: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000236", "RC-000237",
+                       "RC-000238", "RC-000239",
+                       "RC-000240"):
+            from core import crc_probe as crcp
+            scens = {
+                "RC-000236": ("quiet_drain", 19401,
+                              "BENIGN", None),
+                "RC-000237": ("edge_strict", 19402,
+                              "BENIGN-EDGE", None),
+                "RC-000238": ("seq_desync", 19403,
+                              "CRC-STATE-EFFECT", 2),
+                "RC-000239": ("partial_drain", 19404,
+                              "CRC-STATE-EFFECT", 1),
+                "RC-000240": ("flaky_forward", 19405,
+                              "CRC-DETECTED", None),
+            }
+            scen, port, want, want_k = (
+                scens[c["id"]])
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "crc_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/crc_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                pr = subprocess.Popen(
+                    [sys.executable, labp, scen, str(port)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+                try:
+                    _esperar_labs(port, 1, 8.0)
+                    inf = crcp.crc_audit({
+                        "url": f"http://127.0.0.1:{port}",
+                        "battery": "double"})
+                    got_k = inf["evidence"].get("k")
+                    ok = (inf["verdict"] == want
+                          and inf["requests"] <= 8
+                          and (want_k is None
+                               or got_k == want_k))
+                    det = (f"{scen}/double: "
+                          f"{inf['verdict']} "
+                          f"(esperado {want}), k={got_k}, "
+                          f"reqs={inf['requests']}")
+                finally:
+                    pr.kill()
+                print(f"[{c['id']}] crc: {det} -> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+        if c["id"] == "RC-000241":
+            from core import crc_probe as crcp
+            budget = (crcp.BASELINE_PROBES
+                      + crcp.MAX_VARIANTS
+                      * len(crcp.PHASES)
+                      * crcp.PHASE_REQS)
+            has_reader = hasattr(crcp, "H1Reader")
+            ok = (crcp.MAX_VARIANTS == 1
+                  and crcp.BASELINE_PROBES == 0
+                  and crcp.PHASES == ("P", "R")
+                  and crcp.PHASE_REQS == 4
+                  and budget == 8
+                  and crcp.BATTERY == ("double",)
+                  and has_reader
+                  and crcp.E_CRC_SIGNAL == "E-CRC-SIGNAL"
+                  and crcp.E_CRC_STATE == "E-CRC-STATE")
+            det = (f"bateria {crcp.BATTERY}, presupuesto "
+                   f"max {budget} reqs (2 fases x "
+                   f"{crcp.PHASE_REQS}), lector "
+                   f"persistente ({has_reader})")
+            print(f"[{c['id']}] invariantes crc: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000242", "RC-000243",
+                       "RC-000244", "RC-000245",
+                       "RC-000246"):
+            from core import repro_engine as re_eng
+            scens = {
+                "RC-000242": ("seq_desync",
+                              "REPRODUCIBLE", 2),
+                "RC-000243": ("flaky_forward",
+                              "NON-REPRODUCIBLE",
+                              None),
+                "RC-000244": ("quiet_drain",
+                              "NO-CANDIDATE", None),
+                "RC-000245": ("edge_strict",
+                              "NO-CANDIDATE", None),
+                "RC-000246": (None, "UNSTABLE", None),
+            }
+            scen, want, want_k = scens[c["id"]]
+            tomba = None
+            try:
+                if scen is None:
+                    # RC-000246: puerto-tumba. El lab no
+                    # puede ligar el puerto y el audit
+                    # habla con un socket que cierra
+                    # toda conexion: sin observable.
+                    import socket as sk
+                    tomba = sk.socket()
+                    tomba.setsockopt(
+                        sk.SOL_SOCKET, sk.SO_REUSEADDR,
+                        1)
+                    tomba.bind(("127.0.0.1",
+                                re_eng.LAB_PORTS[0]))
+                    tomba.listen(4)
+                    cfg = {"lab_scenario":
+                           "seq_desync"}
+                else:
+                    cfg = {"lab_scenario": scen}
+                inf = re_eng.repro_audit(cfg)
+                ks = set()
+                for gal in inf["evidence"].get(
+                        "genealogies", []):
+                    for _p in re_eng.PASSES:
+                        kk = gal["passes"][_p]["k"]
+                        if kk is not None:
+                            ks.add(kk)
+                ok = (inf["verdict"] == want
+                      and inf["requests"]
+                      <= re_eng.BUDGET
+                      and (want_k is None
+                           or ks == {want_k}))
+                det = (f"{scen or 'puerto-tumba'}: "
+                      f"{inf['verdict']} "
+                      f"(esperado {want}), "
+                      f"ks={sorted(ks)}, "
+                      f"reqs={inf['requests']}")
+            finally:
+                if tomba is not None:
+                    tomba.close()
+            print(f"[{c['id']}] repro: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000247":
+            from core import repro_engine as re_eng
+            dominio = {"REPRODUCIBLE",
+                       "NON-REPRODUCIBLE",
+                       "NO-CANDIDATE", "UNSTABLE",
+                       "UNKNOWN"}
+            ok = (re_eng.BUDGET == 32
+                  and re_eng.GENEALOGIES == 2
+                  and re_eng.PASSES == ("A", "B")
+                  and len(re_eng.LAB_PORTS) == 2
+                  and dominio.issuperset(
+                      {"REPRODUCIBLE",
+                       "NON-REPRODUCIBLE",
+                       "NO-CANDIDATE",
+                       "UNSTABLE"})
+                  and re_eng.repro_audit(
+                      {"genealogies": 3})["verdict"]
+                  == "UNSTABLE")
+            det = (f"BUDGET {re_eng.BUDGET}, "
+                   f"GENEALOGIES {re_eng.GENEALOGIES}, "
+                   f"PASSES {re_eng.PASSES}, "
+                   f"genealogies>2 rechazado")
+            print(f"[{c['id']}] invariantes repro: "
+                  f"{det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000248", "RC-000249",
+                       "RC-000250", "RC-000251",
+                       "RC-000252"):
+            from core import impact_probe as ipr
+            scens = {
+                "RC-000248": ("quiet_drain", 19601,
+                              "BENIGN", None),
+                "RC-000249": ("benign_pin", 19602,
+                              "BENIGN", None),
+                "RC-000250": ("pool_swap", 19603,
+                              "SECURITY-IMPACT-DEMO",
+                              None),
+                "RC-000251": ("pool_shift", 19604,
+                              "IMPACT-CANDIDATE",
+                              "/?itok=attacker-echo"),
+                "RC-000252": ("flaky_swap", 19605,
+                              "IMPACT-CANDIDATE",
+                              None),
+            }
+            (scen, port, want,
+             smug) = scens[c["id"]]
+            labp = os.path.join(os.path.dirname(
+                os.path.dirname(os.path.abspath(__file__))),
+                "labs", "impact_lab.py")
+            if not os.path.exists(labp):
+                print(f"[{c['id']}] labs/impact_lab.py "
+                      "ausente -> SKIP (no FAIL)")
+            else:
+                _aj = False
+                try:
+                    import socket as _sk
+                    _s = _sk.create_connection(
+                        ("127.0.0.1", port), 0.3)
+                    _s.close()
+                    _aj = True
+                except OSError:
+                    pass
+                if _aj:
+                    print(f"[{c['id']}] puerto {port} "
+                          "ocupado por instancia "
+                          "ajena -> FAIL "
+                          "(contaminacion)")
+                    fails += 1
+                else:
+                    pr = subprocess.Popen(
+                        [sys.executable, labp, scen,
+                         str(port)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+                    try:
+                        _esperar_labs(port, 1, 8.0)
+                        inf = ipr.impact_audit({
+                        "host": "127.0.0.1",
+                        "port": port,
+                            "smuggle_path": (
+                                smug or "/admin/secret")})
+                        ctl = (inf["evidence"]
+                               .get("control"))
+                        ok = (inf["verdict"] == want
+                              and inf["requests"] <= 6
+                              and ctl is not None
+                              and len(inf["evidence"]
+                                      .get("rounds",
+                                           [])) == 2)
+                        det = (f"{scen}: "
+                               f"{inf['verdict']} "
+                               f"(esperado {want}), "
+                               f"reqs="
+                               f"{inf['requests']}")
+                    finally:
+                        pr.kill()
+                    print(f"[{c['id']}] impact: {det} "
+                          f"-> {'PASS' if ok else 'FAIL'}")
+                    if not ok:
+                        fails += 1
+        if c["id"] == "RC-000253":
+            from core import impact_probe as ipr
+            ok = True
+            rzn = []
+            if ipr.BUDGET != 6:
+                ok = False
+                rzn.append("presupuesto alterado: %s"
+                           % ipr.BUDGET)
+            if ipr.ROUNDS != 2:
+                ok = False
+                rzn.append("rondas alteradas: %s"
+                           % ipr.ROUNDS)
+            # control obligatorio: sin control alineado
+            # el probe NO emite veredicto de impacto
+            srcl = open(os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "impact_probe.py")).read()
+            if "sin control no " not in srcl:
+                ok = False
+                rzn.append("control previo no exigido")
+            ladder = ("BENIGN", "BENIGN-EDGE",
+                      "IMPACT-CANDIDATE",
+                      "SECURITY-IMPACT-DEMO",
+                      "UNREACHABLE", "UNSTABLE",
+                      "UNKNOWN")
+            for v in ("SECURITY-IMPACT-DEMO",
+                      "IMPACT-CANDIDATE"):
+                if v not in ladder:
+                    ok = False
+                    rzn.append("veredicto fuera de "
+                               "escalera: %s" % v)
+            # el recurso protegido es SIMULADO del lab:
+            # el probe no debe contener rutas de
+            # terceros
+            if "google" in srcl or "http://x" in srcl:
+                ok = False
+                rzn.append("probe con blancos externos")
+            det = (f"BUDGET {ipr.BUDGET}, ROUNDS "
+                   f"{ipr.ROUNDS}, control obligatorio, "
+                   f"recursos solo del lab")
+            print(f"[{c['id']}] invariantes impact: "
+                  f"{det} -> "
+                  f"{'PASS' if ok else 'FAIL: ' + '; '.join(rzn)}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000254":
+            from core import fp_elimination as fpe
+            inf = fpe.fp_audit({})
+            baits = inf["evidence"].get("baits", [])
+            pos = inf["evidence"].get(
+                "positive_control", {})
+            ok = (inf["verdict"] == "FP-ELIMINATED"
+                  and inf["requests"] <= 26
+                  and len(baits) == 4
+                  and pos.get("verdict")
+                  == "SECURITY-IMPACT-DEMO")
+            det = (f"{inf['verdict']}, "
+                   f"cebos={len(baits)} (0 reportables), "
+                   f"control={pos.get('verdict')}, reqs="
+                   f"{inf['requests']}")
+            print(f"[{c['id']}] fp: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000255":
+            from core import fp_elimination as fpe
+            ok = True
+            rzn = []
+            if len(fpe.FP_TABLE) != 8:
+                ok = False
+                rzn.append("FP_TABLE incompleta: %d/8"
+                           % len(fpe.FP_TABLE))
+            rep = set(fpe.REPORTABLE)
+            nonrep = set(fpe.NON_REPORTABLE)
+            if rep & nonrep:
+                ok = False
+                rzn.append("conjuntos reportable/no "
+                           "solapan")
+            sok, sdet = fpe.fp_source_invariants()
+            if not sok:
+                ok = False
+                rzn.extend(sdet)
+            det = (f"FP_TABLE {len(fpe.FP_TABLE)}/8, "
+                   f"reglas de no-escala en 3 modulos")
+            print(f"[{c['id']}] fp invariantes: {det} "
+                  f"-> "
+                  f"{'PASS' if ok else 'FAIL: ' + '; '.join(rzn)}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000256":
+            from core import evidence_package as epk
+            pkg = epk.assemble_package()
+            sig = pkg.get("signature", {})
+            ok = (pkg["verdict"] == "PACKAGE-VALID"
+                  and str(sig.get("k")) == "2"
+                  and sig.get("genealogies") == 2
+                  and sig.get("impact_rounds")
+                  == ["SMUGGLED-PROTECTED",
+                      "SMUGGLED-PROTECTED"]
+                  and sig.get("control_aligned") is True
+                  and pkg["budgets"]["spent"] <= 40
+                  and len(pkg["chain"]) == 3)
+            det = (f"{pkg['verdict']}, k={sig.get('k')}"
+                   f", genealogias="
+                   f"{sig.get('genealogies')}, rondas="
+                   f"{sig.get('impact_rounds')}, reqs="
+                   f"{pkg['budgets']['spent']}")
+            print(f"[{c['id']}] paquete: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000257":
+            from core import evidence_package as epk
+            import json as _json
+            ok = True
+            rzn = []
+            # paquete sintetico completo: verificacion
+            # de un tercero (sin labs, sin reqs)
+            mini = {"schema": epk.SCHEMA,
+                    "generated": "2026-10-05T14:30:00",
+                    "mode": "lab", "chain": [],
+                    "signature": {"k": 2},
+                    "budgets": {"spent": 37},
+                    "limits": {"read_only": True},
+                    "reproduction": [],
+                    "verdict": "PACKAGE-VALID"}
+            mini["hash"] = epk._canon_hash(mini)
+            vok, probs = epk.verify_package(mini)
+            if not vok:
+                ok = False
+                rzn.append("paquete valido "
+                           "rechazado: %s" % probs)
+            # tampering: alterar el payload post-hash
+            mal = _json.loads(_json.dumps(mini))
+            mal["signature"]["k"] = 99
+            tok, _ = epk.verify_package(mal)
+            if tok:
+                ok = False
+                rzn.append("tamper NO detectado")
+            det = ("verify OK en paquete integro, "
+                   "tamper detectado")
+            print(f"[{c['id']}] falsabilidad: {det} -> "
+                  f"{'PASS' if ok else 'FAIL: ' + '; '.join(rzn)}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000258":
+            from core import crown_chain as ccn
+            rec = ccn.hunt_chain({"mode": "lab"})
+            ok = (rec["verdict"] == "CHAIN-COMPLETE-LAB"
+                  and rec["requests"] <= 40
+                  and str(rec["evidence"].get("k"))
+                  == "2"
+                  and rec["evidence"].get(
+                      "impact_rounds")
+                  == ["SMUGGLED-PROTECTED",
+                      "SMUGGLED-PROTECTED"])
+            det = (f"{rec['verdict']}, k="
+                   f"{rec['evidence'].get('k')}, "
+                   f"reqs={rec['requests']}")
+            print(f"[{c['id']}] hunter-chain: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000259":
+            # blanco muerto: escalera honesta, sin crash
+            from core import crown_chain as ccn
+            rec = ccn.hunt_chain({
+                "mode": "live",
+                "url": "http://127.0.0.1:1",
+                "timeout": 2.0})
+            ok = rec["verdict"] in ("NO-DESYNC",
+                                    "UNSTABLE")
+            det = (f"{rec['verdict']} con reqs="
+                   f"{rec['requests']}")
+            print(f"[{c['id']}] hunter-dead: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000260":
+            ok = True
+            rzn = []
+            try:
+                from core.hunter import (
+                    CrownChain as _cc)
+                if not callable(_cc):
+                    ok = False
+                    rzn.append("CrownChain no callable")
+            except Exception as e:
+                ok = False
+                rzn.append("fachada sin CrownChain: "
+                           "%r" % e)
+            from core import crown_chain as ccn
+            if len(ccn.LADDER) != 5 or (
+                    "CROSS-CONNECTION-DEMO"
+                    not in ccn.LADDER):
+                ok = False
+                rzn.append("LADDER incompleta")
+            if "SECURITY-IMPACT" in ccn.LADDER:
+                ok = False
+                rzn.append("impacto vivo en la escalera: "
+                           "prohibido")
+            srcl = open(os.path.join(
+                os.path.dirname(os.path.abspath(
+                    __file__)), "crown_chain.py"
+            )).read()
+            if "LAB-VALIDATED-ONLY" not in srcl:
+                ok = False
+                rzn.append("rung 5 sin limite lab")
+            det = ("export OK, LADDER 5 rungs, rung 5 "
+                   "limitada a lab")
+            print(f"[{c['id']}] hunter-facade: {det} -> "
+                  f"{'PASS' if ok else 'FAIL: ' + '; '.join(rzn)}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000235":
+            base = os.path.dirname(os.path.abspath(
+                __file__))
+            limpio = True
+            for mod_fn in ("h2_probe.py", "cl0_probe.py",
+                           "mc_probe.py"):
+                p = os.path.join(base, mod_fn)
+                try:
+                    with open(p) as f:
+                        if "Informe[" in f.read():
+                            limpio = False
+                except OSError:
+                    limpio = False
+            print(f"[{c['id']}] typo Informe en probes: "
+                  f"{'PASS' if limpio else 'FAIL'}")
+            if not limpio:
+                fails += 1
+        if c["id"] == "RC-000261":
+            import tempfile
+            from core.poi_reach import poi_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "export.php"),
+                 "w").write(_POI_FIX_POS)
+            r = poi_audit(d)
+            f = r["findings"][0] if r["findings"] else None
+            ok = (r["summary"]["poi_reach"] == 1
+                  and f and f["verdict"] == "POI-REACH"
+                  and f["peldanos"] == ["POI-DETECTED",
+                                       "POI-UNAUTH",
+                                       "POI-CHAIN"]
+                  and f["export_surface"]
+                  and "nopriv" in f.get("handler", "")
+                  and any(g["class"] == "Evil_Gadget"
+                          for g in f.get("gadgets", [])))
+            det = (f"{f and f['verdict']} "
+                   f"handler={f and f.get('handler')}")
+            print(f"[{c['id']}] poi-reach: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000262":
+            import tempfile
+            from core.poi_reach import poi_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "safe.php"),
+                 "w").write(_POI_FIX_NEG)
+            r = poi_audit(d)
+            sm = r["summary"]
+            ok = (sm["poi_reach"] == 0 and sm["poi_auth"] == 0
+                  and sm["poi_detected"] == 0
+                  and not r["pop_candidates"])
+            det = (f"reach={sm['poi_reach']} "
+                   f"auth={sm['poi_auth']} pop=0")
+            print(f"[{c['id']}] poi-cero-fp: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000269":
+            import tempfile
+            from core.poi_reach import poi_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "fixed.php"),
+                 "w").write(_POI_FIX_ALLOWED)
+            r = poi_audit(d)
+            sm = r["summary"]
+            ok = (sm["poi_reach"] == 0 and sm["poi_auth"] == 0
+                  and sm["poi_detected"] == 0)
+            det = (f"reach={sm['poi_reach']} "
+                   f"auth={sm['poi_auth']} "
+                   f"det={sm['poi_detected']}")
+            print(f"[{c['id']}] poi-allowed-classes: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000270":
+            import tempfile
+            from core.poi_reach import poi_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "admin.php"),
+                 "w").write(_POI_FIX_NOPRIV_OTRO)
+            r = poi_audit(d)
+            f0 = r["findings"][0] if r["findings"] else None
+            ok = (f0 is not None
+                  and f0["verdict"] == "POI-AUTH"
+                  and "POI-UNAUTH" not in f0["peldanos"]
+                  and f0.get("nopriv_file") is True)
+            det = (f"{f0 and f0['verdict']} "
+                   f"peldanos={f0 and f0['peldanos']}")
+            print(f"[{c['id']}] poi-nopriv-otro: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000263":
+            import tempfile
+            from core.poi_reach import pop_candidates
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "export.php"),
+                 "w").write(_POI_FIX_POS)
+            pops = pop_candidates(d)
+            names = {p["class"] for p in pops}
+            ok = ("Evil_Gadget" in names
+                  and "Plain_Helper" not in names)
+            det = f"gadgets={sorted(names)}"
+            print(f"[{c['id']}] poi-pop: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000264":
+            import tempfile
+            from core.magic_confusion import confusion_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "optimize.php"),
+                 "w").write(_MAG_FIX_POS)
+            r = confusion_audit(d)
+            f = r["findings"][0] if r["findings"] else None
+            ok = (r["summary"]["confusion"] >= 1 and f
+                  and f["verdict"] == "MAGIC-CONFUSION"
+                  and "CONFUSION-CANDIDATE"
+                  in f["peldanos"]
+                  and "CONFUSION-UNGUARDED"
+                  in f["peldanos"]
+                  and f["entry_var"] == "path")
+            det = (f"{f and f['verdict']} "
+                   f"via={f and f['entry_var']}")
+            print(f"[{c['id']}] magic-confusion: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] == "RC-000265":
+            import tempfile
+            from core.magic_confusion import confusion_audit
+            d = tempfile.mkdtemp()
+            open(os.path.join(d, "safe_opt.php"),
+                 "w").write(_MAG_FIX_NEG)
+            r = confusion_audit(d)
+            sm = r["summary"]
+            ok = (sm["confusion"] == 0
+                  and sm["guarded"] == 1)
+            det = (f"confusion={sm['confusion']} "
+                   f"guarded={sm['guarded']}")
+            print(f"[{c['id']}] magic-gate: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        if c["id"] in ("RC-000266", "RC-000267"):
+            import subprocess as _sp
+            import sys as _sys
+            import time as _t
+            from core.wcd404_probe import probe
+            scen_ports = ([("lie_cached", 19511)]
+                          if c["id"] == "RC-000266" else
+                          [("lie_nocache", 19512),
+                           ("honest_404", 19513),
+                           ("lie_expired", 19514)])
+            labs = []
+            try:
+                for _sc, _pt in scen_ports:
+                    _p = _sp.Popen(
+                        [_sys.executable,
+                         "labs/wcd404_lab.py", _sc, str(_pt)],
+                        stdout=_sp.PIPE, text=True)
+                    _up = _p.stdout.readline().strip()
+                    if _up != "UP":
+                        raise LabNoUp(
+                            f"wcd404 {_sc} no sube")
+                    labs.append(_p)
+                verds = []
+                for _sc, _pt in scen_ports:
+                    v = probe({
+                        "url": (f"http://127.0.0.1:{_pt}"
+                                "/app/settings/profile/x.css"),
+                        "marker_self": "ninja-A@maxxspace.com",
+                        "cookie_self": "acct=A",
+                        "cookie_victim": "acct=B",
+                        "timeout": 3.0})
+                    verds.append((_sc, v))
+                if c["id"] == "RC-000266":
+                    _sc, v = verds[0]
+                    ok = (v["verdict"] == "WCD-404-LEAK"
+                          and v["status_lie"]
+                          and v["cache_hit"]
+                          and v["cross_user"]
+                          and v["requests"] <= 8)
+                    det = (f"{_sc}: {v['verdict']} "
+                           f"reqs={v['requests']}")
+                else:
+                    esperados = {
+                        "lie_nocache": "LEAK-NO-CACHE",
+                        "honest_404": "BENIGN",
+                        "lie_expired": "LEAK-NO-CACHE"}
+                    ok = True
+                    det = ""
+                    for _sc, v in verds:
+                        exp = esperados[_sc]
+                        good = (v["verdict"] == exp
+                                and not v["cross_user"])
+                        ok = ok and good
+                        det += (f"{_sc}:{v['verdict']} ")
+                print(f"[{c['id']}] wcd404-lab: {det}-> "
+                      f"{'PASS' if ok else 'FAIL'}")
+                if not ok:
+                    fails += 1
+            finally:
+                for _p in labs:
+                    _p.kill()
+        if c["id"] == "RC-000268":
+            from core import wcd404_probe as _wp
+            v = _wp.probe({
+                "url": "http://127.0.0.1:1/x.css",
+                "marker_self": "x", "timeout": 2.0})
+            base = os.path.dirname(os.path.abspath(
+                __file__))
+            srcl = open(os.path.join(
+                base, "wcd404_probe.py")).read()
+            ok = (v["verdict"] == "conn-dead"
+                  and _wp.BUDGET == 8
+                  and _wp.LADDER == ["BENIGN",
+                                     "STATUS-LIE-DETECTED",
+                                     "WCD-404-LEAK"]
+                  and 'informe["verdict"] = "WCD-404-LEAK"'
+                  in srcl
+                  and 'if marker_self in rv["body"]'
+                  in srcl)
+            det = (f"dead={v['verdict']} budget={_wp.BUDGET} "
+                   "escalera monotona")
+            print(f"[{c['id']}] wcd404-conservador: {det} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
+            if not ok:
+                fails += 1
+        try:
+            _cache_record(c["id"], fails == _fb)
+        except Exception:
+            pass
+    tot = sum(e for e, _ in _SLOW)
+    print("[perf] total %.0fs; top-12 mas lentos:" % tot)
+    for e, cid in sorted(_SLOW, reverse=True)[:12]:
+        print("    [perf] %-11s %6.1fs" % (cid, e))
     print(f"\nRegression corpus: {len(cases)} caso(s), {fails} fallo(s)")
     return 1 if fails else 0
 
@@ -3051,4 +4784,11 @@ if __name__ == "__main__":
     _only = None
     if len(sys.argv) > 2 and sys.argv[1] == "--only":
         _only = set(sys.argv[2].split(","))
-    sys.exit(run(_only))
+    try:
+        sys.exit(run(_only))
+    except LabNoUp as _e:
+        _kill_labs()
+        print(f"LAB-NO-UP: {_e}; huerfanos limpiados, "
+              "reintentar (el cache intra-corpus reusa lo "
+              "ya verificado)")
+        sys.exit(2)

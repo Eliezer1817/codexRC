@@ -25,3 +25,6 @@ waf_state.json
 tune_state.json
 .codexrc/intelligence/events/
 memory/
+server.log
+.watcher.lock
+nohup.out

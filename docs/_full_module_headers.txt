@@ -1,0 +1,2547 @@
+=== __init__.py ===
+# codexRC core package
+
+=== ab_diff.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - AB-DIFF universal (v0.68.0)
+# ------------------------------------------------------------
+# DIFF de sesiones para sitios NO-WordPress (el concepto de la
+# capa 4 de AUTHZ-PROOF portado a cualquier web). Consume
+# objetos Identity de REG-BOT: jamas sabe si la cuenta nacio
+# en WP, Laravel, Django, Express o una app propia.
+#
+# Tres niveles (decision AUTOMATICA segun el blanco):
+#   Nivel 1: registro libre -> sesiones ANON / A (duena de X) / B
+#   Nivel 2: sin registro pero credenciales propias -> ANON / OWN
+#   Nivel 3: nada -> ANON solo (fugas sin autenticacion)
+#
+# Relaciones (lo que hace el diff CONCLUYENTE):
+#   A = propietario del objeto X (recursos descubiertos desde la
+#       sesion de A, con los datos de A dentro)
+#   B = usuario independiente
+#   A->X permitido, B->X permitido   = evidencia BAC/IDOR
+#   A->X permitido, B->X bloqueado   = gate correcto (REFUTADO)
+#   ANON->X permitido                = DEMO-UNAUTH (lo mas grave)
+#
+# Reglas de seguridad permanentes:
+#   - SOLO lectura A->B: peticiones GET, cero payloads de exploit
+#   - presupuesto de peticiones acotado (MAX_CALLS)
+#   - descarta blanco si REG-BOT dice phone/kyc
+#
+# CLI:
+#   python3 core/ab_diff.py https://sitio.com
+#   python3 core/ab_diff.py https://sitio.com --own email:pass
+#   python3 core/ab_diff.py https://sitio.com --mock http://127.0.0.1:8899
+# ============================================================
+
+=== adaptive_hunt.py ===
+"""ADAPTIVE-HUNT (v0.81.0): la capa epistemica.
+
+No pregunta "que vulnerabilidad puedo probar" sino "que
+experimento me daria la mayor informacion para distinguir
+entre las hipotesis que tengo".
+
+Flujo:
+  OBSERVACION (baseline) -> DISPARADOR -> HIPOTESIS ->
+  EXPERIMENTO (contrato pre-registrado) -> EVIDENCIA ->
+  ACTUALIZAR HIPOTESIS -> ... -> VEREDICTO + GAP LEDGER.
+
+Tres salidas, todas validas:
+  BASELINE-CARACTERIZADO: un unico mecanismo vivo explica la
+    observacion (con soporte o por eliminacion honesta).
+  BASELINE-STABLE: el blanco no presento varianza.
+  UNKNOWN-DEMOSTRADO: la superficie no permite concluir HOY,
+    con razon demostrable e hipotesis abiertas enumeradas.
+
+Presupuesto heredado: 30 requests max por sesion.
+"""
+
+=== arsenal.py ===
+#!/usr/bin/env python3
+"""ARSENAL v0.55.0 — dos niveles: BASICO (verde, sin candado) y EXTREMO (rojo, contrasena).
+
+BASICO = lo que todo el mundo hace en un pentest rutinario: va en cajita verde,
+ visible siempre, para el lab y para calibrar la superficie del blanco.
+
+EXTREMO = tecnicas avanzadas que requieren criterio y autorizacion: evasion de
+ WAF, exfiltracion fuera de banda (OOB), mutation XSS, DOM clobbering, phar://,
+ polyglots, bypass de filtros. Contraseña obligatoria + log de cada desbloqueo.
+
+Politica que no cambia: demostracion minima, stop al primer impacto confirmado,
+ sin dump masivo, sin persistencia, sin destructivos (DROP/borrado jamas).
+Uso CLI:
+  python3 core/arsenal.py --list
+  python3 core/arsenal.py --cat sql          # nivel BASICO (verde)
+  python3 core/arsenal.py --cat sql --extreme  # exige confirmacion escrita ACTIVO
+"""
+
+=== async_lane.py ===
+# -*- coding: utf-8 -*-
+"""
+codexRC - SLIPSTREAM (carril async, v0.23.0)
+============================================
+Segunda etapa del motor de velocidad OVERDRIVE. La bateria GET del corpus
+(corpus/XSSHunter.test_params) disparada por un event loop: un SOLO hilo de
+Python mantiene hasta `concurrency` sondas en vuelo simultaneamente via
+I/O asincrono (httpx). En I/O de red el cuello de botella es el servidor,
+no el CPU: el event loop no crea hilos ni cambia contexto, solo multiplexa
+sockets, por lo que 64 sondas en vuelo pesan menos que 8 hilos y el
+throughput sube de forma casi lineal hasta saturar al servidor objetivo.
+
+Detalles que preservan la filosofia de la casa:
+  * Sesion heredada: el AsyncClient nace con las cookies y cabeceras de la
+    sesion autenticada del escaneo (caza logueada igual que siempre).
+  * Marcadores inertes: mismas sondas de lectura, ningun payload funcional.
+  * Politica de cortesia: cada tarea espera `delay` tras recibir respuesta
+    (igual que el modo secuencial), pero las esperas se solapan, por lo que
+    la tasa efectiva es `concurrency / delay`. En blancos delicados subir
+    `delay` o bajar workers baja la tasa de forma predecible.
+  * Fallback transparente: si httpx no esta disponible (p.ej. instalacion
+    minima en Termux), test_params usa el camino clasico de hilos.
+"""
+
+=== auth.py ===
+"""
+codexRC - Authentication Module (Termux friendly)
+Supports 3 methods:
+1. Session Cookies (recommended)
+2. Automatic form login (username + password) with better CSRF & form detection
+3. Bearer / JWT / Custom Authorization header
+"""
+
+=== bac_proof.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - BAC-PROOF (v0.67.0, AUTHZ-PROOF capa 4)
+# ------------------------------------------------------------
+# Validacion DINAMICA de candidatos BAC/IDOR en WP-LAB local:
+# levanta WordPress (SQLite, sin MySQL) + PHP server, instala el
+# plugin bajo prueba, crea un objeto victima del admin y dispara
+# cada accion candidata como ANONIMO / SUSCRIPTOR / ADMIN.
+# Difiere las respuestas y emite evidencia de ejecucion:
+#
+#   DEMO-BAC-DINAMICO     el suscriptor obtiene lo mismo que el
+#                         admin sobre el objeto ajeno
+#   DEMO-UNAUTH-DINAMICO  el anonimo obtiene lo mismo que el
+#                         admin (nopriv explotado)
+#   REFUTADO-DINAMICO     el suscriptor/anonimo es bloqueado
+#                         (gate/owner funciona en ejecucion real)
+#                         -> alimenta FP-MEMORIA (capa 5)
+#
+# Requisitos: php + pdo_sqlite en PATH. Todo local: cero
+# interaccion con terceros (regla mVDP: lectura A->B, sin impacto).
+# ============================================================
+
+=== bin_audit.py ===
+"""BIN-AUDIT: analisis binario/nativo, mas alla del navegador.
+
+Abre cualquier artefacto que un vendor distribuye y le saca lo que
+importa para la caza:
+
+  SECRETS HARDCODEADOS  (critica, Patchstack paga: "BAC sobre objetos
+    sensibles: API keys, secrets"): claves AWS (AKIA...), Google (AIza...),
+    Stripe live (sk_live_...), GitHub (ghp_...), Slack (xox...), JWT,
+    claves privadas PEM, connection strings con credenciales, y en
+    archivos de texto pares api_key/secret/token/password = valor.
+
+  ENDPOINTS INTERNOS    (alta): URLs http/ws escondidas en el binario,
+   incluyendo rutas de admin, staging y APIs privadas del vendor.
+
+  IMPORTS PELIGROSOS    (media): simbolos dinamicos como system/execve/
+    popen/dlopen (superficie de RCE y carga de codigo en native code).
+
+  FINGERPRINT           (info): tipo ELF/PE/Mach-O/zip/apk/jar, arquitectura,
+    bitness, seccion debug presente.
+
+Formatos soportados: ELF (32/64, LE/BE, parse real de cabeceras y
+.dynsym), PE (MZ), Mach-O, zip/jar/apk (recursivo: descomprime y audita
+cada artefacto interno, .dex/.class/.so anidados), gzip. Cualquier otro
+archivo = escaneo de strings generico.
+
+Nivel 1 honesto: recon de binarios (strings, simbolos, secretos,
+endpoints). Desensamblado completo queda fuera del alcance Python
+puro; esto ya encuentra lo que paga.
+
+Uso:
+    python3 core/bin_audit.py <archivo_o_dir> [--json] [--top N]
+    POST /api/bin {"path": "..."}                    (backend)
+"""
+
+=== brain.py ===
+"""CEREBRO: la capa de inteligencia determinista del Hunter.
+
+Dos funciones, cero IA (a proposito: exactitud, costo cero, depurable):
+
+  1. FINGERPRINT  identifica que es el blanco ANTES de gastar sondas:
+     WordPress (+ plugins y theme via wp-content), Angular/React/Vue/Next,
+     Laravel, servidores (headers X-Powered-By / Server). Si detecta un
+     vendor con historial de CVEs, lo grita: pista de vendor-farming.
+
+  2. PRIORIZACION puntua cada objetivo del spider (endpoint + parametro)
+     y ordena la cola de caza: admin-ajax, uploads, ids, settings, api...
+     arriba; utm_*, fbclid, previews y assets abajo. Cada objetivo recibe
+     un PRESUPUESTO de sondas proporcional a su valor, para no martillar.
+
+Las baterias consumen la cola ya rankeada: el mismo presupuesto total se
+concentra donde duele. Todo determinista: mismo blanco, mismas decisiones.
+"""
+
+=== cache_bait.py ===
+"""CACHE-BAIT: bateria dedicada de cache poisoning y cache deception.
+
+Todo PASIVO (no se envenena la cache de nadie):
+  1. ENTRADAS UNKEYED: cabeceras de routing que muchos caches/CDN no
+     incluyen en la clave (X-Forwarded-Host, X-Rewrite-URL, Forwarded...).
+     Si se REFLEJAN sin validar, cualquiera puede fijar contenido en la
+     cache para TODOS los usuarios. Se reporta como candidata.
+  2. WEB CACHE DECEPTION: pedir rutas privadas con extension de asset
+     (/api/user/profile.css). Si el servidor responde 200 con los mismos
+     datos privados y content-type cacheable, un proxy puede guardar
+     paginas PRIVADAS y servirlas a extraños.
+  3. PROBE EN MULTIPLES PAGINAS descubiertas por la arana (no solo la base).
+
+Basado en las tecnicas de la guia practica de cache poisoning web
+(unkeyed inputs + cache deception), adaptadas a solo-lectura.
+"""
+
+=== cache_baseline.py ===
+#!/usr/bin/env python3
+"""CACHE-BASELINE (v0.79.0): clasifica el baseline del target.
+
+  STABLE    nucleo y secundarias identicas en K corridas
+  VARIANT   la variacion existe PERO es caracterizable
+            (temporal: Age/Date/Last-Modified avanzan con
+            nucleo estable; load-balancing: Server varia con
+            cuerpo estable)
+  AMBIGUO   variacion NO explicada (posible bot management,
+            personalizacion o backend dinamico sin
+            caracterizar)
+  INVALID   sin observaciones utilizables
+
+AMBIGUO e INVALID conducen conservadoramente a UNKNOWN en el
+juez: sin baseline usable no hay poder discriminatorio.
+"""
+
+=== cache_controls.py ===
+#!/usr/bin/env python3
+"""CACHE-CONTROLS (v0.79.0): explicaciones alternativas ANTES
+de elevar un diferencial.
+
+Cada control emite PASSED / FAILED / NOT_APPLICABLE con
+EVIDENCIA real que lo respalda. Nada decorativo: un PASSED
+siempre corresponde a una comprobacion efectiva.
+
+Controles CRITICOS (pueden explicar un diferencial y
+degradarlo a BENIGN): cookies_session, authorization, vary,
+ttl_wait, bot_management.
+"""
+
+=== cache_correlation.py ===
+#!/usr/bin/env python3
+"""CACHE-CORRELATION (v0.79.0): el orquestador.
+
+Pregunta central: ¿dos representaciones que deberian ser
+equivalentes generan estados de cache distintos, o dos
+representaciones distintas terminan compartiendo un estado que
+no deberian compartir?
+
+REGLA FUNDAMENTAL: no asumimos ni afirmamos conocer la cache
+key interna. CacheBindingEvidence expresa FUERZA DE EVIDENCIA
+EXTERNA compatible con binding/correlacion; no es un
+descubrimiento de la key.
+
+Flujo: SemanticRelation -> CacheFingerprint -> Baseline ->
+Controls -> Correlation -> Target Judge.
+
+EVIDENCIA E0-E6 (no son puntos, no hay confidence=0.85):
+  E0 CACHE OBSERVATION
+  E1 REPRODUCIBILITY
+  E2 SEMANTIC DIFFERENTIAL
+  E3 CACHE BINDING
+  E4 DOWNSTREAM DIFFERENTIAL
+  E5 CROSS-CONSUMER IMPACT
+  E6 SECURITY IMPACT
+
+Juez determinista. DEMO es dificil de alcanzar por diseno:
+exige binding STRONG + (E5 o E6) + controles criticos PASSED +
+atribucion razonable + baseline no ambiguo. NUNCA se produce
+DEMO por: Age diferente, HIT/MISS, ausencia de headers, body
+diferente solo, dos requests diferentes, convergencia
+aparente, inferencia de cache key, o E0+E1.
+"""
+
+=== cache_fingerprint.py ===
+#!/usr/bin/env python3
+"""CACHE-FINGERPRINT (v0.79.0): huella SOLO de senales
+observables.
+
+Cada senal es tri-estado:
+  OBSERVED  presente en la respuesta
+  ABSENT    ausente en la respuesta
+  UNKNOWN   no determinable (respuesta ilegible)
+
+REGLA DEL OPERADOR: header ausente NO significa cache miss.
+Age: ABSENT no puede convertirse en CACHE-MISS. Age/Date/
+timing y orden de headers son senales SECUNDARIAS: nunca
+producen diferencial por si solas ("Age diferente" no es
+diferencial). El diferencial real compara el nucleo:
+status, body_hash, etag, last_modified, content_type,
+cache_control, vary.
+"""
+
+=== cache_semantic.py ===
+#!/usr/bin/env python3
+"""CACHE-SEMANTIC (v0.79.0): relacion entre Request A y Request B.
+
+Regla fundamental del operador: NO asumir ni afirmar que
+conocemos la cache key interna. cache_key(A) == cache_key(B)
+es solo HIPOTESIS de correlacion; lo observable son huellas
+externas. La escalera: hipotesis != observacion != evidencia
+!= veredicto.
+
+Conjunto CERRADO y pequeno de transformaciones cuya
+neutralidad es demostrable por regla RFC. Si una diferencia no
+pertenece al conjunto: UNKNOWN. No se fuerza EQUIVALENT.
+"""
+
+=== cfg.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""SEMANTIC CORE (v0.58.1) — Nivel 1: CFG intra-funcion + dominancia.
+
+Tokenizer PHP-lite -> arbol de statements -> grafo de control de flujo
+-> dominadores (algoritmo iterativo) -> consultas semanticas:
+
+  dominates(cfg, gate_node, sink_node)   ¿todo camino a sink pasa gate?
+  gate_dominates_sink(...)               el gate protege el sink?
+  router_noise(...)                      gate domina todos los sinks
+                                         sensibles => la comparacion
+                                         'auth' es solo router (FP)
+
+Jerarquia de precision: una consulta de este modulo SIEMPRE gana a
+una ventana de texto (+-1, +-5 lineas). Si el parseo falla, el llamador
+debe caer a su heuristica textual previa (fallback).
+
+Nivel honesto 1: intra-funcion. No resuelve includes ni herencia.
+Python puro, Termux/armv7l OK.
+"""
+
+=== chain.py ===
+"""ENCADENAR HALLAZGOS: el valor real esta en las CADENAS, no en piezas.
+
+Un XSS solo suele ser P3. Ese mismo XSS en un sitio con CSP debil es un
+robo de sesion. Un IDOR con email + un endpoint de settings es un posible
+account takeover. Patchstack y compañía pagan por IMPACTO COMBINADO.
+
+Reglas deterministas sobre hallazgos YA verificados (corre tras VERITAS):
+  1. XSS + CSP debil en el mismo blanco -> XSS ejecutable, sesion robable
+  2. XSS + ruta admin mapeada -> el vector puede golpear al admin
+  3. XSS almacenado/blind + panel admin -> captura de sesion de admin
+  4. IDOR repetido en varios id -> filtracion MASIVA, no caso puntual
+  5. IDOR con datos personales + endpoint settings/token -> encaminado a
+     account takeover
+  6. SQLi + panel admin en el blanco -> extraccion de credenciales
+  7. SQLi + BAC en el mismo blanco -> doble via a datos privados
+
+Las cadenas no tocan los hallazgos originales: se reportan aparte con su
+propia severidad combinada y razon humana lista para el informe.
+"""
+
+=== cl0_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.87.0 CL.0-SINGLE-TIER (Request Smuggling CL.0)
+=================================================
+Familia CL.0 con la disciplina de la linea DESYNC:
+contratos pre-registrados en el ExperimentGraph, juez
+determinista, presupuesto bajo y cero-FP por diseno.
+
+Mecanica CL.0: POST con 'Content-Length: 0' cuyo body
+declara 0 bytes pero el stream lleva un prefijo smuggleado.
+Si el front NO parsea el prefijo como request propio y el
+backend NO consume el stream residual, el prefijo es
+procesado por el backend como request invisible para el
+front: la cola de respuestas queda desplazada.
+
+Oraculo observable (nada inferido):
+  T1  ventana de silencio tras POST+smuggle:
+      respuesta temprana => el front parseo el prefijo
+      (pipelining benigno, NO desync).
+  T2  tras el followup: si aparece la respuesta del
+      smuggle (eco del token) SIN atribucion del front
+      => el backend proceso bytes que el front no
+      contabiliza => MISMATCH observable.
+  S   doble followup: si la respuesta del segundo
+      followup porta el token del PRIMERO => la cola
+      esta desplazada (STATE EFFECT observable).
+
+Regla heredada: el eco del token SOLO no es desync.
+Sin diferencial de timing o atribucion observable, el
+veredicto NO escala. Sin repro 2/2 no hay DESYNC.
+
+Contratos (pre-registrados):
+  baseline: C0 control GET @base (firma de respuesta);
+            C1 POST vacio + followup en conexion fresca
+            (r2 debe matchear C0: si no, UNSTABLE).
+  variante (endpoint candidato, redirect/404 family):
+    P  probe: POST CL:0 + smuggle + followup1 + followup2
+    R  repro: idem en conexion nueva
+
+Escalera determinista:
+  BENIGN -> CL0-DETECTED (1/2, probable, NO reportable)
+  -> CL0-DESYNC (repro 2/2) -> CL0-STATE-EFFECT
+  (+ BENIGN-FRONT / UNSTABLE / UNREACHABLE / UNKNOWN)
+
+Presupuesto: 2 baseline + 1 variante x 2 fases x 3 reqs
+= max 8 requests. Read-only: el smuggle es un GET propio
+con token unico, jamas recursos de terceros.
+"""
+
+=== connection_state.py ===
+#!/usr/bin/env python3
+"""CONNECTION-STATE AUDIT (v0.77.0): ¿deja una peticion ambigua
+un estado observable que modifica la interpretacion de una
+peticion posterior sobre la misma conexion?
+
+Arquitectura: A -> B sobre UNA conexion.
+  baseline:    K corridas de A0 (GET limpio) -> B (GET limpio)
+  tratamiento: A1 (framing aceptado / veneno) -> B identico
+  comparacion: B0 == B1 ? sobre huella, conteo, cierre, latencia
+
+REGLA (anti falso positivo): "la respuesta cambio" NO es
+smuggling. Primero se demuestra QUE cambio y DONDE:
+  - B recibio SU respuesta (identidad preservada)
+  - B recibio una respuesta AJENA (marcador: contaminacion
+    cruzada demostrable)
+  - B no recibio nada (traga)
+  - hay una respuesta extra con B bien atendido (pipelining
+    legítimo cuando el edge honra TE: RFC 7230, no hallazgo)
+
+Estado de la conexion como evidencia (STATE-CONTINUITY):
+parser_state (respondio A? cuantas respuestas?), reuse,
+request/response counter, connection_close, cache_context,
+origin_context (ECO). Lo no observable queda unknown.
+
+Clasificacion por tratamiento:
+  REJECTED            A1 recibio 400/cierre
+  STATE-STABLE        B atendido con huella dentro del baseline
+  STATE-STABLE+PIPE   idem + respuesta extra (edge honro TE:
+                      pipelining correcto, se anota, no escala)
+  STATE-CHANGED       B desatendido o con huella fuera de la
+                      varianza baseline
+  BASELINE-AMBIGUO    el baseline varia solo (sin poder
+                      discriminatorio: nada se concluye)
+
+Escalera STATE-CHANGED: ¿reproducible? no -> UNKNOWN;
+si -> SOSPECHA; y si ademas B recibio respuesta AJENA
+(marcador) reproducible -> DEMO (contaminacion cruzada
+demostrada: la respuesta que llego a B pertenece a otro
+request).
+
+Presupuesto: perfil v0.75 (11) + baseline K=3 (6) + T1 por
+variante aceptada (2 c/u) + T2 veneno (2) + repro (2). Tope
+28, secuencial, lectura A->B, marcador = path inexistente
+unico por corrida.
+"""
+
+=== cov_bait.py ===
+"""COV-BAIT v2: caza guiada por COBERTURA DE CODIGO + MOTOR DE MUTACION.
+
+Etapa 1: medir cobertura por sonda (baseline, params ocultos, paginas).
+Etapa 2 (nuevo): FUZZING CON FEEDBACK estilo XBOW:
+  - corpus de inputs: arranca con la query de la semilla y los params
+    ocultos que ejecutaron codigo nuevo en la etapa 1
+  - mutaciones deterministas (añadir param, mutar valor, quitar param)
+  - cada sonda se mide en el navegador: si EJECUTA rangos nuevos, el
+    input entra al corpus como PADRE y las mutaciones siguen desde ahi
+    (hill-climbing por cobertura)
+  - presupuesto fijo de sondas + freno por estancamiento (12 sondas sin
+    cobertura nueva = para) + anti-bucles (hash de inputs ya probados)
+  - reporta las COMBINACIONES que desbloquean funciones escondidas,
+    con los nombres de las funciones ejecutadas
+
+Todo determinista: rng con semilla fija, resultados reproducibles.
+Requisitos: navegador Chromium + websocket-client (python puro, Termux ok).
+"""
+
+=== crc_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.90.0 CROSS-REQUEST CORRELATION
+=================================
+Reconstruccion de la cola del origin por CORRELACION
+entre requests, con la disciplina de la linea DESYNC:
+contratos pre-registrados en el ExperimentGraph, juez
+determinista, presupuesto bajo y cero-FP por diseno.
+
+Mecanica CROSS-REQUEST CORRELATION: un POST CL.0 lleva
+DOS requests smuggleadas (T1, T2: GETs propios con
+tokens unicos). Si el origin procesa el residual como
+cola, las respuestas de los followups quedan
+DESPALAZADAS por k consistente y MEDIBLE:
+
+  k=0  [ECHO-fb,     ECHO-fc,     ECHO-fd]   alineado
+  k=1  [SMUGGLE-T1,  ECHO-fb,     ECHO-fc]   shift 1
+  k=2  [SMUGGLE-T1,  SMUGGLE-T2,  ECHO-fb]   shift 2
+
+Oraculo observable (nada inferido): la PERMUTACION de la
+coleccion. La firma del desync es la correlacion
+CONSISTENTE: el eco propio aparece desplazado
+EXACTAMENTE por el numero de ecos del smuggle
+observados (fi == si_count). Un patron disperso (ecos
+sin permutacion consistente) NO escala a STATE-EFFECT.
+
+Regla heredada (v0.87-89): el eco del token SOLO no es
+desync; sin permutacion observable, el veredicto NO
+escala. Sin repro 2/2 no hay DESYNC.
+
+Auto-control por atribucion (sin baseline separado): el
+eco propio del followup en la posicion 0 es el control
+de cada fase; sin eco propio ni eco del smuggle:
+UNKNOWN (no BENIGN, cero-FP).
+
+Contratos (pre-registrados):
+  fase P  POST doble-smuggleado (T1, T2) + 3 GETs
+          (fb, fc, fd) en conexion fresca
+  fase R  repro idem con tokens nuevos
+
+Escalera determinista:
+  BENIGN -> CRC-DETECTED (1/2, probable, NO reportable)
+  -> CRC-DESYNC (repro 2/2)
+  -> CRC-STATE-EFFECT (ademas permutacion consistente,
+     k medible y reproducible)
+  (+ BENIGN-EDGE / UNSTABLE / UNREACHABLE / UNKNOWN)
+
+Presupuesto: 1 variante x 2 fases x 4 reqs (A: 1 POST
+doble-smuggleado; B: 3 GETs) = max 8 requests. Read-only:
+los smuggles son GETs propios con tokens unicos, jamas
+recursos de terceros.
+
+Aprendizajes v0.87-89: bytes crudos jamas repr(b'..');
+buffers PERSISTENTES por conexion; grace de ciclo de
+vida antes de heredar.
+"""
+
+=== cross_layer.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.84.0 CROSS-LAYER CORRELATION
+================================
+Un solo disparo, tres capas observadas SIMULTANEAMENTE
+(Edge / Cache / Origin) + dimension de conexion (A, B, control).
+
+Filosofia heredada:
+- Solo evidencia observable; nada inferido queda fuera de 'unknown'.
+- Tolerancia del edge NO es vulnerabilidad: si el origin nunca
+  ve la perturbacion, el veredicto es BENIGN (EDGE-ONLY).
+- Presupuesto bajo: <= 11 requests por auditoria.
+- Contratos pre-registrados en el ExperimentGraph (anti post-hoc).
+
+Clases de evidencia (ExperimentGraph):
+- E-XL-MISMATCH     : el edge acepta una perturbacion que el
+                      origin sirve DISTINTO (semantica difiere).
+- E-XL-SHARED       : el efecto se reproduce desde 2 conexiones
+                      (estado compartido, clase cache).
+- E-XL-CONTAMINATION: una conexion nueva (control) recibe el
+                      efecto sin haberlo pedido.
+
+Escalera determinista (en el informe):
+OBSERVED -> REPRODUCIBLE -> CROSS-LAYER ->
+  SHARED-STATE -> CONTAMINATION -> DEMO
+
+DEMO exige: MISMATCH reproducido (2 conexiones) +
+CONTAMINATION observable + controles PASSED. Nada se infiere.
+"""
+
+=== crown_chain.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.95.0 CROWN CHAIN — INTEGRACION AL HUNTER
+==========================================
+Corona alcanzada (LAB 22/22, corpus 128/128): la
+cadena completa se integra al Hunter como UN
+orquestador que sube la escalera con los motores del
+roadmap, sin tocar la arquitectura de ningun modulo.
+
+  rung 1  DETECTION        cl0 + h2 + mc + crc
+                          (4 probes, veredictos
+                          propios, cero-FP cada uno)
+  rung 2  REPRODUCIBLE     repro_engine (2 genealogias
+                          x pase A/B, firma k igual)
+  rung 3  STATE-EFFECT     firma k medible y
+                          consistente
+  rung 4  CROSS-CONNECTION contaminacion entre
+                          conexiones PROPIAS (mc)
+  rung 5  SECURITY IMPACT  LIMITE HONESTO: en vivo NO
+                          se ejecuta: envenenar la
+                          respuesta de un usuario real
+                          de terceros esta fuera de
+                          toda regla. Rung validada
+                          solo en LAB (impact_probe,
+                          recurso protegido simulado).
+                          La garantia cero-FP queda
+                          citada (RC-000254).
+
+Modos:
+  lab   ensambla el paquete completo via
+        evidence_package (deteccion k=2, 2 genealogias,
+        impacto 2/2) -> CHAIN-COMPLETE-LAB.
+  live  escalera contra el blanco real, read-only,
+        presupuesto declarado 60 reqs; NUNCA supera
+        CROSS-CONNECTION-DEMO: sin repro 2/2 o sin
+        k consistente NO avanza.
+
+La escalera JAMAS se salta: DETECTED sin repro no
+escala; repro sin firma k consistente no escala; el
+disparo unico (flaky) NO escala.
+"""
+
+=== cspt_scan.py ===
+#!/usr/bin/env python3
+"""CSPT-SCAN (v0.71.0): Client-Side Path Traversal.
+
+Clase nueva (2025-2026): el JS del sitio concatena input del
+usuario en la RUTA de un fetch()/axios -> se engana al navegador
+autenticado para llamar endpoints que no deberia ("../" en el
+path). Termina en SSRF-del-cliente, CSRF o XSS encadenado.
+
+Detecta estaticamente el patron FUENTE (query/hash de URL) ->
+SINK (fetch/axios/xhr con path concatenado) en los .js del
+plugin/tema.
+
+Uso:
+    python3 core/cspt_scan.py <root>
+"""
+
+=== cve_matcher.py ===
+"""
+codexRC - CVE Matcher Module
+Correlates detected technologies/versions with known CVEs.
+Uses the public CIRCL CVE Search API (no key required for basic use).
+"""
+
+=== decompile.py ===
+"""DECOMPILE: descompilacion parcial nivel 3 (bytecode DEX -> pseudocodigo).
+
+REVERSE (v0.36) leyo la ESTRUCTURA (clases, metodos, strings). DECOMPILE
+baja un nivel mas: abre el CODE_ITEM de cada metodo y DESensambla sus
+instrucciones reales (opcode dalvik) resolviendo lo que referencian:
+
+  const-string v0 = "AKIA..."        (strings de la tabla)
+  invoke-static Lcom/sdk/Lic;->verify  (metodos por nombre y clase)
+  if-eqz, goto, return...             (flujo de control)
+
+Resultado: pseudocodigo legible de los METODOS DE LOGICA SENSIBLE
+(decrypt/license/sign/verify/auth/checkout) sin ejecutar nada y sin
+necesitar JRE/dex2jar (que no existen para armv7l). Un secret que
+aparece como const-string dentro del flujo de un metodo se reporta
+como critica "secret EN EJECUCION".
+
+Nivel honesto: desensamblado resuelto del subset comun de dalvik
+(~45 opcodes: constantes, strings, fields, invokes, saltos, retornos).
+Opcoes fuera del subset se marcan y el metodo se corta ahi. No es
+Java fuente 100%; es lo que un reverser lee primero.
+
+Uso:
+    python3 core/decompile.py <apk|dex> [--all] [--top N] [--json]
+    POST /api/decompile {"path": "..."}                    (backend)
+"""
+
+=== deep_scan.py ===
+"""
+codexRC - Deep Scan Module
+Auditoria profunda: deteccion de WAF/CDN, certificado TLS y mapeo de dominios.
+Todo en Python puro para que corra igual en Termux (armv7l) sin binarios extra.
+"""
+
+=== desync_hunt.py ===
+"""DESYNC-HUNT (v0.83.0): investigacion DESYNC sobre el
+EXPERIMENT-GRAPH.
+
+Consume EDGESYNC (v0.74: sondas de framing con 3
+dimensiones) SIN reemplazarlo. Cada sonda es un EXPERIMENTO
+con contrato pre-registrado; cada disparo produce una
+OBSERVACION cruda con huellas de reproducibilidad; el
+contrato convierte senales en EVIDENCIA; el candidato
+DESYNC avanza solo con evidencia.
+
+Escalera de impacto (nunca se salta):
+    DESYNC OBSERVED -> REPRODUCIBLE -> STATE EFFECT ->
+    CROSS-CONNECTION -> SECURITY IMPACT
+
+La corona (CONFIRMED) exige E-DESYNC-IMPACT reproducible:
+efecto de seguridad fuera del propio experimento. La mera
+discrepancia de parsing no basta.
+"""
+
+=== diff_hunt.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - DIFF-HUNT (v0.45.0)
+# ------------------------------------------------------------
+# Pivote de estrategia: en vez de auditar plugins enteros
+# (los top ya estan blindados), caza SOLO el codigo nuevo.
+# Descarga la version actual y la anterior de cada plugin con
+# VDP activo, calcula el diff (lineas agregadas/modificadas en
+# archivos .php propios del plugin) y corre TAINT-TRACE +
+# CVE-MATCH + GATES-AUDIT + FP-AUTO-CLOSE restringido a esas
+# lineas nuevas.
+#
+# Logica: lo recien escrito no paso por ningun auditor ni
+# por los bots de los demas hunters.
+#
+# Uso:
+#   python3 core/diff_hunt.py slug1 slug2 ... [--vdp vdp.json]
+#   python3 core/diff_hunt.py slugs.txt --vdp vdp.json --out r.json
+# Salida: solo hallazgos VIVOS sobre lineas nuevas. 💥 = critico.
+# ============================================================
+
+=== dossier_hunt.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - DOSSIER-HUNT (v0.96.1) — caza con las clases Q4-2026
+# ------------------------------------------------------------
+# Driver de caza READ-ONLY sobre fuentes publicas de plugins
+# WordPress (downloads.wordpress.org), con las clases nuevas del
+# dossier: POI-REACH (Object Injection con alcance+gadget) y
+# MAGIC-CONFUSION (extension vs contenido hacia Imagick).
+#
+# Reusa la infra de plugin_batch (descarga + filtro de ruido de
+# librerias). Anti-FP: hallazgos dentro de vendor/lib NO se
+# reportan (NOISE_RE de plugin_batch).
+#
+# Uso:
+#   python3 core/dossier_hunt.py slug1 slug2 ...
+#   python3 core/dossier_hunt.py --populares 40
+#   python3 core/dossier_hunt.py slug --version 1.2.3   # calibracion
+#
+# Escalera honesta: solo POI-REACH y MAGIC-CONFUSION son
+# 💥; POI-AUTH/POI-DETECTED son pistas, CONFUSION-GUARDED
+# es defensa correcta.
+# ============================================================
+
+=== edge_profile.py ===
+#!/usr/bin/env python3
+"""EDGE-PROFILE (v0.75.0): caracteriza el CONTRATO del edge.
+
+No busca desync, no lanza smuggles. Responde una sola pregunta:
+
+  ¿Que transformaciones aplica cada frontera antes de entregar el
+  mensaje a la siguiente capa?
+
+Metodo: sondeos beningos (framing contradictorio con cuerpo
+VACIO, sin contenido smuggleado) y observacion de lo que regresa.
+Nada se infiere: lo no observable queda "unknown".
+
+Ficha:
+  version          HTTP observado
+  reuse            la conexion reutilizada responde secuencial
+  cierre_rechazo   el rechazo viene con cierre de conexion
+  cl_te / te_doble / te_espacio / te_case
+                   rejected | accepted | unknown
+  normalizacion    normalized | conserved | unknown
+                   (observable solo si el downstream hace ECO;
+                   en blancos reales sin eco queda unknown)
+  downstream       reached (eco visto) | unknown
+  cache            firma Age/X-Cache entre requests repetidos
+  origin           unknown (siempre: no observable)
+
+Presupuesto: 1 conexion de reutilizacion (3 GET) + 4 probes
+benignos (1 conexion, probe+sonda cada uno) = ~11 requests,
+secuencial, lectura A->B, cuerpos <= 4KB.
+"""
+
+=== edgesync.py ===
+#!/usr/bin/env python3
+"""EDGESYNC-HUNT (v0.74.0): SONDA-DE-CORRELACION.
+
+Salto sobre v0.73: el veredicto ya no nace de una sola dimension
+(el eco). Ahora cada variante se observa en TRES dimensiones sobre
+la MISMA conexion:
+
+  dim1 framing     respuesta al mensaje ambiguo (eco / conteo)
+  dim2 persistencia la conexion sigue viva tras el ambiguo, o el
+                   edge la mata? un cierre activo del edge significa
+                   algo muy distinto a una conexion que sigue con
+                   estado inconsistente
+  dim3 estado      el request siguiente (sonda) conserva su estado
+                   esperado, o llega desplazado/envenenado?
+
+La pregunta que responde: "¿el comportamiento observado demuestra
+que DOS componentes interpretaron el mismo mensaje de forma
+diferente?" Escalera de veredictos:
+
+  RECHAZO-EDGE   el edge corto el framing ambiguo (400/close):
+                 postura activa; nada observable, no se gasta
+                 presupuesto extra
+  SIN-DESYNC     el edge acepto y todo cuadra (o mix aceptado+
+                 rechazado)
+  SOSPECHA       una sola dimension desacuerda, sin eco
+  DESYNC-DEMO    eco (o sonda envenenada) REPRODUCIBLE, con la
+                 segunda capa pillada interpretando distinto
+
+TOPOLOGY-PRE: pasada inicial barata que lee Server/Via/CF-Ray/
+Age/X-Cache del baseline y clasifica el blanco (cdn-blindado |
+proxy-intermedio | directo). CDN blindado -> bateria reducida
+(V1, V2, P1); el resto -> bateria completa. La topologia queda
+como evidencia y alimenta a UNIVERSAL-RECON.
+
+Variantes: 9 framings (v0.73) + 2 POISON:
+  P1 CL.TE: prefijo de envenenamiento (request sin terminar)
+     dentro de la ventana CL; el back lo pega a la sonda y la
+     respuesta de la sonda sale POR el camino del veneno
+  P2 TE.CL: el mismo prefijo dentro del data de un chunk
+
+Los ecos TE.CL y P2 (familia TECL) siguen siendo CANDIDATOS
+(desync o pipelining: ambiguo sin prueba cruzada) y van a listas
+propias: tecl_candidatos y poison_candidatos.
+
+SEGURIDAD (anti-DoS, no negociable):
+  - MAX_PROBES pruebas totales (baseline + 9 framings + 2 poisons
+    + reproducciones), 1 conexion secuencial por variante
+  - cooldown entre probes, sin flood, sin RST, cuerpos <= 4KB
+  - stop al primer DESYNC-DEMO
+  - lectura A->B: todo lo que viaja smuggleado es de solo lectura
+"""
+
+=== escalada.py ===
+"""ESCALADA: que hacer DESPUES del aviso critico.
+
+El CHAIN (v0.28) dice "tenes una cadena critica" y ahi se quedaba: el
+operador se quedaba en el blanco sin saber el siguiente paso. ESCALADA
+(v0.38) continua solo, con reglas deterministas y canarios inertes:
+
+  PASO A - VERITAS DIRIGIDO: re-verifica en navegador real SOLO las
+           piezas XSS de la cadena (las que armaron el caso), no todo.
+  PASO B - TECHO DE IMPACTO: pide el blanco con la sesion heredada y
+           revisa las flags de las cookies: sin HttpOnly + XSS
+           ejecutable = camino a HIJACK de sesion (el techo).
+  PASO C - KIT PoC: genera la pagina atacante LOCAL (poc/<host>.html)
+           con iframe + hash canario + postMessage canario. El operador
+           la abre en su maquina y VE si la cadena aterriza. Canariz
+           inerte: banner visible, cero exfiltracion.
+  PASO D - PLAYBOOK: pasos ordenados que faltan, segun las piezas que
+           tenga la cadena (persistencia, admins, reporte).
+
+Todo es lectura y render inerte: nada de datos reales, nada sale del
+equipo del operador. Si no hay cadenas criticas, no corre.
+"""
+
+=== evidence.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - EVIDENCE-CHAIN + ABOGADOS (v0.47.0)
+# ------------------------------------------------------------
+# Motor de razonamiento de evidencia (estilo RacerD/Infer):
+# no pregunta "¿podria ser vulnerable?" sino
+# "¿que evidencia tengo para afirmar que realmente lo es?".
+#
+# Por cada finding construye una CADENA DE EVIDENCIA:
+#
+#   SOURCE      ¿input controlable por el atacante?
+#   FLOW        ¿como llega hasta el sink? (saltos incluidos)
+#   AUTH        ¿que compuertas lo custodian? (nonce/caps/nopriv/REST)
+#   SANITIZATION ¿existe sanitizacion efectiva en la ruta?
+#   SINK        operacion peligrosa final
+#   CORRELATION ¿que analizadores lo vieron? (TAINT/GATES/PATTERNS/DIFF)
+#   DYNAMIC     evidencia dinamica (si existe)
+#
+# Sobre la cadena actuan ABOGADOS deterministas:
+#   FISCAL   debe PROBAR: source controlado + taint al sink +
+#            sin sanitizacion + alcance sin privilegios.
+#   DEFENSA  busca REFUTACIONES: gate protegido, sanitizador,
+#            prepare seguro, contexto admin-only, inalcanzable.
+#   JUEZ     pesa evidencia y dicta. NO es un LLM: reglas fijas.
+#
+# Veredictos (escala RacerD: se reporta solo lo demostrable):
+#   CONFIRMED           prueba estatica completa + dinamica reproducida
+#   DEMOSTRADO-ESTATICO prueba estatica completa, falta dinamica
+#   PROBABLE            flujo probado, alcance/dinamica sin resolver
+#   CONTESTADO          defensa tiene refutacion parcial
+#   DESCARTADO          refutacion fuerte (gate/sanitizado/admin-only)
+#
+# Cada cadena expone FALSADORES: que evidencia la tumbaria.
+# Meta: el scanner que necesita MENOS confianza humana por finding.
+# ============================================================
+
+=== evidence_package.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.94.0 EVIDENCE PACKAGE
+=======================
+Etapa FINAL del roadmap: convierte lo que sobrevivio a
+toda la escalera en el paquete FALSABLE que exige el
+operador: un tercero puede re-ejecutar y llegar al
+mismo veredicto.
+
+Cadena que empaqueta (ninguna rung inferida, todo
+re-ejecutable):
+  RUNG 1  DETECTION+STATE-EFFECT  crc_lab seq_desync:
+          firma CRC-STATE-EFFECT k=2, media por pase
+          del reproduction engine.
+  RUNG 2  REPRODUCTION  repro_engine: 2 genealogias
+          INDEPENDIENTES (instancias frescas) x pase
+          A (deteccion) + pase B (replay): REPRODUCIBLE
+          exige firma identica en A y B de TODAS.
+  RUNG 3  SECURITY IMPACT  impact_probe contra
+          impact_lab pool_swap: la victima (TCP
+          distinto) recibe la respuesta del recurso
+          protegido smuggleado, 2/2 rondas, control
+          limpio: SECURITY-IMPACT-DEMO.
+  RUNG 4  FP-GUARANTEE (cita): la bateria de cebo de
+          fp_elimination verifico 0/4 cebos
+          reportables con control positivo activo
+          (caso de corpus RC-000257).
+
+Cada rung lleva su presupuesto y el paquete declara
+LIMITES explicitos: read-only, modo lab, recurso
+protegido SIMULADO (dato del lab, jamas un recurso de
+terceros), presupuestos declarados, escalera completa
+sin saltos.
+
+Falsabilidad: el paquete incluye los comandos exactos
+de reproduccion y un hash sha256 del payload canonico;
+verify_package() re-computa el hash y valida los
+campos obligatorios: un tercero re-ejecuta la cadena y
+compara.
+
+Presupuesto: repro (32) + impact (5) = 37 reqs, techo
+declarado 40. Read-only.
+"""
+
+=== experiment_catalog.py ===
+"""CATALOGO DE EXPERIMENTOS (v0.81.0): sondas HTTP de solo
+lectura con CONTRATO pre-registrado.
+
+Cada experimento declara ANTES de ejecutar que resultados
+apoyarian o refutarian que hipotesis. El contrato se evalua
+despues con el bundle de resultados acumulado: nada se
+racionaliza a posteriori.
+
+Orden de ejecucion: fijo por dependencia (INTRA -> CROSS ->
+SESSION -> VIRGIN -> TIME). La parte adaptativa es PARAR
+temprano cuando el juez converge, y el gap ledger que queda
+si no converge.
+"""
+
+=== experiment_graph.py ===
+"""EXPERIMENT-GRAPH (v0.83.0): grafo dirigido de
+investigacion para la linea DESYNC.
+
+Principio inviolable:
+    Hypothesis != Observation != Evidence != Verdict
+
+Flujo obligatorio:
+    HYPOTHESIS -> EXPERIMENT -> OBSERVATION -> EVIDENCE ->
+    CORRELATION -> VERDICT
+
+Reglas:
+  - Todo contrato se registra ANTES de ejecutar (anti
+    post-hoc).
+  - Journal append-only: la evidencia previa NUNCA se
+    sobrescribe; se anula con evidencia nueva citada.
+  - Sobrevivir experimentos NO demuestra una hipotesis:
+    solo evidencia explicita de apoyo la marca SUPPORTED.
+  - Contradiccion es terminal: gana, pero el historial
+    conserva el apoyo previo.
+  - La reproducibilidad NO es "dos respuestas iguales":
+    exige huellas completas (request, conexion, reuso,
+    timing, respuesta, estado, cache, baseline, controles,
+    genealogia) reconstruibles.
+  - CONFIRMED exige E-DESYNC-IMPACT + invariantes
+    anti-falso-positivo limpias. La corona no se fabrica.
+"""
+
+=== experiment_selector.py ===
+"""SELECTOR DE EXPERIMENTOS (v0.82): grafo de experimentos.
+
+Responde UNA pregunta: dadas las hipotesis vivas y el
+presupuesto, ¿cual es la siguiente prueba que mas
+informacion me puede dar?
+
+EDV (Valor de Discriminacion Esperado) por experimento:
+  para cada RAMA POSIBLE de su contrato (union estatica
+  pre-registrada, parte del contrato, no una prediccion):
+    valor_rama = suma de pesos sobre hipotesis VIVAS
+      CONTRADICT = 2.0 (contradiccion es terminal: reduce
+                      el conjunto vivo de forma determinista)
+      SUPPORT    = 1.0 (apoyo solo prepara convergencia)
+  EDV = media de valores de rama.
+
+Sin probabilidades inventadas: las ramas se ponderan uniforme
+porque NO se conoce su probabilidad; EDV es una heuristica
+de ORDENAMIENTO, no de veredicto. Ningun resultado afecta
+que hipotesis es apoyada o refutada: eso lo decide el
+contrato.
+
+DAG DE DEPENDENCIAS (del propio catalogo):
+  INTRA-CONN -> CROSS-CONN -> VIRGIN
+  INTRA-CONN -> TIME-OFFSET
+  Un experimento no es elegible si falta un prerequisito.
+
+DESEMPATES (deterministas, en orden):
+  1. mayor EDV
+  2. epsilon: discriminante en la ventana previa de memoria
+     (eficiencia, nunca evidencia)
+  3. orden de dependencia del catalogo
+
+PARADA HONESTA: si ningun experimento restante puede
+tocar una hipotesis viva (EDV == 0 en todos), el loop se
+detiene y declara que NINGUN experimento disponible
+discrimina las hipotesis vivas. El UNKNOWN conserva esa
+razon, no un silencio.
+"""
+
+=== fp_autoclose.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - FP-AUTO-CLOSE (v0.44.0)
+# ------------------------------------------------------------
+# Segunda capa de verificacion tras GATES-AUDIT: reconoce los
+# patrones de falso positivo que se repiten lote tras lote y
+# los dictamina solo, para que el operador/agente solo vea
+# candidatos reales.
+#
+# Veredictos automaticos (_fp):
+#   FP-GATE-PROTEGIDO     el hallazgo cae en un handler con
+#                         caps y/o nonce (dictamen de GATES)
+#   FP-SQLI-PREPARE       el sink usa $wpdb->prepare con
+#                         placeholders (%s/%d) sobre el input
+#   FP-SQLI-CAST          el input pasa por absint()/intval()
+#   FP-XSS-ESCAPED        la linea del echo aplica esc_*/wp_kses
+#   FP-UPLOAD-WHITELIST   la subida valida mime y/o extension
+#   FP-STRICT-IN_ARRAY    in_array con strict=true (no juggling)
+#   FP-GATE-NOPRIV-LOGIN  handler nopriv con is_user_logged_in
+#                         o dispatcher que exige sesion dentro
+#
+# Nivel 1: ventanas de contexto con regex; no ejecuta nada.
+# ============================================================
+
+=== fp_elimination.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.93.0 FP-ELIMINATION
+=====================
+Etapa 21-bis del roadmap: caza SISTEMATICA de falsos
+positivos. La red conservadora de veredictos (flaky no
+escala, benigno se descarta, muerto no se promedia) ya
+elimina la mayoria de los FP por diseno; este modulo los
+convierte en GARANTIA verificable:
+
+1. TABLA DE CLASES DE SENAL: cada clase observable del
+   oraculo tiene su regla de clasificacion y su estatus
+   reportable. Una senal sin regla = FP potencial: el
+   modulo NO aprueba.
+
+2. BATERIA DE CEBO (FP-bait): escenarios que DEBEN
+   producir veredictos NO reportables. Si algun cebo
+   produce un veredicto reportable (SECURITY-IMPACT-
+   DEMO), es un falso positivo: FP-LEAK.
+
+   Cebos: quiet_drain (drenaje), benign_pin (conn
+   pinneada), pool_shift (mispairing benigno cruzado),
+   flaky_swap (swap 1/2, un solo disparo en la vida).
+
+3. CONTROL POSITIVO: pool_swap DEBE producir
+   SECURITY-IMPACT-DEMO. Sin control positivo la
+   bateria es vacua (no puede detectar nada): UNSTABLE,
+   sin claim.
+
+Veredictos:
+  FP-ELIMINATED  todos los cebos no reportables Y el
+                 control positivo reporta: la garantia
+                 cero-FP queda VERIFICADA en bateria.
+  FP-LEAK        un cebo produjo veredicto reportable:
+                 falso positivo REAL: hay que arreglar.
+  UNSTABLE       lab muerto o control positivo mudo:
+                 no se puede juzgar.
+
+Presupuesto: 5 auditorias x 5 reqs = 25 (techo 26).
+Read-only. Labs propios, nada en paralelo.
+"""
+
+=== fp_memory.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - FP-MEMORIA (v0.66.0, AUTHZ-PROOF capa 5)
+# ------------------------------------------------------------
+# Memoria semantica de falsos positivos: cuando un hallazgo es
+# refutado (por el OPERADOR o por la DEFENSA con prueba), se
+# guarda su HUELLA ESTRUCTURAL. El siguiente hallazgo con la
+# misma huella se auto-cierra sin gastar triaje.
+#
+# "El falso positivo se paga una sola vez, nunca mas."
+#
+# Huella (fingerprint) = estructura semantica normalizada del
+# hallazgo: tipo, veredicto de gates, rol exigido, nonce, owner,
+# sinks de objeto, marcadores del nombre de la accion y del
+# codigo alrededor. SIN nombres de archivo, lineas ni plugin:
+# dos hallazgos con la misma huella son la MISMA familia, aunque
+# vivan en plugins distintos.
+#
+# Matching EXACTO de huella (sin wildcards): una huella cerrada
+# solo cierra huellas identicas. Anti-ruido conservador.
+#
+# La memoria vive en el repo (.codexrc/intelligence/fp_memory.jsonl)
+# y se propaga por git: toda instancia que hace pull aprende lo
+# que las demas ya pagaron en triaje.
+#
+# CLI:
+#   python3 core/fp_memory.py --stats
+#   python3 core/fp_memory.py --list [FPM-0003]
+# ============================================================
+
+=== gates_audit.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - GATES-AUDIT (v0.43.0)
+# ------------------------------------------------------------
+# Dictamina SOLO si los handlers de un plugin estan protegidos:
+# mapea wp_ajax / wp_ajax_nopriv / wc_ajax / REST (permission_callback)
+# a su callback, extrae el cuerpo de la funcion y busca compuertas
+# (current_user_can / wp_verify_nonce / check_ajax_referer).
+#
+# Veredictos automaticos:
+#   CANDIDATO-BAC   nopriv sin caps ni nonce (superficie anonima abierta)
+#   REVISAR-AUTH    solo wp_ajax (logueado) sin caps ni nonce
+#                   (cualquier subscriber puede llegar; vale si toca
+#                   objetos sensibles: settings, users, archivos, dinero)
+#   PROTEGIDO       tiene caps y/o nonce verificado
+#   REST-ABIERTO    permission_callback __return_true (anonimo)
+#
+# Uso:
+#   python3 core/gates_audit.py <dir_plugin> [--json]
+# Integrado en PLUGIN-BATCH: anota cada hallazgo con su veredicto.
+# Nivel 1: regex + balance de llaves; no ejecuta nada.
+# ============================================================
+
+=== ghostgate.py ===
+"""
+codexRC - Modulo GHOSTGATE (Cloudflare relay, Termux friendly)
+
+CF-Ghost diagnostica. GhostGate accede.
+
+Flujo integrado al login autenticado:
+1. El request normal del escaneo llega a una pagina protegida por Cloudflare.
+2. Este modulo clasifica la respuesta (JS_CHALLENGE / TURNSTILE / WAF_BLOCK /
+   BLOQUEO_IP / UNDER_ATTACK / SIN_CF).
+3. Si hay challenge y curl_cffi esta instalado, reintenta con la huella TLS
+   exacta de Chrome 136 (impersonacion de navegador real).
+4. Si pasa, entrega las cookies al requests.Session del escaneo.
+5. Si no pasa (IP quemado / Turnstile), informa que se necesita GHOSTGATE
+   completo: delegar el acceso a un navegador real con IP limpia.
+
+Basado en la metodologia GHOSTGATE (repo Eliezer1817/GhostGate).
+"""
+
+=== graphql_bait.py ===
+"""GRAPHQL: bateria dedicada contra endpoints GraphQL ocultos.
+
+Las SPA modernas esconden toda la logica en /graphql. Esta bateria:
+
+  1. DESCUBRE el endpoint (rutas comunes + soporte GET ?query=)
+  2. INTROSPECCION: si esta habilitada, lista los tipos del esquema:
+     el mapa completo de la API = mapa de donde buscar IDORs/BAC
+  3. FIELD SUGGESTIONS: con introspeccion CERRADA, los errores tipo
+     "Did you mean 'user'?" siguen filtrando el esquema campo por campo
+  4. BATCHING: detecta si acepta arrays de queries en un solo request
+     (bypass de rate limits) — se envia UN lote de 2 consultas inertes,
+     jamas un bombardeo (DoS fuera de reglas)
+
+Todo lectura: introspeccion y sugerencias son metadatos publicos.
+"""
+
+=== h2_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.88.0 H2-TRANSLATION (Parser Differential)
+============================================
+Familia h2.CL / inyeccion H1 por HPACK leniente, con la
+disciplina de la linea DESYNC: contratos pre-registrados en
+el ExperimentGraph, juez determinista, presupuesto bajo y
+cero-FP por diseno.
+
+Mecanica H2-TRANSLATION: el edge traduce HTTP/2 -> HTTP/1.1.
+Dos bugs de traduccion clasicos:
+  h2.CL   el edge reenvia TODOS los DATA frames ignorando el
+          content-length del origin: el origin consume CL
+          bytes y procesa el residual como request invisible.
+  H-INJ   el traductor copia verbatim un valor de header con
+          CRLF: el origin parsea una request extra escondida
+          en el header block.
+
+Oraculo observable (nada inferido): la ATRIBUCION de
+respuestas por stream. En H2 cada request tiene su stream:
+  A  el stream del followup recibe el eco del token del
+     followup      -> traduccion alineada (BENIGN).
+  B  el stream del followup recibe SMUGGLE-ECHO del token
+     smuggleado   -> el origin proceso bytes que el edge no
+     contabiliza  -> MISMATCH observable.
+  S  cadena: el segundo followup recibe el eco del primero
+     -> la coleccion queda desplazada (STATE EFFECT).
+  R  RST_STREAM/GOAWAY del edge ante smuggle -> frontera
+     estricta (BENIGN, no desync).
+
+Regla heredada (v0.87): el eco del token SOLO no es desync;
+sin desalineacion observable, el veredicto NO escala. Sin
+repro 2/2 no hay DESYNC.
+
+Contratos (pre-registrados):
+  baseline: C0 GET control (firma de eco propio);
+            C1 POST vacio + followup alineado (si el
+            followup no matchea C0: UNSTABLE).
+  variante (bateria h2.CL o H-INJ, 1 endpoint):
+    P  probe en conexion fresca (POST smuggleado + fb + fc)
+    R  repro idem en conexion nueva
+
+Escalera determinista:
+  BENIGN -> H2-DETECTED (1/2, probable, NO reportable)
+  -> H2-DESYNC (repro 2/2)
+  -> H2-STATE-EFFECT (ademas coleccion desplazada)
+  (+ BENIGN-EDGE / UNSTABLE / UNREACHABLE / UNKNOWN)
+
+Presupuesto: 2 baseline + 1 variante x 2 fases x 3 reqs
+= max 8 requests. Read-only: el smuggle es un GET propio con
+token unico, jamas recursos de terceros.
+
+Aprendizaje RC-000217: los payloads son BYTES crudos jamas
+repr(b'..'); la carga HPACK va en 0x00-literal sin huffman.
+"""
+
+=== hunt_wide.py ===
+#!/usr/bin/env python3
+"""v0.48.0 WIDE-HUNT: caza sobre el corpus COMPLETO wordpress.org (>=5k installs).
+
+La mejora EVIDENCE-CHAIN (v0.47.0) hace que los falsos positivos se cierren
+solo, asi que el ruido ya no justifica limitar la caza a los VDP de
+Patchstack. Nueva regla:
+  - CAZAMOS a todos (corpus ancho, refrescable con wide_corpus.py).
+  - REPORTAMOS donde pagan (VDP activo con bounty, mapa vdp_mapa.json);
+    sin VDP = solo CVE credit, el hallazgo se guarda igual.
+  - Los ya auditados (hechos/hunt_wide_done.txt) se saltan para no repetir.
+
+CLI:
+  python3 core/hunt_wide.py --dias 90 --workers 6
+  python3 core/hunt_wide.py --solo-pagables   # solo VDP con bounty
+"""
+
+=== hunter.py ===
+"""
+codexRC - Hunter (FACHADA, v0.57.5)
+El modulo original de 96KB se partio en submodulos por responsabilidad:
+  core/hunter_base.py   constantes + helpers compartidos
+  core/hunter_spider.py Spider (mapeo)
+  core/hunter_deep.py   DeepHunter (caza profunda)
+  core/hunter_xss.py    XSSHunter (reflexion)
+  core/hunter_blind.py  BlindXSS
+  core/hunter_xsspro.py XSSPro
+Esta fachada re-exporta TODO para que los imports existentes
+(backend/app.py, core/async_lane.py, CLI) no cambien ni una linea.
+"""
+
+=== hunter_base.py ===
+"""
+codexRC - Hunter Module
+Motor de descubrimiento (arana + inventario de parametros) y corpus de
+pruebas XSS por reflexion. Diseno 100% pasivo del lado del atacante:
+solo envia marcadores benignos (kxss...) y DEDUCE explotabilidad por
+analisis de contexto. Nunca ejecuta JavaScript ni dispara payloads reales.
+"""
+
+=== hunter_blind.py ===
+"""
+codexRC - BlindXSS
+"""
+
+=== hunter_deep.py ===
+"""
+codexRC - DeepHunter
+Caza profunda multi-vector. Extraida de hunter.py (v0.57.2).
+"""
+
+=== hunter_spider.py ===
+"""
+codexRC - Spider
+Arana de descubrimiento: mapa paginas/params/endpoints. Extraida de
+hunter.py (v0.57.2) para mantener el modulo navegable; la fachada
+core/hunter.py re-exporta todo y nada se rompe afuera.
+"""
+
+=== hunter_xss.py ===
+"""
+codexRC - XSSHunter
+"""
+
+=== hunter_xsspro.py ===
+"""
+codexRC - XSSPro
+"""
+
+=== hypothesis_graph.py ===
+"""HYPOTHESIS-GRAPH (v0.81.0): hipotesis explicativas de una
+observacion AMBIGUA, con reglas de actualizacion deterministas.
+
+Reglas:
+  - SUPPORT exige evidencia positiva explicita (contrato).
+  - CONTRADICT exige observacion discriminante (el mecanismo
+    predice algo que NO ocurrio en su dimension).
+  - La contradiccion es terminal: un soporte posterior no
+    revive una hipotesis (se registra como conflicto).
+  - Todo lo demas queda UNKNOWN. Hipotesis != observacion !=
+    evidencia != veredicto.
+"""
+
+=== impact_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.92.0 IMPACT CORRELATION
+==========================
+Etapa de IMPACT del roadmap: dado un desync reproducido
+(la firma del REPRODUCTION ENGINE), responde UNA
+pregunta: el efecto de estado hace dano a un usuario
+DISTINTO del atacante (contaminacion de respuesta
+cross-user)?
+
+Mecanica v0.92: el atacante (conexion A) hace POST CL.0
+con un request smuggleado y CIERRA tras leer su propia
+respuesta; el smuggle ya viajo al origin y su respuesta
+queda PENDIENTE en la conn del pool. La victima
+(conexion V, TCP DISTINTO) hereda la conn: su primer
+request recibe la respuesta del smuggle del atacante.
+
+Oraculo observable (nada inferido): QUE respuesta recibe
+la victima. Clasificacion por atribucion:
+  ECHO <vtok>       -> ALIGNED (su propio eco: sin
+                       impacto)
+  SECRET-IMPACT-*   -> SMUGGLED-PROTECTED (la victima
+                       recibio la respuesta de un recurso
+                       protegido que jamas pidio)
+  ECHO <otro-tok>   -> MISPAIRED-BENIGN (eco del token
+                       del ATACANTE: mispairing cruzado
+                       pero contenido benigno)
+  OK                -> MISPAIRED-BENIGN (la respuesta del
+                       POST del atacante llego a la
+                       victima)
+
+Escalera determinista (nunca se salta, cero-FP):
+  BENIGN -> IMPACT-CANDIDATE (mispairing benigno, o swap
+  protegido 1/2: probable, NO reportable)
+  -> SECURITY-IMPACT-DEMO (swap protegido 2/2 rondas Y
+     control limpio: la victima recibe a demanda la
+     respuesta protegida del smuggle del atacante)
+  (+ BENIGN-EDGE / UNREACHABLE / UNSTABLE / UNKNOWN)
+
+Auto-control por atribucion: la fase CONTROL (victima
+limpia antes de envenenar) valida que el apareamiento
+funciona con la cola alineada. Sin control no hay claim.
+
+Presupuesto: 1 control + 2 rondas x (1 POST atacante +
+1 GET victima) = 5 requests max. Read-only: los smuggles
+son GETs al propio lab; el recurso protegido
+(/admin/secret) es dato SIMULADO del lab, jamas un
+recurso de terceros.
+
+Aprendizajes v0.87-91: bytes crudos jamas repr(b'..');
+buffers PERSISTENTES por conexion; el obuf viaja CON la
+conn del pool; conn muerta = error honesto, no crash;
+nada en paralelo.
+"""
+
+=== lab_ab_site.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - LAB-AB-SITE (v0.68.0): sitio NO-WordPress de prueba
+# ------------------------------------------------------------
+# Laboratorio local para validar REG-BOT + AB-DIFF sin tocar a
+# ningun tercero (misma filosofia que WP-LAB, pero para apps
+# genericas). Simula una app "Laravel-like" con:
+#   - registro (username, email, password estricta, confirm)
+#   - verificacion por CODIGO (6 digitos) al mailbox mock
+#   - login por email+password
+#   - /api/me: datos de la sesion (id, email, links)
+#   - /api/user/<id>: SIN owner check  <- bug IDOR a detectar
+#   - /api/user/<id>/notes: CON owner check <- caso a REFUTAR
+#   - /mockmail/<email>: buzon mock (compatible mail.tm shape)
+#
+# Uso:
+#   python3 core/lab_ab_site.py 8899     # levanta en :8899
+#   python3 core/ab_diff.py http://127.0.0.1:8899 \
+#       --mock http://127.0.0.1:8899
+# ============================================================
+
+=== magic_confusion.py ===
+#!/usr/bin/env python3
+"""MAGIC-CONFUSION (v0.96.0): extension vs contenido en rutas de media.
+
+CVE-2026-65640 (WordPress Core <= 7.0.3, Author+ RCE 9.1): WP confia
+en la EXTENSION del archivo; ImageMagick decide por MAGIC BYTES.
+Un "png" que en realidad contiene PostScript (%!, \\x04%!,
+\\xC5\\xD0\\xD3\\xC6, prefijo de formato tipo EPS:file.png) pasa los
+checks de extension, llega a Imagick -> Ghostscript -> ejecucion.
+Core parcheo 7.0.4 (commit 7daaa50) snifeando contenido ANTES de
+construir el objeto Imagick. Los PLUGINS que procesan media por su
+cuenta (galerias, optimizadores, importadores, cover-art) siguen
+duplicando el patron.
+
+Escalera cero-FP:
+  CONFUSION-CANDIDATE   sink Imagick (readImage/readImageBlob/ping/
+                        new Imagick) alimentado por variable que nace
+                        de una PRIMITIVA DE ENTRADA: $_FILES,
+                        wp_upload_bits, wp_handle_upload,
+                        media_handle_upload, move_uploaded_file,
+                        download_url, media_sideload, wp.downloadFile
+  CONFUSION-UNGUARDED   el archivo del sink NO presenta gate de
+                        contenido: wp_check_filetype_and_ext, finfo,
+                        getimagesize, wp_get_image_mime, exif_imagetype
+  CONFUSION-PREFIX      ademas, el path/file llega con posible
+                        prefijo de formato (variable interpolada
+                        antes de ':' o file.name sin sanear):
+                        riesgo de forzar el coder (EPS:evil.png)
+
+Veredicto final: MAGIC-CONFUSION solo con CANDIDATE + UNGUARDED.
+Demo real queda en WP-LAB (payload PostScript INERTE: demostrar el
+routing, nunca Ghostscript ejecutable en blanco de terceros).
+
+Uso:
+    python3 core/magic_confusion.py <dir_plugin> [--json]
+"""
+
+=== mc_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.89.0 MULTI-CONNECTION (Efecto de Segundo Orden)
+==================================================
+Contaminacion CRUZADA entre conexiones via pool de
+conexiones origin, con la disciplina de la linea DESYNC:
+contratos pre-registrados en el ExperimentGraph, juez
+determinista, presupuesto bajo y cero-FP por diseno.
+
+Mecanica MULTI-CONNECTION: el edge mantiene un POOL de
+conexiones keep-alive al origin. El atacante (conexion A)
+hace POST CL.0 con prefijo smuggleado y CIERRA: la origin
+conn envenenada vuelve al pool con respuestas pendientes.
+La victima (conexion B, TCP DISTINTO) hereda la conn del
+pool: su primer followup recibe el eco del smuggle de A.
+
+Oraculo observable (nada inferido): la ATRIBUCION de
+respuestas por CONEXION:
+  A  B recibe SU eco en posicion 0       -> alineado.
+  S  B recibe SMUGGLE-ECHO del token de A -> el origin
+     proceso bytes de OTRA conexion      -> MISMATCH
+     observable cruzado.
+  D  ademas el eco propio de B aparece DESPLAZADO (pos>0)
+                                         -> la coleccion
+     queda desplazada (STATE EFFECT).
+  R  RST del edge al smuggle             -> frontera
+     estricta (BENIGN, no desync).
+
+Regla heredada (v0.87/88): el eco del token SOLO no es
+desync; sin desplazamiento observable, el veredicto NO
+escala. Sin repro 2/2 no hay DESYNC.
+
+Auto-control por atribucion (sin baseline separado): el
+eco propio del followup en posicion 0 es el control de
+cada fase; si no aparece ni eco propio ni eco del smuggle:
+UNKNOWN (no BENIGN, cero-FP).
+
+Contratos (pre-registrados):
+  fase P  conexion A (POST smuggleado + close) y
+          conexion B (3 GETs: fb, fc, fd)
+  fase R  repro idem con conexiones nuevas
+
+Escalera determinista:
+  BENIGN -> MC-DETECTED (1/2, probable, NO reportable)
+  -> MC-DESYNC (repro 2/2)
+  -> MC-STATE-EFFECT (ademas coleccion desplazada)
+  (+ BENIGN-EDGE / UNSTABLE / UNREACHABLE / UNKNOWN)
+
+Presupuesto: 1 variante x 2 fases x 4 reqs
+(A: 1 POST smuggleado; B: 3 GETs) = max 8 requests.
+Read-only: el smuggle es un GET propio con token unico,
+jamas recursos de terceros.
+
+Aprendizajes v0.88 aplicados: buffers PERSISTENTES por
+conexion (los bytes nunca se descartan); payloads BYTES
+crudos jamas repr(b'..').
+"""
+
+=== normalization_audit.py ===
+#!/usr/bin/env python3
+"""NORMALIZATION-AUDIT (v0.76.0): que representacion recibe el
+origin cuando el edge ACEPTA un framing contradictorio.
+
+Pregunta: cuando el edge acepta una variante, ¿que representacion
+termina recibiendo el origin?
+
+REGLA DE ORO: una tolerancia del edge NO es una vulnerabilidad
+por si misma. Este modulo describe TRANSFORMACIONES OBSERVABLES;
+no convierte una transformacion en hallazgo automaticamente.
+Lo no observable queda unknown (nunca "probablemente").
+
+Sonda central: BODY-DIFFERENTIAL (benigna). Cuerpo
+  5\\r\\nhello\\r\\n0\\r\\n\\r\\n
+  - leido como TE/chunked  -> cuerpo "hello" (5 bytes)
+  - leido como CL          -> 15 bytes crudos
+Las DOS lecturas consumen el mensaje completo: no hay smuggle,
+no hay leftover, no hay request secondario. Solo dos
+interpretaciones posibles del mismo mensaje, contrastables contra
+dos canonicos limpios enviados aparte:
+  canonical A: POST CL con cuerpo "hello"  (normalizador TE->CL)
+  canonical B: POST CL con cuerpo crudo    (conservador)
+
+Veredictos por variante (todos exigidos por evidencia):
+  NORMALIZED  input != downstream PERO ECO muestra TE eliminado
+  CONSERVED   input ~= downstream, ECO muestra TE intacto y la
+              respuesta coincide con el canonico crudo
+  MISMATCH    ECO muestra que el origin ACTUO sobre la lectura TE
+              (te=chunked) mientras la respuesta coincide con el
+              canonico A: dos capas, dos interpretaciones
+  REJECTED    el probe diferencial recibio 400/cierre
+  UNKNOWN     sin eco y sin diferencia observable de respuesta
+
+Escalera MISMATCH (nada escala sin evidencia):
+  ¿reproducible? -> ¿afecta estado/conexion? -> ¿evidencia
+  downstream (ECO)? -> SOSPECHA. DEMO queda para las capas de
+  estado/cache del roadmap (v0.77+).
+
+Presupuesto: perfil v0.75 (11 req) + 3 req por variante aceptada
+(probe + 2 canonicos), secuencial, lectura A->B. Tope 24.
+"""
+
+=== observe.py ===
+"""CODEX-OBSERVE (Fase 1, alcance reducido).
+
+Registro minimo de eventos semanticos de EVIDENCE-CHAIN: a que decision
+llego el motor, con que evidencia, en que version/commit. Fase 1 de la
+especificacion CODEX-OBSERVE/INTEL/REGRESS del operador. NO se implementan
+las fases de motor de anomalias, differential/metamorphic/fuzz testing ni
+CODEX-INTEL: para una herramienta de caza de bugs pagables el ROI de esa
+infraestructura es bajo comparado con el tiempo de construirla; lo que
+protege plata real es el Regression Corpus (core/regress.py), no el
+logging exhaustivo. Si en el futuro aparecen inconsistencias reales de
+verdict entre corridas, esto se puede ampliar.
+"""
+
+=== path_bait.py ===
+"""PATH-BAIT: bateria dedicada de LFI / path traversal (PAGA en Patchstack).
+
+Mas profunda que la version dentro de STEALTH-BAIT:
+  - wrappers: traversal directo, dobles puntos, barras invertidas
+    (Windows), null byte, php://filter (base64) para wp-config
+  - firmas: /etc/passwd, wp-config.php, .env, boot.ini, id_rsa
+  - objetivos: params con nombre de archivo/ruta/plantilla Y ademas
+    cualquier objetivo de alto valor (score >= 8) con sondas genericas
+  - 100% lectura: archivos de SISTEMA como prueba, cero ejecucion
+"""
+
+=== pattern_match.py ===
+"""CVE-MATCH: aprendizaje de patrones globales sobre codigo PHP.
+
+Compara el codigo de un plugin contra PATRONES ABSTRACTOS destilados de
+vulnerabilidades historicas reales (CVEs verificadas + 0-days propios de
+CZ-HUNT). No usa firmas fijas: cada patron es una COMBINACION de senales
+estructurales debiles que juntas forman el fallo conocido:
+
+  ej. BAC ajax sin auth = hook nopriv (+3) + escritura (+3) + input de
+  usuario (+2) - proteccion presente (-4) + nonce impreso al frontend
+  (+2, cancela el veto del nonce)
+
+Si el puntaje pasa el umbral, el hallazgo cita la familia:
+"coincide con la familia del 0-day AFFI (CZ-HUNT 2026) / CVE-2023-6875".
+
+LINEA BASE GLOBAL (miles de funciones): con --baseline se mide que
+porcentaje de funciones similares del corpus (cientos de plugins
+descargados) SI tiene la proteccion. Un hallazgo anota:
+"outlier: 92% de los handlers parecidos del corpus protegen esto".
+Comparar contra la poblacion es lo que separa un patron de un ruido.
+
+Patrones incluidos (familias con referencia real):
+  bac-ajax-nopriv  : BAC/PrivEsc en ajax nopriv (0-day AFFI, VillaTheme)
+  loose-auth-cmp   : comparacion floja en control de acceso
+                     (CVE-2023-6875 Post SMTP, type juggling)
+  ipn-downgrade    : verificacion de pago degradable a sandbox
+                     (CVE-2026-9242 RegistrationMagic, vector propio)
+  ssrf-from-request: SSRF con URL del usuario (familia SSRF plugins WP)
+  upload-unchecked : subida de archivos sin validar tipo
+                     (familia upload arbitrario, Patchstack paga)
+  role-from-request: rol/capacidad escrita desde request (PrivEsc)
+
+Uso:
+    python3 core/pattern_match.py <archivo_o_dir> [--top N] [--json]
+    python3 core/pattern_match.py <corpus> --baseline   # construye stats
+    POST /api/patterns {"path": "..."}                   (backend)
+"""
+
+=== pipeline.py ===
+"""
+codexRC - Pipeline Orchestrator
+Controls the flow between modules (nodes).
+"""
+
+=== plugin_batch.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - PLUGIN-BATCH (v0.42.0)
+# ------------------------------------------------------------
+# Modo agente: un solo comando recibe slugs de plugins
+# WordPress, descarga la ultima version estable, y corre el
+# arsenal ESTATICO del Hunter (TAINT-TRACE + CVE-MATCH),
+# con capa VERIFICACION: filtra ruido de librerias y deja
+# solo hallazgos en codigo propio del plugin.
+#
+# Uso:
+#   python3 core/plugin_batch.py slug1 slug2 ...
+#   echo "slug1\nslug2" | python3 core/plugin_batch.py
+#   python3 core/plugin_batch.py --vdp cz_hunt/vdp/vdp_matches.json
+#   python3 core/plugin_batch.py slugs.txt --out resultados.json
+#
+# Salida: resumen en consola (💥 = criticos) + JSON completo.
+# Nivel de confianza por hallazgo: HIGH (taint confirmado en
+# codigo propio) / MED (patron con outlier del baseline) /
+# LOW (ruido ya filtrado, no se reporta).
+# ============================================================
+
+=== poi_reach.py ===
+#!/usr/bin/env python3
+"""POI-REACH (v0.96.1): Object Injection con alcance y gadget chain.
+
+CVE-2026-2599 (Contact Form Entries): download_csv() hacia unserialize()
+de input del usuario, sin allowed_classes, en handler anonimo -> RCE
+9.8. La clase sigue pagando ($600-$2.600 segun installs, tabla
+Patchstack). Lo que falta en los tools abiertos no es detectar
+unserialize: es probar ALCANCE y EXPLOTABILIDAD.
+
+Escalera cero-FP (cada peldano exige el anterior):
+  POI-DETECTED   unserialize recibe taint del usuario sin sanitizador
+                 (hereda el taint estatico de TAINT-TRACE, nivel 1)
+  POI-UNAUTH     el sink vive en handler dictaminado por GATES-AUDIT
+                 como superficie anonima (CANDIDATO-BAC o REST-ABIERTO)
+                 o el archivo registra hooks nopriv con el sink dentro
+  POI-CHAIN      POP-CANDIDATE en el mismo plugin: clase con metodo
+                 magico (__destruct / __wakeup / __toString / __call /
+                 __get) con propiedades = gadget alcanzable
+  POI-REACH      las tres: candidato reportable (Demo en WP-LAB con
+                 chain inerte queda pendiente, nunca en vivo)
+
+Superficie priorizada (leccion CVE-2026-2599): handlers y funciones de
+export / download / csv reciben parametros serializados y casi nunca
+pasan por gates: se anotan como nota de prioridad, no como veredicto.
+
+Sin alcance anonimo el veredicto honesto es POI-AUTH (logged): Patchstack
+acepta roles bajos, pero el dictamen es del operador, no del motor.
+
+Uso:
+    python3 core/poi_reach.py <dir_plugin> [--json]
+"""
+
+=== race_proof.py ===
+#!/usr/bin/env python3
+"""RACE-PROOF (v0.71.0): ejecutor dinamico de carreras TOCTOU.
+
+El lado estatico (RACE-TRACE v0.70.0) encuentra leer->decir->escribir
+sin lock. Este modulo es el brazo: dispara N requests simultaneos
+contra el endpoint vulnerable y dictamina si el estado cambio mas
+de lo permitido.
+
+Modos:
+  - H2-SINGLE-PACKET: una sola conexion HTTP/2, todos los HEADERS
+    en un unico paquete TCP (la tecnica de James Kettle). Requiere
+    libreria pura `h2` (pip install h2) y que el server hable h2.
+  - BARRERA-HTTP11: N conexiones pre-abiertas que disparan todas
+    al pasar la barrera (fallback universal, sirve en Termux).
+
+Veredictos:
+  - RACE-DEMO: exitos > permitidos (la carrera gano)
+  - SIN-RACE: el server resistio (o la ventana no se dejo caer)
+
+Uso:
+  python3 core/race_proof.py --url http://host/wp-admin/admin-ajax.php \
+      --data "action=apply_coupon&c=BLACK" --cookie "wordpress_logged_in=x" \
+      --count 20 --success-contains "cupon aplicado" --allowed 1
+"""
+
+=== race_trace.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - RACE-TRACE (v0.70.0)
+# ------------------------------------------------------------
+# Detecta TOCTOU (check-then-act) en estado persistente de
+# plugins WP: leer -> decidir -> escribir sin lock. Es la clase
+# de bug que gana carreras con single-packet HTTP/2 y que casi
+# ningun plugin WP aguanta (limites, cupones, stock, saldos).
+#
+# Filosofia del engine: NIVEL 1 estatico puro (regex + balance
+# de llaves), nada se ejecuta, cero dependencias (Termux OK).
+#
+# Lo que busca, por funcion:
+#   1) READ  de estado persistente: get_option/get_user_meta/
+#      get_post_meta/get_transient/$wpdb->get_(var|row) SELECT
+#      ->get_stock_quantity/->get_usage_count/->get_total/
+#      ->get_balance/->get_meta(...)
+#   2) WRITE de estado persistente: update_option/update_user_meta/
+#      update_post_meta/$wpdb->(query|update|insert)/
+#      ->set_stock_quantity/->increase_usage_count/...
+#   3) EMPAREJA read->write sobre la MISMA clave o variable
+#      (flujo lite: $var asignada en el read y usada en el write
+#      o en el valor computado del write).
+#   4) VENTANA: entre read y write hay un if/guard con la
+#      variable => check-then-act clasico.
+#
+# Veredictos:
+#   CANDIDATO-RACE      read->write emparejado en estado sensible
+#                      (dinero/stock/cupon/limite/credito) sin
+#                      mitigacion visible en la funcion
+#   RACE-ATOMICO       el write es SQL incremento sobre columna
+#                      (col = col + 1) => atomico, descartado
+#   MITIGADO-TRANSIENT lock con get_transient/set_transient en
+#                      el flujo => mitigacion de facto WP, blando
+#   MITIGADO-LOCK      flock / LOCK_EX / get_lock de MySQL
+#   DESCARTADO-LECTURA read y write sin ventana ni variable comun
+#
+# Severidad del candidato:
+#   critica  handler nopriv (carrera ANONIMA via ajax)
+#   alta     estado de dinero/stock/cupon/billetera
+#   media    contador/limite/intentos (enumeracion o bypass)
+#
+# Uso:
+#   python3 core/race_trace.py <dir_plugin> [--json]
+# Integrado en PLUGIN-BATCH: rec["race_candidatos"] + anota
+# hallazgos existentes con "_race" si comparten funcion.
+# ============================================================
+
+=== re_engine.py ===
+"""REVERSE: ingenieria inversa nivel 2 (sobre BIN-AUDIT).
+
+Mientras BIN-AUDIT extrae la superficie (secrets, endpoints, imports),
+REVERSE abre los formatos y lee la ESTRUCTURA interna del artefacto:
+
+  DEX (APK/Android)   parse REAL del formato DEX: string_ids, type_ids,
+   method_ids y class_defs con uleb128. Lista clases, metodos y todas
+   las strings del bytecode → se les pasa el detector de secrets y
+   endpoints de BIN-AUDIT. Detecta app OFUSCADA (nombres a/b/c estilo
+   ProGuard/R8) y metodos con keywords de logica sensible
+   (decrypt/license/sign/verify/token).
+
+  CLASS (JAR/Java)    parse del constant pool del .class (CAFEBABE):
+   nombre de la clase, superclase y todas las constantes Utf8 →
+   secrets y referencias internas.
+
+  ELF (nativo)        tabla de simbolos INTERNA (.symtab, no solo
+   .dynsym): nombres de funciones estaticas que revelan como se
+   organiza la logica (verify_*, decrypt_*, handle_*). Detecta binario
+   STRIPPED, secciones .debug_* y ENTROPIA por seccion: una seccion
+   ejecutable con entropia > 7.0 = empaquetado/ofuscado (UPX-like).
+
+Nivel honesto: parse de formatos + simbolos + entropia. Desensamblado
+de instrucciones queda como etapa futura (necesita binutils en el
+dispositivo); esto ya revela la logica sin ejecutar nada.
+
+Uso:
+    python3 core/re_engine.py <archivo_o_dir> [--json] [--top N]
+    POST /api/re {"path": "..."}                        (backend)
+"""
+
+=== recon.py ===
+"""
+codexRC - Basic Recon Module
+Collects headers, status, redirects, cookies, security headers and basic info.
+"""
+
+=== reg_bot.py ===
+#!/usr/bin/env python3
+# ============================================================
+# codexRC - REG-BOT (v0.68.0, AB-DIFF universal)
+# ------------------------------------------------------------
+# PROVEEDOR UNIVERSAL DE IDENTIDADES/SESIONES DE PRUEBA.
+# Desacoplado de WordPress: AUTHZ-PROOF consume objetos
+# Identity estandarizados y jamas sabe si la cuenta nacio en
+# WordPress, Laravel, Django, Express o una app propia.
+#
+# Submodulos (separacion de responsabilidades):
+#   FORM-DISCOVERY      lee el formulario (no lo adivina)
+#   CONSTRAINT-SOLVER   resuelve restricciones del servidor
+#   IDENTITY-GENERATOR  identidad plausible y unica por sitio
+#   REGISTRATION-FLOW   registro multi-paso con reintentos
+#   VERIFICATION-FLOW   codigo numerico O enlace magico (polling corto)
+#   SESSION-HANDLER     captura cookies/csrf/tokens
+#   RECIPE-MEMORY       memoria de receta por sitio
+#
+# Objeto Identity estandarizado:
+#   Identity = {
+#     "id", "credentials", "cookies", "csrf", "tokens",
+#     "verification_state", "registration_recipe", "capabilities"
+#   }
+#
+# Relaciones para A/B (lo que AUTHZ-PROOF realmente necesita):
+#   A = propietario del objeto X
+#   B = usuario independiente
+#   A->X permitido, B->X permitido  = evidencia de BAC/IDOR
+#
+# Reglas de seguridad (permanentes):
+#   - pide telefono/documentos/KYC -> DESCARTAR el blanco
+#   - CAPTCHA que GHOSTGATE no pasa -> CAPTCHA-PENDING (cola de
+#     handoff al operador, NUNCA un sistema para vencer CAPTCHA)
+#   - el mailbox ninja es mail.tm (API, sin telefono); en labor
+#     se usa MockMailProvider local
+#
+# Identidades y recetas viven en CODEXRC_HOME (estado privado
+# del operador, NO se comparten por git: contienen credenciales).
+#
+# CLI:
+#   python3 core/reg_bot.py https://sitio.com           # registrar 1 ninja
+#   python3 core/reg_bot.py https://sitio.com --n 2     # A y B
+#   python3 core/reg_bot.py https://sitio.com --recipes # recetas guardadas
+# ============================================================
+
+=== regress.py ===
+"""CODEX-REGRESS (alcance reducido: Regression Corpus + ejecucion).
+
+Cada defecto REAL confirmado y corregido se guarda como caso reproducible
+(sec. 9 de la especificacion). No se eliminan casos aunque pasen: su valor
+es impedir que el defecto vuelva. Se omiten differential/metamorphic/
+property-based/fuzz testing (fases 5-6-8) por ahora: para una herramienta
+de caza orientada a bugs pagables, el regression corpus de defectos reales
+ya detectados es lo que protege plata; el resto es inversion de ingenieria
+sin payoff claro hoy.
+
+Uso:
+    python3 core/regress.py            # corre todos los casos, PASS/FAIL
+    python3 core/regress.py --add ...  # (manual, ver _CASES)
+"""
+
+=== report_export.py ===
+"""Reportes exportables del Hunter: TXT, JSON y PDF.
+
+PDF de alta calidad: se arma un documento HTML+CSS y se imprime con el
+navegador real en modo headless (Chrome/Chromium/Edge, la misma deteccion
+multiplataforma que usa VERITAS). Si no hay navegador disponible, fallback
+a fpdf2 (python puro, `pip install fpdf2`, funciona en Termux/armv7l).
+
+Orden del informe (regla del operador): filtraciones de datos de usuarios
+ARRIBA y en rojo; hallazgos tecnicos abajo por severidad.
+"""
+
+=== repro_engine.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""REPRODUCTION ENGINE v0.91 — etapa 21 del roadmap
+(ultima etapa de MODULO antes de IMPACT / FP-ELIMINATION
+/ EVIDENCE PACKAGE).
+
+Escalera de impacto (nunca se salta):
+  DESYNC OBSERVED -> REPRODUCIBLE (2 genealogias
+  independientes) -> STATE EFFECT -> CROSS-CONNECTION
+  -> SECURITY IMPACT.
+
+Este modulo toma un candidato STATE-EFFECT y responde
+UNA pregunta: la firma se reproduce a demanda?
+
+Genealogia = estado del servidor INDEPENDIENTE:
+  * modo lab: instancia FRESCA de labs/crc_lab.py
+    (proceso y pool propios, puerto distinto).
+  * modo vivo: secuencia completa de conexiones nuevas
+    contra el blanco (sin estado compartido del lado
+    del cliente).
+
+Cada genealogia ejecuta DOS pases del probe subyacente
+(por defecto crc_probe, bateria double):
+  * pase A (deteccion): la corrida original.
+  * pase B (replay): MISMA genealogia, corrida nueva
+    que debe volver a mostrar la firma. Un disparo
+    unico (flaky) NO escala: NON-REPRODUCIBLE.
+
+Veredictos (conservadores, cero-FP):
+  REPRODUCIBLE     todas las genealogias muestran
+                   STATE-EFFECT con la MISMA firma
+                   (k) en pase A y pase B.
+  NON-REPRODUCIBLE hubo senal (DETECTED/STATE-EFFECT)
+                   en algun pase pero no se sostiene
+                   en A+B de todas las genealogias.
+                   El candidato NO avanza.
+  NO-CANDIDATE     todos los pases BENIGN/BENIGN-EDGE:
+                   reproducible pero no es nada.
+  UNSTABLE         instancia muerta o control caido:
+                   no se puede juzgar. Sin claim.
+
+Presupuesto: genealogias (2) x pases (2) x 8 reqs
+= 32 requests max. Read-only. Python puro.
+"""
+
+=== research_memory.py ===
+"""RESEARCH-MEMORY (v0.81.1): memoria de investigacion por
+target.
+
+Guarda por host, en CODEXRC_HOME/memory/research/<host>/:
+  dossier.jsonl   una linea por ventana (sesion) observada
+  latest.json     la ultima ventana completa
+
+REGLAS DE HONESTIDAD:
+  1. Solo observaciones: se guarda lo visto, lo ejecutado y lo
+     descartado CON SU NOTA. Nunca inferencias sin contrato.
+  2. Las conclusiones CADUCAN POR VENTANA: una hipotesis
+     contradicha ayer no revive sola hoy, pero tampoco es
+     verdad eterna. Al re-entrar, el grafo se siembra fresco y
+     lo previo entra como ANOTACION de ventana.
+  3. El UNICO reuso automatico es con evidencia fuerte:
+     baseline IDENTICO (mismas huellas) dentro del TTL. Mismo
+     observable = mismas condiciones observadas; distinto
+     baseline = ventana nueva, corrida nueva.
+"""
+
+=== retro_hunt.py ===
+#!/usr/bin/env python3
+"""
+RETRO-HUNT (v0.51.0) — CodexRC
+
+Caza el codigo PRE-COOLDOWN: plugins >=5k installs cuya ultima
+actualizacion es ANTERIOR al gate de revision IA de WordPress.org
+(junio 2026). Ese codigo distribuido nunca paso por el escaneo
+automatico de WP.org ni por Jetpack Scan de cola, asi que es el
+terreno con menos filtros encima.
+
+La auditoria es FULL-CODE (no diff): todo el plugin se taintea,
+no solo lo nuevo.
+
+Uso:
+  python3 core/retro_hunt.py                    # cola completa pre-cooldown
+  python3 core/retro_hunt.py --limit 20        # prueba chica
+  python3 core/retro_hunt.py --workers 6
+  python3 core/retro_hunt.py --desde 2026-06-01 # umbral cooldown
+
+Salida:
+  hechos/retro_results.json.jsonl   (hallazgos por plugin)
+  hechos/retro_done.txt             (auditados, incremental crash-safe)
+"""
+
+=== saml_audit.py ===
+#!/usr/bin/env python3
+"""SAML-DEFENSE (v0.71.0): auditor SAML/XML de PHP.
+
+Los bypasses novedosos de 2025 ("The Fragile Lock", PortSwigger)
+golpean implementaciones SAML: XML Signature Wrapping, entidad
+externa (XXE), XInclude y validaciones de firma flojas.
+
+Detecta estaticamente en PHP:
+  - XXE: parseo de XML con input de usuario SIN flags LIBXML_NONET
+  - Mitigaciones: LIBXML_NONET / entity_loader desactivado
+  - SAML-WSW: processResponse() SIN chequeo posterior de
+    getErrors()/isValid()/isAuthenticated() en el flujo
+  - SAML-STRICT: settings con 'strict' => false
+  - XInclude: ->xinclude() sobre DOM con input usuario
+
+Uso:
+    python3 core/saml_audit.py <root>
+"""
+
+=== self_tune.py ===
+"""AUTOCORRECCION: el Hunter recuerda que rindio y ajusta su propio gasto.
+
+Memoria persistente (tune_state.json, NO se committea):
+  por PARAMETRO: cuantas veces ese nombre de parametro produjo hallazgos
+                en cazas anteriores (user_id, cat, q, id...).
+  por BLANCO:   fingerprint del sitio (WordPress, Angular...) -> si un
+                CMS/Framework rinde historico, se nota.
+
+Uso:
+  - load_boosts()   ANTES de rankear: multiplica el presupuesto de sondas
+                    de los parametros con historial exitoso (x1.5 con 2+
+                    hallazgos, x1.2 con 1). Determinista: mismas estadisticas,
+                    misma decision.
+  - record()        AL FINAL de cada caza: cuenta los hallazgos por param
+                    y por tipo de blanco. La caza N aprende de las N-1.
+
+Anti-sesgo: el boost nunca baja el presupuesto de otros parametros; solo
+sube el de los probados, con tope. Un parametro nuevo empieza neutro.
+"""
+
+=== semantic_channels.py ===
+"""Canales de observacion de SEMANTIC-CACHE (v0.80).
+
+Regla del diseno aprobado: dos canales NO son
+"independientes" solo porque tienen nombres diferentes.
+
+independence_status:
+  VERIFIED  solo con evidencia de dispositivos distintos
+            (topologia). v0.80 NO la produce.
+  PARTIAL   canal_type distinto (mecanismo de observacion
+            distinto) aunque el dispositivo no sea
+            verificable.
+  UNKNOWN   mismo canal_type, o sin poder establecer nada.
+
+Ningun canal afirma estados internos: cada observacion
+cita que se midio y como.
+"""
+
+=== semantic_core.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""SEMANTIC CORE (v0.58.0) — Nivel 0: identidad canonica de recursos.
+
+Fundamento del nivel semantico del motor. Un hallazgo solo puede
+alcanzar DEMOSTRADO-ESTATICO si la evidencia proviene del archivo
+correcto, verificado por hash de contenido.
+
+Identidad canonica de un archivo (FileId):
+    root canonico (absoluto, normalizado)
+    + ruta relativa normalizada (separador '/', sin '..')
+
+El basename NO es identidad. Si la resolucion solo puede hacerse por
+basename, el resultado es AMBIGUO y bloquea el veredicto alto.
+
+Cadena de integridad:
+    Finding -> FileId -> ContentHash -> contenido analizado
+    Si el hash del contenido analizado != hash esperado:
+    INTEGRITY FAILURE -> el finding no puede pasar a DEMOSTRADO-ESTATICO.
+
+Python puro, Termux/armv7l OK.
+"""
+
+=== semantic_dimension.py ===
+"""Fase 2 de SEMANTIC-CACHE: localizacion de dimension y
+descarte de SELF-INDUCED STATE (v0.80).
+
+Solo corre si la fase 1 (v0.79) encontro una inconsistencia
+observable SIN explicacion legitima. Presupuesto duro:
+fase2 <= 8, controles <= 4.
+
+Self-induced (regla del diseno aprobado): ninguna
+observacion producida por una sonda se convierte en
+evidencia de causalidad si no podemos descartar
+razonablemente que la propia sonda creo el estado
+observado. Metodos:
+  VIRGIN_PATH      el patron se reproduce en paths nunca
+                   tocados por ninguna sonda
+  NEGATIVE_CONTROL sonda que NO debe producir el efecto;
+                   si lo produjera -> UNKNOWN
+  CLEAN_REPRO      repro sin contaminacion previa
+  MULTI_RUN       patron consistente en >=3 observaciones
+"""
+
+=== semantic_engine.py ===
+"""SEMANTIC-CACHE (v0.80): motor de desacuerdos semanticos.
+
+Flujo:
+  FASE 1  bateria v0.79 INTACTA (17 req) via
+          cache_correlation.audit
+  FASE 2  solo si hay inconsistencia observable SIN
+          explicacion legitima (<= 8 req + <= 4 controles)
+  JUEZ    determinista sobre atributos separados
+
+HARD CAP: total <= 30 requests. Si se alcanza el limite
+sin discriminar: UNKNOWN. No se persigue la hipotesis.
+"""
+
+=== semantic_judge.py ===
+"""Juez determinista de SEMANTIC-CACHE (v0.80).
+
+Veredicto corto: CONSISTENT / BENIGN / INCONSISTENT /
+SUSPICIOUS / DEMO / UNKNOWN.
+
+Atributos SEPARADOS del veredicto (nunca mezclados):
+  semantic_state  CONSISTENT | INCONSISTENT
+  correlation     NONE | OBSERVED | STRONG
+  impact          NONE | CROSS-CONSUMER | SECURITY
+  attribution     UNKNOWN | CANDIDATE | SUPPORTED
+  binding         WEAK | MODERATE | STRONG | UNKNOWN
+  self_induced    RULED_OUT | UNKNOWN
+  self_induced_method  VIRGIN_PATH | NEGATIVE_CONTROL |
+                       CLEAN_REPRO | MULTI_RUN | UNKNOWN
+
+Sin scores, sin confidence, sin sumas: el veredicto se
+deriva de CONDICIONES sobre atributos.
+
+DEMO exige CONJUNTAMENTE (regla aprobada, ninguna
+sustituye a otra):
+  1 inconsistencia reproducible
+  2 dimension semantica localizada
+  3 convergencia atribuida (validator O provenance)
+  4 controles criticos PASSED
+  5 baseline utilizable
+  6 self_induced RULED_OUT (con metodo citado)
+  7 correlacion/atribucion suficiente (la provenance
+    sola NO sustituye la demostracion de impacto)
+  8 E5 CROSS-CONSUMER o E6 SECURITY reproducible
+
+self_induced=UNKNOWN: no alimenta E5/E6, no produce DEMO,
+maximo SUSPICIOUS si el resto es fuerte.
+"""
+
+=== semantic_models.py ===
+"""Modelos de datos de SEMANTIC-CACHE (v0.80).
+
+Regla epistemologica central (diseno aprobado):
+    Hipotesis != Observacion != Evidencia != Veredicto.
+
+Estos modelos NUNCA representan estados internos del
+edge/cache/proxy/origin como hechos. Toda propiedad
+interna no demostrable con observaciones del motor queda
+como UNKNOWN o CANDIDATE en su campo dedicado
+(attribution), nunca como hecho del reporte.
+"""
+
+=== sqli_bait.py ===
+"""SQLI-BAIT: deteccion avanzada de inyeccion SQL en la superficie de la app.
+
+4 tiers, del mas barato al mas contundente (solo sobre blancos autorizados):
+
+  1. ERROR     rompe sintaxis y captura el error del motor en la respuesta,
+               con fingerprint del DBMS (MySQL/MariaDB, PostgreSQL, MSSQL,
+               SQLite, Oracle).
+  2. BOOLEAN   diferencial clasico  AND 1=1  vs  AND 1=2  contra el baseline
+               (respuesta con 1=1 ~ baseline y con 1=2 distinta = inyectable).
+  3. TIME      SLEEP(4) / pg_sleep(4) / WAITFOR DELAY con confirmacion
+               repetida (2 aciertos seguidos contra jitter de red).
+  4. STACKED   '; SELECT ... -- - detectado por error o timing (apilado).
+
+Tambien sondea cabeceras clasicas que terminan en SQL (X-Forwarded-For,
+User-Agent, Referer). Todo con presupuesto de sondas por parametro para no
+martillar, y con controles anti-falso-positivo (el error debe ser NUEVO
+respecto al baseline; el time-based exige repeticion).
+"""
+
+=== ssa.py ===
+"""SSA-lite: grafo de versiones def-use para TAINT-TRACE.
+
+Cada asignacion crea una VERSION nueva de la variable (q#1, q#2, ...)
+con: kind (SOURCE/SANITIZED/PREPARED/CONCAT/PLAIN), taint, parents
+(versiones que aportaron valor) y linea. Un uso resuelve la version
+viva mas reciente (asignada en linea <= uso, dentro del scope).
+
+Entrega la CADENA de evidencia de un sink:
+    v3 = CONCAT(v2, "%")
+    v2 = SANITIZE(v1)
+    v1 = SOURCE($_GET['q']) @ L40
+en vez de "$q aparece cerca del sink".
+
+Nivel 1 (documentado): intra-funcion, orden lineal (los back-edges de
+loops se ignoran: una var reasignada en loop cuenta la version de la
+asignacion previa). Closures sin nombre heredan el scope exterior.
+"""
+
+=== ssti_bait.py ===
+"""SSTI-BAIT: bateria dedicada de inyeccion de plantillas con FINGERPRINT.
+
+Identifica el MOTOR de plantillas, no solo el hecho de que computa:
+  Jinja2 / Twig      {{7*7}} -> 49          (Python/PHP)
+  Jinja2 confirmado  {{7*'7'}} -> 7777777  (multiplicacion de string Python)
+  FreeMarker/Java    ${7*7} -> 49
+  Velocity           #set($x=7*7)$x -> 49
+  ERB / EJS (Ruby)   <%= 7*7 %> -> 49
+  Ruby interp        #{7*7} -> 49
+  Smarty (PHP)       {math equation="7*7"} -> 49
+
+SSTI = RCE en potencia: paga CRITICO en la tabla. Canarios 100% inertes
+(aritmetica 7*7, cero comandos, cero datos ajenos).
+"""
+
+=== state.py ===
+"""Estado individual por operador/IA.
+
+Un solo repositorio de codigo (compartido via git) puede ser usado por
+varias IAs u operadores en paralelo sin pisarse: todo archivo de
+ESTADO (avance de caza, ya-auditados, resultados) vive en el
+workspace del operador. Por defecto es el propio repo (compatibilidad
+total con lo existente); exportando CODEXRC_HOME cada IA tiene el
+suyo:
+
+    export CODEXRC_HOME=~/.codexrc_hermes     # cada IA, distinto
+
+    python3 core/hunt_wide.py --shard 0/2    # ademas: repartir corpus
+    python3 core/hunt_wide.py --shard 1/2
+
+Regla: el repo guarda CODIGO y datos publicos (data/:
+vdp_mapa.json, wide_corpus.json); CODEXRC_HOME guarda HECHOS
+propios (hechos/,
+resultados). Dos IAs con distintos CODEXRC_HOME no comparten la
+cola de "ya auditados" ni se duplican hallazgos.
+"""
+
+=== state_correlation.py ===
+#!/usr/bin/env python3
+"""STATE-CORRELATION (v0.78.0): un veredicto por target, no por
+sonda.
+
+No agrega payloads. Toma lo que v0.75 (contrato del edge),
+v0.76 (representacion) y v0.77 (estado de conexion) observan
+sobre el MISMO target y lo une en una ficha de estado unica.
+
+Cuatro resultados:
+  STABLE                      sin nada observable fuera de
+                              varianza
+  PIPE-BENIGN                 desplazamiento observado PERO la
+                              conexion inocente quedo limpia:
+                              pipelining legitimo del front
+                              (edge honra TE, RFC 7230).
+                              SELLADO: re-observarlo mil veces
+                              jamas escala
+  STATE-CHANGED               cambio de estado reproducible sin
+                              evidencia cross-connection
+  CROSS-CONNECTION-MISMATCH   la conexion inocente recibio
+                              respuesta ajena: desacuerdo real
+                              de cadena. UNICO que alimenta la
+                              escalera
+
+EVIDENCE QUALITY (E0-E5), anotacion transversal:
+  E0  observacion nula
+  E1  reproducible
+  E2  diferencial
+  E3  downstream observado (ECO)
+  E4  cross-connection
+  E5  impacto de seguridad (respuesta ajena entregada a una
+      conexion inocente, reproducible)
+
+El vector va a un JUEZ determinista, no a una suma:
+DEMO exige E4 + E5 SIEMPRE (E3 sube confianza, no es
+requerido). La confianza sube porque llego evidencia
+independiente que reduce incertidumbre, no porque una
+anomalia se repitio.
+
+REGLA v0.77 (leccion del falso DEMO): un desplazamiento en
+conexion unica NO demuestra desync; hay que demostrar
+contaminacion o desacuerdo entre conexiones independientes.
+"""
+
+=== stealth_bait.py ===
+"""STEALTH-BAIT: caza de superficie oculta para blancos blindados.
+
+Los escaneres genericos prueban siempre lo mismo en los mismos sitios. Esta
+bateria ataca por donde nadie mira, 100% MODO LECTURA (canarios inertes,
+cero payloads de explotacion, estandar A->B):
+
+  1. HIDDEN-PARAMS  parametros secretos que el frontend nunca muestra
+                   (debug, is_admin, role, internal...): si el backend
+                   reacciona a uno, hay logica no publicada a revisar.
+  2. PATH-BAIT     path traversal en params file/path/tpl/lang con firma
+                   de deteccion (passwd / wp-config). LFI PAGA en la tabla
+                   de Patchstack.
+  3. SSTI-BAIT     canario de plantilla {{7*7}} / ${7*7} / #{7*7}: si la
+                   respuesta contiene 49, el servidor COMPUTA (RCE paga).
+  4. CRLF-BAIT     inyeccion de cabeceras: marcador %0d%0a en params
+                   reflejados, verificado SOLO en headers de respuesta.
+  5. METHOD-BAIT   method tampering: X-HTTP-Method-Override, _method, y
+                   verbos alternativos sobre endpoints de datos.
+  6. CACHE-BAIT    deteccion PASIVA de entradas unkeyed (X-Forwarded-Host
+                   reflejado): candidata a cache poisoning, sin envenenar.
+  7. GRAPHQL       introspeccion abierta y endpoints /graphql ocultos.
+
+Todo con presupuesto de sondas por objetivo (respeta el CEREBRO) y
+anti-FP por comparacion contra baseline.
+"""
+
+=== taint_trace.py ===
+"""TAINT-TRACE: analisis de flujo de datos (taint) sobre codigo fuente PHP.
+
+Sigue el valor de un parametro desde la FUENTE ($_GET/$_POST/$_REQUEST/
+$_COOKIE/php://input/$_SERVER) a traves de asignaciones y concatenaciones
+hasta el SINK peligroso:
+
+  base de datos : $wpdb->query/get_var/get_row/get_results, mysql_query
+  navegador     : echo/print/printf (XSS)
+  objetos       : unserialize (object injection)
+  archivos      : include/require/file_get_contents/file_put_contents (LFI)
+  comandos      : system/exec/passthru/eval (RCE)
+  red           : wp_remote_get/curl (SSRF)
+
+Si el sink recibe un valor que NACE del usuario SIN sanitizador en el
+camino, es hallazgo: la vulnerabilidad existe aunque la respuesta HTTP
+no muestre nada (SQLi ciego, XSS reflejado en otra pagina, etc).
+
+Sanitizadores que cortan el taint: intval/absint/sanitize_*/esc_sql/
+esc_attr/esc_html/esc_url/wp_kses. $wpdb->prepare con placeholders y el
+taint SOLO en los valores (no en la cadena de formato) = SEGURO.
+
+Nivel 1 (heuristico, intra-archivo): analisis por linea con punto fijo
+hasta que el taint deja de propagarse. Sin dependencias externas,
+Python puro, sirve en Termux. Para nivel interprocedural sigue siendo
+mejor Semgrep (SINK-SCAN); este tracer es el complemento vivo.
+
+Uso:
+    python3 core/taint_trace.py <archivo_o_directorio> [--json] [--top N]
+    POST /api/taint  {"path": "..."}   (desde el backend)
+"""
+
+=== tech_detect.py ===
+"""
+codexRC - Basic Technology Detection (html.parser)
+"""
+
+=== universal_engine.py ===
+#!/usr/bin/env python3
+"""
+UNIVERSAL-ENGINE (v0.52.0) — CodexRC
+
+Orquestador: descubre que es un blanco, modela su superficie y decide
+que analizadores activar. Convierte los modulos especializados
+(BIN-AUDIT, REVERSE, DECOMPILE, TAINT-TRACE, GATES-AUDIT, COV-BAIT,
+EVIDENCE-CHAIN, WP-LAB) en componentes de un motor comun.
+
+Arquitectura (metodologia OWASP: mapear -> auth -> logica -> impacto):
+
+  1. UNIVERSAL-RECON    fingerprint del blanco (que tecnologia/es)
+  2. descubrir superficie (que entradas existen)
+  3. elegir analizadores segun perfil (no 500 pruebas, las que aplican)
+  4. correr componentes (estatico + dinamico + navegador)
+  5. UNIVERSAL-EVIDENCE  una sola cadena con FISCAL/DEFENSA/JUEZ
+  6. ledger de cobertura: ANALIZADO / DESCUBIERTO / NO ACCESIBLE / VERIFICADO
+
+Uso:
+  python3 core/universal_engine.py <path>            # fuente (dir/zip/apk/bin)
+  python3 core/universal_engine.py <url>            # app viva (GHOSTGATE si CF)
+  python3 core/universal_engine.py <path> --json
+"""
+
+=== vdp_fresh.py ===
+#!/usr/bin/env python3
+"""v0.61.0 VDP-FRESH: cazar los VDP RECIEN AGREGADOS a Patchstack.
+
+Palanca de corpus fresco: los plugins que entran NUEVOS al directorio
+VDP (patchstack.com/database/vdp) aun no fueron revisados por nadie.
+Este modulo mantiene snapshots del mapa VDP y detecta:
+
+  ALTAS    slugs con VDP nuevo (blanco de caza inmediata)
+  BOUNTY  plugins ya conocidos que ahora si pagan (sube prioridad)
+  BAJAS   VDP retirado (dejar de cazar para reportar)
+
+CLI:
+  python3 core/vdp_fresh.py --snapshot          # guarda linea base
+  python3 core/vdp_fresh.py --diff data/vdp_mapa.json
+      compara el mapa NUEVO contra el snapshot -> vdp_nuevos.json
+  python3 core/vdp_fresh.py --estado            # resumen del snapshot
+
+Flujo semanal: extraer mapa (navegador, GOLDEN LIST) -> --diff ->
+vdp_nuevos.json -> hunt_wide --vdp-nuevos (prioridad maxima).
+"""
+
+=== vdp_watcher.py ===
+"""VDP-FRESH WATCHER (v0.62.6).
+
+Detecta plugins PAGABLES (VDP con bounty) que sacaron version nueva
+desde nuestra ultima auditoria y los manda a DIFF-HUNT solos: el
+parche fresco es el mejor momento para cazar parches incompletos.
+
+Lo despierta un workflow cada 6 horas; el script es determinista
+(Python puro, sin LLM) y el agente solo triaga al final.
+
+Uso:
+  python3 core/vdp_watcher.py             # detecta y caza los que movieron
+  python3 core/vdp_watcher.py --check     # solo listar, sin cazar
+  python3 core/vdp_watcher.py --limit 20  # prueba rapida (primeros N pagables)
+"""
+
+=== vendor_farm.py ===
+"""VENDOR-FARM: descubre familias de plugins de UN MISMO vendor con
+instalaciones en rango pagable, para farmear el vendor completo (el
+patron que dio el 0-day de AFFI en VillaTheme).
+
+- Consulta la API publica de wordpress.org (HTTPS, python puro, Termux OK)
+- Agrupa por vendor (autor) y filtra familias con N+ plugins en el rango
+- Excluye slugs ya auditados (pasa el directorio del corpus o una lista)
+- Estima la paga por plugin con la tabla Patchstack (BTC/ETH) y marca
+  el precio del hallazgo mas valioso de la familia
+
+Uso (CLI):
+    python3 core/vendor_farm.py --tag woocommerce --pages 5 \
+        --min 10000 --max 200000 --family 2 --exclude-dir cz_hunt
+    python3 core/vendor_farm.py --browse popular --pages 8
+
+API del server:
+    POST /api/vendor_farm {"tag": "woocommerce", "pages": 5,
+                          "min": 10000, "max": 200000,
+                          "family_min": 2, "exclude_slugs": [...]}
+"""
+
+=== veritas.py ===
+"""VERITAS: verificacion de XSS con navegador real (Chrome headless).
+
+La reflexion puede mentir: el servidor refleja el marcador, pero el
+navegador real lo sanea, lo escapa, lo mata el CSP o nunca llega a un
+sink ejecutable. VERITAS no cree en reflexiones: re-lanza cada candidato
+con un CANARIO INERTE (solo cambia document.title, nada visible, nada
+que exfiltre, no modifica datos) dentro de Chrome headless y mira si el
+DOM final contiene el canario en <title>. Si ejecuto -> confirmado. Si
+no -> era un falso positivo y baja de gravedad.
+
+Herramienta general de auditoria con autorizacion previa del operador."""
+
+=== vision_gate.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""VISION-GATE (v0.69.0): clasificador visual de challenges via Gemini.
+
+Filosofia (mismas reglas del JUEZ): el LLM clasifica, NUNCA conduce.
+Vision-Gate recibe screenshot opcional + fragmento de DOM redactado
+y devuelve EXCLUSIVAMENTE el JSON del esquema. REG-BOT decide que
+hacer con el veredicto; el modelo jamas toca el navegador.
+
+Seguridad:
+- hacia el modelo via solo imagen + texto redactado (regex tapa
+  emails/telefonos/tokens largos). Cero credenciales, cookies o
+  secretos de sesion.
+- sin GEMINI_API_KEY o con API caida -> action=ERROR y REG-BOT
+  conserva el comportamiento determinista actual (CAPTCHA-PENDING
+  en cola de handoff). Nunca cuelga la caza.
+
+Estados (taxonomia del diseño):
+  no_challenge | supported_checkpoint | unsupported_checkpoint
+  | ambiguous | requires_human
+
+Acciones ejecutables por REG-BOT:
+  CONTINUE       seguir solo (falso positivo de la heuristica)
+  GHOSTGATE      delegar a navegador real (sugerencia; REG-BOT loguea)
+  DISCARD        descartar blanco (solo con confidence >= 0.8)
+  REQUIRES_HUMAN cola de handoff al operador
+  ERROR          no se pudo clasificar -> comportamiento por defecto
+
+CLI de prueba:
+  python3 core/vision_gate.py --html page.html
+  python3 core/vision_gate.py --image shot.png --url http://...
+"""
+
+=== waf_guard.py ===
+# -*- coding: utf-8 -*-
+"""
+codexRC - GHOST-SHIELD (evasion WAF con memoria, v0.24.0)
+=========================================================
+Capa de evasion del lado del COMPORTAMIENTO (no del payload). Los WAF
+modernos castigan patrones de trafico antes que payloads sueltos; esta capa
+hace tres cosas:
+
+  1. JITTER: ninguna sonda sale con el mismo intervalo. Cada request duerme
+     delay * uniforme(0.5, 1.8) antes de salir, rompiendo el patron de
+     bot perfecto de intervalo fijo.
+
+  2. DETECCION DE BLOQUEO: cada respuesta pasa por el clasificador. Firma
+     dura (403/503 + WAF conocido o pagina de challenge) o blanda (429
+     rate-limit). Ante bloqueo duro se sugiere GHOSTGATE en el log.
+
+  3. COOLDOWN CON MEMORIA: el origen bloqueado entra en cooldown
+     exponencial (30s * 2^n, tope 10 min) y el estado SE PERSISTE EN DISCO:
+     la memoria de quien nos bloqueo sobrevive jobs, reinicios y dias.
+     Mientras un origen esta en cooldown, sus sondas se saltan en vez de
+     seguir martillando y quemando la IP. Cuando el WAF nos deja pasar de
+     nuevo (respuesta sana), el exponente se resetea.
+
+Arquitectura: la capa vive DENTRO de la sesion HTTP (GuardedSession), no en
+cada bateria. Cualquier sonda del corpus que use la sesion (arana, GET,
+forms, headers, XSS-PRO, IDOR, BLIND...) queda cubierta sin tocar su codigo.
+El carril async (SLIPSTREAM) engancha el mismo WafGuard en sus sondas httpx.
+
+Solo lectura: esta capa no altera payloads ni escribe en el blanco.
+"""
+
+=== wcd404_probe.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""WCD-404-PROBE (v0.96.0): el oraculo de la cache que guarda 404s.
+
+Pregunta: cuando el status miente (4xx cuyo CUERPO renderiza datos de
+la cuenta), el cache del edge lo guarda y se lo sirve a OTRO usuario?
+
+Escalera cero-FP, monotona (cada peldano exige el anterior):
+  BENIGN             el disfraz responde 4xx con cuerpo LIMPIO:
+                     no hay status-lie
+  STATUS-LIE-DETECTED 4xx cuyo cuerpo contiene marcadores DECLARADOS
+                     de la cuenta propia (contrato pre-registrado:
+                     el operador declara que marcadores son PII,
+                     ej. email ninja propio; el probe no adivina)
+  WCD-404-LEAK       cebado con repeticiones -> el mismo URL con
+                     la sesion de OTRO usuario (o anon) devuelve el
+                     CUERPO DEL PROPIO: cross-user leak observable
+
+Sin HIT de cache el veredicto honesto es LEAK-NO-CACHE (caso
+linktr.ee): la senal existe pero no contamina; NO reportable.
+
+Regla de la casa (cache-semantic): cache key interna es HIPOTESIS;
+lo observable son huellas externas (headers de HIT / swap de cuerpo).
+Presupuesto: <= 8 requests, read-only. Sin blanco vivo sin 'LestGo'.
+
+Uso:
+  from core.wcd404_probe import probe
+  probe({"url": "http://.../app/settings/profile/x.css",
+         "marker_self": "ninja-A@maxxspace.com",
+         "cookie_self": "acct=A", "cookie_victim": "acct=B"})
+"""
+
+=== wcd_bait.py ===
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+v0.86.0 WCD-CACHE-KEY (Web Cache Deception)
+============================================
+Familia WCD con la disciplina de la linea DESYNC: contratos
+pre-registrados, juez determinista, presupuesto bajo y cero-FP
+por diseno.
+
+Filosofia heredada (v0.72-v0.85):
+- Solo evidencia observable; nada inferido queda fuera de 'unknown'.
+- Un endpoint abierto (anonimo ya ve los datos SIN disfraz) NO es
+  WCD: es un candidato BAC, familia distinta, veredicto honesto.
+- Sin almacenamiento positivo observable en el edge (HIT/Age)
+  NO es WCD reportable: es LEAK-NO-CACHE (probable, no reportable).
+- DEMO exige contaminacion: una conexion NUEVA y SIN sesion recibe
+  el cuerpo autenticado desde el cache, con controles PASSED.
+  (Vary sobre Cookie o Set-Cookie en la respuesta descalifican.)
+
+Contratos (pre-registrados en el ExperimentGraph):
+  baseline: A0 sesion@base debe contener el marcador autenticado
+            (si no, NO-AUTH-DATA: no hay linea base de que es
+            'dato autenticado'); D0 anon@base NO debe verlo
+            (si lo ve: OPEN-ENDPOINT, no es WCD).
+  por variante:
+    A  sesion + disfraz        -> leak? cache-positive?
+    B  sesion + disfraz (re)  -> HIT reproducido?
+    C  anon  + disfraz        -> contaminacion observable?
+
+Veredictos (escalera determinista):
+  BENIGN -> LEAK-NO-CACHE -> WCD-CACHE -> WCD-DEMO
+  (+ OPEN-ENDPOINT / NO-AUTH-DATA / UNREACHABLE / UNKNOWN)
+
+Presupuesto: 2 baseline + 2 variantes x 3 = max 8 requests.
+"""
+
+=== wide_corpus.py ===
+#!/usr/bin/env python3
+"""v0.48.0 WIDE-CORPUS: corpus de caza = TODOS los plugins wordpress.org
+con installs >= umbral (por defecto 5k), sin depender del filtro VDP.
+
+Filosofia EVIDENCE-CHAIN: como los abogados cierran solos los falsos
+positivos, el cuello de botella ya no es el ruido sino el ancho de banda.
+El VDP de Patchstack ya no filtra a quien CAZAMOS; solo decide a quien
+REPORTAMOS (VDP activo = paga; sin VDP = CVE credit directo al vendor).
+
+CLI:
+  python3 core/wide_corpus.py                 # >=5k installs -> wide_corpus.json
+  python3 core/wide_corpus.py --min 10000     # umbral a gusto
+  python3 core/wide_corpus.py --refresh       # refresca desde la API
+"""
+
+=== zombies.py ===
+#!/usr/bin/env python3
+"""ZOMBIE-KILL — mata procesos zombis y duplicados del backend CodexRC.
+
+Leccion aprendida (27/09/2026, supervisor del bot de trading): pgrep/pkill -f
+matchea el PROPIO bash del comando (falso zombi). Este modulo NO usa pgrep:
+lee /proc directamente y excluye su propio PID y el de su padre.
+
+Criterios:
+ 1. Estado Z (zombi real: no consume CPU, el kernel los reapa con su padre;
+    si el padre es nuestro server muerto, quedan colgando).
+ 2. DUPLICADOS: dos+ procesos python ejecutando backend/app.py. El mas viejo
+    (menor PID, no, mayor tiempo de inicio -> el de menor PID suele ser el
+    primero) SOBREVIVE; el resto muere por PID con kill -9, nunca pkill -f.
+
+Uso:
+  python3 core/zombies.py            # listado (no mata nada)
+  python3 core/zombies.py --kill    # mata duplicados (deja 1 vivo)
+"""
+

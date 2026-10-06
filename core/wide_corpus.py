@@ -22,7 +22,7 @@ API = ("https://api.wordpress.org/plugins/info/1.2/"
        "?action=query_plugins&request[per_page]=100&request[browse]=popular"
        "&request[page]=%d")
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_OUT = os.path.join(HERE, "..", "wide_corpus.json")
+DEFAULT_OUT = os.path.join(HERE, "..", "data", "wide_corpus.json")
 
 
 def fetch_page(p: int, retries: int = 3):

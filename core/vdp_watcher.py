@@ -28,7 +28,7 @@ sys.path.insert(0, ROOT)
 from core import state
 from core.diff_hunt import get_versions
 
-VDP = os.path.join(ROOT, "vdp_mapa.json")
+VDP = os.path.join(ROOT, "data", "vdp_mapa.json")
 
 
 def _auditadas() -> dict:
