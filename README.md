@@ -238,13 +238,13 @@ que **nunca se salta**:
 | `poi_reach` | POI-REACH: Object Injection con alcance (GATES) y gadget chain POP-CANDIDATE en el mismo plugin |
 | `magic_confusion` | MAGIC-CONFUSION: extensión vs contenido (magic bytes) en rutas de upload hacia Imagick, sin gate de contenido |
 
-### Superficie HTTP universal (ROUTER/ENDPOINT GRAPH v0.98.0)
+### Superficie HTTP universal (ROUTER/ENDPOINT GRAPH v0.98.0-v0.99.1)
 
 | Módulo | Función |
 |---|---|
 | `handler_resolver` | resuelve el cuerpo REAL de method/function/closure contando llaves (mismo criterio que `_line_in_handler`) |
 | `router_graph` | grafo ROUTER→ROUTE→HANDLER→PARAMETER/MIDDLEWARE con evidencia archivo+línea |
-| `universal_endpoint` | descubre y normaliza rutas de CUALQUIER router (WP hooks, Slim-like, PSR-7 custom, array router) a un modelo común; ZERO-FP: exige evidencia estructural de path, nunca un nombre de método aislado |
+| `universal_endpoint` | descubre y normaliza rutas de CUALQUIER router (WP hooks, Slim-like, PSR-7 custom, array router) a un modelo común; ZERO-FP: exige evidencia estructural de path y de handler-callable, nunca un nombre de método aislado |
 
 Nace de una brecha real: GATES-AUDIT solo entiende hooks clásicos de
 WP, así que un router custom (caso Amelia Booking, v0.97.0) dejaba su
@@ -254,7 +254,18 @@ GATES-AUDIT ni duplica AUTHZ-PROOF/FIN-LOGIC: los adaptadores
 superficie con la MISMA interfaz que ya consumen, venga de donde venga
 el router. `ENDPOINT-DISCOVERED` no es `VULNERABILITY`; `HANDLER-RESOLVED`
 no es `AUTHZ-PROTECTED`. Validado con `tests/universal_endpoint_regress.py`
-(14/14 PASS). Lab: `labs/router_lab.py`.
+(15/15 PASS) + `tests/universal_endpoint_vendor_fp_regress.py` (7/7 PASS).
+Lab: `labs/router_lab.py`.
+
+Montado en el Hunter desde v0.99.0 (dentro de `core/universal_engine.py`,
+sin duplicar conteo). Primer contacto con código real (v0.99.1,
+2026-10-06, 58 plugins de wordpress.org): confirmó router propio en
+Amelia Booking, FluentCRM y FluentForm; midió y corrigió 4 clases de
+falso positivo de código vendoreado (SDKs de cliente HTTP saliente,
+asset loaders, claves de array coincidentes con un verbo HTTP). Límite
+conocido: middleware a nivel de grupo (`->group()->withPolicy()`,
+patrón Laravel-like) todavía no se rastrea — detalle en
+[AGENTS.md](AGENTS.md#6-qué-no-hace-esta-herramienta-nivel-actual-v0991).
 
 ### Lógica de negocio (FIN-LOGIC v2)
 
