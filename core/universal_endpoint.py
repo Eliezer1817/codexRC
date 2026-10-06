@@ -57,6 +57,7 @@ ARRAY_LITERAL_HANDLER_RE = re.compile(
 MIDDLEWARE_TOKEN_RE = re.compile(
     r"(\w*(?:Middleware|Guard|Policy))\s*::\s*class|"
     r"->\s*middleware\s*\(\s*['\"]([^'\"]+)['\"]|"
+    r"->\s*(?:add|middleware)\s*\(\s*(?:new\s+)?([A-Za-z0-9_]+)|"
     r"['\"]([\w\-]*(?:auth|role|permission|login_required|guard|policy|"
     r"capability|nonce|token)[\w\-]*)['\"]", re.I)
 
@@ -337,7 +338,13 @@ def _discover_calls_in_file(rel: str, lines: List[str], src: str
             continue
         args_src = src[open_idx + 1:close_idx]
         args = _split_top_level_args(args_src)
-        call_src = src[m.start():close_idx + 1]
+        
+        # Extend call_src up to the next semicolon to catch chained methods ->middleware()
+        stmt_end = src.find(';', close_idx)
+        if stmt_end != -1:
+            call_src = src[m.start():stmt_end + 1]
+        else:
+            call_src = src[m.start():close_idx + 1]
         line_no = src[:m.start()].count("\n") + 1
 
         method = path_arg = handler_arg = None

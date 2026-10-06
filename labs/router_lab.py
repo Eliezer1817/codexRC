@@ -180,3 +180,23 @@ def cleanup_lab(root: str) -> None:
 if __name__ == "__main__":
     r = build_lab()
     print(f"lab construido en {r}")
+
+FIXTURES["case10_chained_middleware.php"] = """<?php
+class DashboardController {
+    public function index() { return true; }
+    public function profile() { return true; }
+}
+// Laravel style chained middleware
+Route::get('/admin/dashboard', 'DashboardController@index')->middleware('auth:api');
+// Slim style chained add()
+$app->get('/user/profile', [DashboardController::class, 'profile'])->add(new RequireAuth());
+"""
+
+FIXTURES["case11_dynamic_routes.php"] = """<?php
+class DynamicController {
+    public function handle() { return true; }
+}
+// Variable pura (peor escenario)
+$route_path = get_dynamic_path();
+Route::get($route_path, 'DynamicController@handle');
+"""

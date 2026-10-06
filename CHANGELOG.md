@@ -56,11 +56,46 @@ Corpus certificado re-corrido completo tras la integración:
 **141/141 PASS, 0 fallos** (una corrida tuvo el flake conocido
 LAB-NO-UP de siempre; el reintento con caché intra-corpus cerró limpio).
 
-Pendiente (explícitamente fuera de alcance de v0.98.0): middleware vía
-`->middleware('auth')` encadenado tipo Laravel, resolución de paths
-dinámicos construidos en runtime, y el montaje dentro del Hunter
-(`surface_for_target()` es la fachada lista, pero el roadmap pide
-regresión + fixtures reales antes de integrarla al pipeline).
+Pendiente (explícitamente fuera de alcance de v0.98.0): el montaje
+dentro del Hunter (`surface_for_target()` es la fachada lista, pero
+el roadmap pide regresión + fixtures reales antes de integrarla al
+pipeline).
+
+### Addendum v0.98.0 — middleware chaining + dynamic route resolution
+
+Cerrados los dos puntos que habían quedado pendientes:
+
+- **`core/universal_endpoint.py`** — `MIDDLEWARE_TOKEN_RE` ahora
+  reconoce `->add(new RequireAuth())` (estilo Slim) ademas de
+  `->middleware('auth:api')` (estilo Laravel) y `X::class`. El
+  extractor de llamadas sigue la cadena de metodos hasta el `;`
+  (no corta en el primer `)`), para capturar el middleware
+  encadenado DESPUES del registro de ruta.
+- **`labs/router_lab.py`** — 2 fixtures nuevos: `case10_chained_
+  middleware.php` (Laravel + Slim encadenados) y `case11_dynamic_
+  routes.php` (ruta armada 100% en variable en runtime, peor
+  escenario anti-falso-positivo).
+- **`tests/universal_endpoint_regress.py`** — 2 checks nuevos:
+  `chained_middleware` (ambos middlewares detectados) y
+  `pure_dynamic_route_rejected` (la ruta dinamica pura se descarta
+  sin inventar el path final).
+
+15/15 PASS propios. Corpus certificado completo: 141/141 PASS,
+0 fallos.
+
+Evaluado y descartado explícitamente: generalizar
+`core/experiment_graph.py` para que otras líneas (AUTHZ-PROOF,
+FIN-LOGIC, TAINT-TRACE) lo reutilicen vía un esquema de clases de
+evidencia parametrizable. Se prototipó en sandbox pero NO se aplica
+aquí: `core/bac_proof.py` (AUTHZ-PROOF) es autocontenido y no
+consume `experiment_graph`/`hypothesis_graph`, asi que esa
+generalizacion habria quedado sin consumidor real — contradice el
+patron ya usado en este mismo v0.98.0 para integrar motores sin
+duplicarlos (adaptadores finos y no invasivos como
+`to_gates_handlers()`/`to_fin_param_sources()`, no un motor generico
+compartido). Si AUTHZ-PROOF llega a necesitar trazabilidad de
+evidencia, el camino correcto es un adaptador especifico, no heredar
+la escalera DESYNC.
 
 ## v0.97.0 — BUSINESS LOGIC STATE ENGINE v2 (13/13 PASS propios)
 

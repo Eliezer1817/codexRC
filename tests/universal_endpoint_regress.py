@@ -130,6 +130,22 @@ def run() -> int:
               f"n={len(dup)} sources={dup[0]['sources'] if dup else None}")
         fails += 0 if ok else 1
 
+
+        # --- 14. chained middleware --------------------------------------
+        chained1 = _find(eps, "GET", "/admin/dashboard", "DashboardController")
+        chained2 = _find(eps, "GET", "/user/profile", "DashboardController")
+        ok_c1 = (len(chained1) == 1 and any(m["name"] == "auth:api" for m in chained1[0].get("middleware", [])))
+        ok_c2 = (len(chained2) == 1 and any("RequireAuth" in m["name"] for m in chained2[0].get("middleware", [])))
+        ok = ok_c1 and ok_c2
+        print(f"[chained_middleware] -> {'PASS' if ok else 'FAIL'} c1={chained1} c2={chained2}")
+        fails += 0 if ok else 1
+
+        # --- 15. pure dynamic route rejection ----------------------------
+        dyn_pure = [e for e in eps if e.get("handler") == "DynamicController::handle"]
+        ok = (len(dyn_pure) == 0) # Debe rechazarse porque no empieza con '/' ni es concatenacion clara
+        print(f"[pure_dynamic_route_rejected] -> {'PASS' if ok else 'FAIL'} {dyn_pure}")
+        fails += 0 if ok else 1
+
         # --- 11. GATES-AUDIT adaptador: formato compatible con FIN-LOGIC -
         gates_handlers = ue.to_gates_handlers(eps)
         ok = all("archivo_callback" in h and "linea_callback" in h
