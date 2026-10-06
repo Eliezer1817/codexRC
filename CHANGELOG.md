@@ -1,3 +1,55 @@
+## v0.99.1 — UNIVERSAL ENDPOINT: filtro anti-FP de codigo vendoreado (7/7 PASS propios)
+
+Primer contacto de v0.99.0 con codigo real (no fixtures): se corrio el
+Hunter estatico sobre 10 plugins de wordpress.org (ameliabooking,
+bookly, wp-simple-booking-calendar, easy-appointments, tutor,
+learnpress, wp-job-manager, give, ninja-forms, paid-memberships-pro;
+2026-10-06). Resultado medido: **194 "custom_router" detectados, solo
+149 reales (todos de Amelia, el unico router propio del lote) -> 45
+falsos positivos (23%)**, repartidos en 5 de los 6 plugins con hits.
+La suite 15/15 de v0.98.0 no lo veia: sus fixtures eran sinteticas y
+no incluian SDKs vendoreados ni arrays de configuracion.
+
+Cuatro clases de FP, una causa comun (se aceptaba como ruta cualquier
+`->get(`/`->post(`/`$x['post'][..]=` sin evidencia de que fuera
+registro de ruta entrante):
+- **Cliente HTTP saliente** (Braintree SDK en paid-memberships-pro):
+  `$this->_http->post('/oauth/..', $params)` -> receptor `_http`.
+- **Concatenacion con '/' suelto** (Give `ScriptAsset::get(DIR . 'build/x.php')`,
+  LearnPress `Cache::get('q-' . $id . '/' . $k, 'grupo/x')`): bastaba
+  cualquier '/' en la expresion dinamica.
+- **Handler = dato** (`->post($url, ['k' => $v])`, `->get($k, 'grupo/x')`).
+- **Claves de array que coinciden con un verbo** (Bookly/Tutor/Razorpay
+  `$d['options']['x'] = 'wp'`, `$c['post']['fields'] = array()`):
+  `options`/`post`/`get` son claves comunes, no metodos HTTP.
+
+Cambios en `core/universal_endpoint.py` (sin tocar GATES-AUDIT ni el resto):
+1. `_looks_like_path`: la parte dinamica exige un literal entre comillas
+   que EMPIECE con '/' + caracter de ruta (`_DYN_PATH_SEGMENT_RE`).
+2. `_handler_is_plain_data`: rechaza handler string plano (salvo
+   `Ctrl@metodo`) o array asociativo (`=>`). Una variable pelada NO se
+   rechaza (puede ser callable externo: caso `/api/ghost`).
+3. `ARRAY_ROUTE_RE`: el path debe empezar con '/'; mismo filtro de handler.
+4. `_OUTBOUND_CLIENT_RECV_RE`: receptor `*http*/client/curl/guzzle/request*`
+   (con prefijo `_` opcional) = cliente saliente, no router.
+
+Resultado re-medido sobre los mismos 10 plugins: **194 -> 149**; los 149
+son los de Amelia (se perdio 1: `OPTIONS type` en razorpay/Requests,
+vendoreado, tambien era FP). Cero FP en los otros 9. Suites previas
+intactas: 15/15 (v0.98.0) y 4/4 (v0.99.0).
+
+`tests/universal_endpoint_vendor_fp_regress.py` (nuevo): 4 casos de
+rechazo (patrones reales minimizados) + 3 contraejemplos que DEBEN
+seguir siendo ruta (variable pelada, `Clase::class`, `Ctrl@metodo`).
+Verificado no tautologico: contra el codigo v0.99.0 falla 4/4.
+
+Limites conocidos (honestos): el filtro de receptor es por NOMBRE
+(`*http*`, `*client*`...): un router real llamado `$client` seria un
+falso negativo; una libreria vendoreada con receptor de otro nombre
+seguiria dando FP. No hay resolucion de tipos. Una ruta con handler
+variable y path literal es indistinguible, por forma, de un cliente
+HTTP con otro nombre de receptor.
+
 ## v0.99.0 — UNIVERSAL ENDPOINT GRAPH montado en el Hunter (4/4 PASS propios)
 
 Cierra el ultimo pendiente de v0.98.0: `surface_for_target()` deja de

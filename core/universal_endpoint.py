@@ -37,6 +37,12 @@ VERB_CALL_RE = re.compile(
     r"(get|post|put|patch|delete|options|any|map|match|route)\s*\(",
     re.I)
 
+# Segmento literal de ruta dentro de una expresion dinamica: un string
+# entre comillas que EMPIEZA con '/' y contiene al menos un caracter
+# de ruta despues (p.ej. '/stats', "/users/{id}"). Un '/' suelto
+# ('/' . $key) NO cuenta como ruta.
+_DYN_PATH_SEGMENT_RE = re.compile(r"""(['"])/[A-Za-z0-9_\-{}\[\]:+*.]+""")
+
 METHOD_LITERAL_RE = re.compile(
     r"^['\"](GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD|ANY)['\"]$", re.I)
 METHOD_ARRAY_RE = re.compile(
@@ -225,9 +231,46 @@ def _looks_like_path(arg: Optional[str]) -> Tuple[bool, bool]:
     if lit is not None:
         return lit.startswith("/"), False
     # expresion dinamica: $prefix . '/path' , "{$x}/y", etc.
-    if "/" in arg and ("$" in arg or "." in arg):
-        return True, True
+    # v0.99.1: el fragmento con '/' debe ser un LITERAL entre comillas
+    # que EMPIECE con '/' (segmento de ruta real). Antes bastaba
+    # cualquier '/' en la expresion, lo que aceptaba concatenaciones
+    # de rutas de ARCHIVO (GIVE_PLUGIN_DIR . 'build/x.php'), de
+    # URLs de SDK (merchantPath() . '/x') y claves de cache
+    # ('question-' . $id . '/' . $key). Medido sobre 10 plugins
+    # reales de wordpress.org (2026-10-06).
+    if "$" in arg or "." in arg:
+        if _DYN_PATH_SEGMENT_RE.search(arg):
+            return True, True
     return False, False
+
+
+# Receptores que son CLIENTES HTTP salientes (consumen una API remota),
+# no routers que registran rutas entrantes: $this->_http->post(...),
+# $client->get(...), $curl->post(...), $guzzle->get(...). Se evalua el
+# ULTIMO segmento del receptor inmediatamente antes de ->verbo( .
+_OUTBOUND_CLIENT_RECV_RE = re.compile(
+    r"_*(?:http|client|curl|guzzle|requests?|transport|fetcher)\w*$", re.I)
+
+
+def _handler_is_plain_data(expr: Optional[str]) -> bool:
+    """True si el 'handler' es estructuralmente un DATO y no un callable:
+    string literal plano (sin forma Clase@metodo) o array asociativo
+    (contiene '=>'). Una variable pelada NO cuenta como dato: puede ser
+    un callable de origen externo (HANDLER-UNRESOLVED, caso case6).
+    Evita aceptar llamadas a clientes HTTP / caches con la forma
+    ->post($path, ['k' => $v]) o ->get($key, 'grupo/x')."""
+    if expr is None:
+        return False
+    e = expr.strip()
+    if not e:
+        return False
+    lit = _unquote(e)
+    if lit is not None:
+        return "@" not in lit  # 'Ctrl@metodo' (Laravel) si es callable
+    if (e.startswith("[") or e.lower().startswith("array(")) \
+            and "=>" in e:
+        return True
+    return False
 
 
 def _normalize_path(path_raw: str) -> str:
@@ -329,6 +372,9 @@ def _discover_calls_in_file(rel: str, lines: List[str], src: str
                              ) -> List[Dict[str, Any]]:
     out = []
     for m in VERB_CALL_RE.finditer(src):
+        recv = m.group(1) or m.group(2) or ""
+        if _OUTBOUND_CLIENT_RECV_RE.match(recv):
+            continue  # v0.99.1: cliente HTTP saliente, no router
         verb = m.group(4).lower()
         open_idx = src.find("(", m.end() - 1)
         if open_idx == -1:
@@ -378,6 +424,8 @@ def _discover_calls_in_file(rel: str, lines: List[str], src: str
         is_path, is_dyn = _looks_like_path(path_arg)
         if not is_path:
             continue  # ZERO-FP: sin evidencia estructural de ruta real
+        if _handler_is_plain_data(handler_arg):
+            continue  # v0.99.1: handler = dato, no callable (cliente HTTP/cache)
 
         middleware = []
         if len(args) >= 3 and verb in HTTP_VERBS:
@@ -412,6 +460,13 @@ def _discover_calls_in_file(rel: str, lines: List[str], src: str
 def _discover_array_routes(rel: str, src: str) -> List[Dict[str, Any]]:
     out = []
     for m in ARRAY_ROUTE_RE.finditer(src):
+        # v0.99.1: 'options'/'post'/'get' son claves de array comunes en
+        # config/WP ($data['options']['x'] = 'wp'). Sin un path que empiece
+        # con '/' no hay evidencia de ruta HTTP.
+        if not m.group(4).startswith("/"):
+            continue
+        if _handler_is_plain_data(m.group(5).strip()):
+            continue
         line_no = src[:m.start()].count("\n") + 1
         out.append({
             "method": m.group(2).upper(),
