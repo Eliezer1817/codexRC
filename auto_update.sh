@@ -156,6 +156,27 @@ stop_server() {
 remote_head() { git ls-remote origin "refs/heads/$BRANCH" 2>/dev/null | awk '{print $1}'; }
 local_head()  { git rev-parse "refs/heads/$BRANCH" 2>/dev/null; }
 
+# --- limpieza de archivos trackeados que el remoto va a borrar --------
+# Si un archivo quedo trackeado en una version vieja del repo (ej:
+# server.log, antes de entrar a .gitignore en el MISMO commit que lo
+# destrackea) y el proceso en vivo lo sigue escribiendo, "git pull"
+# rechaza para siempre con "local changes would be overwritten by
+# merge" -> bucle infinito silencioso (el .gitignore nuevo todavia no
+# bajo, asi que "git check-ignore" local no lo ve ignorado TODAVIA).
+# Deteccion robusta: comparar contra el commit remoto real (fetch),
+# no contra el .gitignore local desactualizado. Si un archivo esta
+# tracked+modificado ACA y el commit entrante lo BORRA, es basura de
+# ejecucion (este script nunca edita codigo fuente a mano): se
+# descarta sola, nunca toca un archivo que el remoto siga trackeando.
+limpiar_basura_trackeada() {
+    git fetch -q origin "$BRANCH" 2>/dev/null || return 1
+    local f
+    while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        git checkout -- "$f" 2>/dev/null             && log "Descartado cambio local en '$f' (tracked viejo, eliminado en origin/$BRANCH)"
+    done < <(comm -12         <(git ls-files -m 2>/dev/null | sort)         <(git diff --no-renames --name-only --diff-filter=D "HEAD..origin/$BRANCH" 2>/dev/null | sort))
+}
+
 log "=== Guardia blindado v0.38.3 activo (cada ${INTERVALO}s, rama $BRANCH) ==="
 echo "codexRC guardia ACTIVO (cada ${INTERVALO}s) · instancias: unica por lock"
 echo "Servidor: http://localhost:8000"
@@ -184,11 +205,22 @@ while true; do
         log "Commit nuevo detectado: ${LOCAL:0:7} -> ${REMOTE:0:7}"
         echo "[$(date '+%T')] Commit nuevo detectado, actualizando..."
         stop_server
+        limpiar_basura_trackeada
         if git pull --ff-only origin "$BRANCH" >> "$LOG" 2>&1; then
             log "git pull OK. Reiniciando servidor..."
             echo "[$(date '+%T')] Pull OK, servidor reiniciandose"
         else
-            log "ERROR: git pull fallo. Reiniciando con el codigo anterior."
+            # reintento unico: puede que la limpieza de arriba no haya
+            # alcanzado a correr antes de que el pull fallara una vez
+            limpiar_basura_trackeada
+            if git pull --ff-only origin "$BRANCH" >> "$LOG" 2>&1; then
+                log "git pull OK en el reintento. Reiniciando servidor..."
+                echo "[$(date '+%T')] Pull OK (reintento), servidor reiniciandose"
+            else
+                log "ERROR: git pull fallo 2 veces seguidas. Detalle:"
+                tail -n 8 "$LOG" | while IFS= read -r l; do log "  | $l"; done
+                echo "[$(date '+%T')] ERROR: git pull fallo. Revisa auto_update.log (quedo en el commit anterior)."
+            fi
         fi
         start_server
         CAIDAS_RAPIDAS=0
