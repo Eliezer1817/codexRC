@@ -1,8 +1,8 @@
 {
- "total": 3,
- "ok": 3,
+ "total": 0,
+ "ok": 0,
  "fallos": 0,
- "segundos": 8.2,
+ "segundos": 0.0,
  "hallazgos": [],
  "pagables_con_hallazgo": []
 }

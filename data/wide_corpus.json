@@ -1,7 +1,7 @@
 {
  "min_installs": 5000,
- "total": 3250,
- "generado": "2026-10-07 18:42",
+ "total": 3249,
+ "generado": "2026-10-07 18:49",
  "plugins": [
   {
    "slug": "elementor",
@@ -42,8 +42,8 @@
    "slug": "woocommerce",
    "name": "WooCommerce",
    "installs": 7000000,
-   "last_updated": "2026-09-22 2:40pm GMT",
-   "version": "11.1.2"
+   "last_updated": "2026-10-07 2:05pm GMT",
+   "version": "11.2.0"
   },
   {
    "slug": "google-site-kit",
@@ -22738,13 +22738,6 @@
    "installs": 5000,
    "last_updated": "2026-09-28 7:29am GMT",
    "version": "2.0"
-  },
-  {
-   "slug": "yabe-webfont",
-   "name": "Jooosi Fon &#8211; Use Custom Fonts, Google Fonts or Adobe Fonts",
-   "installs": 5000,
-   "last_updated": "2026-10-06 2:37am GMT",
-   "version": "1.1.5"
   },
   {
    "slug": "jetpack-search",
