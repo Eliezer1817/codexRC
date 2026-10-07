@@ -1,0 +1,37 @@
+{
+ "https://www.openstreetmap.org/user/new": {
+  "recipes": [
+   {
+    "site": "https://www.openstreetmap.org/user/new",
+    "reg_url": "https://www.openstreetmap.org/user/new",
+    "login_url": "https://www.openstreetmap.org/login?referer=%2Fuser%2Fnew%3Fcookie_test%3Dtrue",
+    "steps": 1,
+    "verification": "unknown",
+    "worked_at": "2026-10-07 17:23"
+   }
+  ],
+  "identities": [
+   {
+    "id": "dada46afc814",
+    "credentials": {
+     "email": "ninjairphy3wpvb@maxxspace.com",
+     "username": "diegoaguir2919",
+     "password": "Tmglme!26#K"
+    },
+    "cookies": {},
+    "csrf": {},
+    "tokens": {},
+    "verification_state": "timeout",
+    "registration_recipe": {
+     "site": "https://www.openstreetmap.org/user/new",
+     "reg_url": "https://www.openstreetmap.org/user/new",
+     "login_url": "https://www.openstreetmap.org/login?referer=%2Fuser%2Fnew%3Fcookie_test%3Dtrue",
+     "steps": 1,
+     "verification": "timeout",
+     "worked_at": "2026-10-07 17:23"
+    },
+    "capabilities": []
+   }
+  ]
+ }
+}

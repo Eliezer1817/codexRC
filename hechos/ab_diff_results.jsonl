@@ -2,3 +2,7 @@
 {"target": "https://example.com", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:07"}
 {"target": "https://httpbin.org", "level": 3, "endpoints": 4, "veredictos": [], "notes": [], "ts": "2026-10-07 17:12"}
 {"target": "https://httpbin.org", "level": 3, "endpoints": 4, "veredictos": [], "notes": [], "ts": "2026-10-07 17:14"}
+{"target": "https://juice-shop-demo.owasp-juice.shop", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:18"}
+{"target": "http://testphp.vulnweb.com/signup.php", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:19"}
+{"target": "https://demo.wpsandbox.org/wp-login.php?action=register", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:19"}
+{"target": "https://www.openstreetmap.org/user/new", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:26"}
