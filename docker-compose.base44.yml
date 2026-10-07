@@ -9,6 +9,8 @@ services:
       - ./:/app
     ports:
       - "3000:8000"
+    env_file:
+      - /run/base44/app.env
     environment:
       - CODEXRC_LAN=1
       - BASE44_PREVIEW_MODE=1

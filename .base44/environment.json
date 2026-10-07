@@ -2,5 +2,12 @@
   "previewPort": 3000,
   "healthPath": "/",
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
-  "secrets": []
+  "secrets": [
+    {
+      "name": "GEMINI_API_KEY",
+      "description": "Clave de API de Google Gemini para vision_gate.py (tareas de visión/CAPTCHA). Obtenerla desde https://aistudio.google.com/apikey",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    }
+  ]
 }
