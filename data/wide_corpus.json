@@ -1,7 +1,7 @@
 {
  "min_installs": 5000,
  "total": 3249,
- "generado": "2026-10-07 19:43",
+ "generado": "2026-10-07 19:48",
  "plugins": [
   {
    "slug": "elementor",
@@ -22607,13 +22607,6 @@
    "version": "5.10.0"
   },
   {
-   "slug": "wp-fusion-lite",
-   "name": "WP Fusion Lite &#8211; Marketing Automation and CRM Integration for WordPress",
-   "installs": 5000,
-   "last_updated": "2026-09-25 7:06pm GMT",
-   "version": "3.48.0"
-  },
-  {
    "slug": "pakkelabels-for-woocommerce",
    "name": "DEPRECATED &#8211; Shipmondo &#8211; A complete shipping solution for WooCommerce",
    "installs": 5000,
@@ -22621,11 +22614,11 @@
    "version": "5.0.8"
   },
   {
-   "slug": "baselinker-woo",
-   "name": "Base (formerly BaseLinker) &#8211; 300+ marketplaces, 150+ carriers &amp; PIM &amp; OMS &amp; WMS in one",
+   "slug": "wp-fusion-lite",
+   "name": "WP Fusion Lite &#8211; Marketing Automation and CRM Integration for WordPress",
    "installs": 5000,
-   "last_updated": "2026-09-24 8:52am GMT",
-   "version": "1.1.2"
+   "last_updated": "2026-09-25 7:06pm GMT",
+   "version": "3.48.0"
   },
   {
    "slug": "comments-like-dislike",
@@ -22633,6 +22626,13 @@
    "installs": 5000,
    "last_updated": "2026-09-28 5:38am GMT",
    "version": "1.2.5"
+  },
+  {
+   "slug": "baselinker-woo",
+   "name": "Base (formerly BaseLinker) &#8211; 300+ marketplaces, 150+ carriers &amp; PIM &amp; OMS &amp; WMS in one",
+   "installs": 5000,
+   "last_updated": "2026-09-24 8:52am GMT",
+   "version": "1.1.2"
   },
   {
    "slug": "multifile-upload-field-for-contact-form-7",
