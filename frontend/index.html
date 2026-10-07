@@ -912,9 +912,11 @@
     }
 
     function resetCards() {
-      ["Tech", "Sec", "Dom", "Cve", "Auth"].forEach(k => {
-        document.getElementById("c" + k).textContent = "…";
-        document.getElementById("b" + k).innerHTML = '<div class="empty">escaneando…</div>';
+      ["Tech", "Sec", "XLayer", "Dom", "Auth"].forEach(k => {
+        const c = document.getElementById("c" + k);
+        const b = document.getElementById("b" + k);
+        if (c) c.textContent = "…";
+        if (b) b.innerHTML = '<div class="empty">escaneando…</div>';
       });
     }
 

@@ -1,2 +1,4 @@
 {"target": "--help", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-04 02:43"}
 {"target": "https://example.com", "level": 3, "endpoints": 1, "veredictos": [], "notes": [], "ts": "2026-10-07 17:07"}
+{"target": "https://httpbin.org", "level": 3, "endpoints": 4, "veredictos": [], "notes": [], "ts": "2026-10-07 17:12"}
+{"target": "https://httpbin.org", "level": 3, "endpoints": 4, "veredictos": [], "notes": [], "ts": "2026-10-07 17:14"}
