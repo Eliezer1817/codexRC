@@ -11550,3 +11550,69 @@ RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
 ===== [2026-10-07T19:34:37Z] vuelta 50: refrescando corpus =====
 corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
 ===== [2026-10-07T19:35:12Z] vuelta 50 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:35:42Z] vuelta 51: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:35:42Z] vuelta 51: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:35:42Z] vuelta 51: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:36:16Z] vuelta 51 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:36:46Z] vuelta 52: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:36:46Z] vuelta 52: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:36:46Z] vuelta 52: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:37:20Z] vuelta 52 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:37:50Z] vuelta 53: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:37:50Z] vuelta 53: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:37:50Z] vuelta 53: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:38:24Z] vuelta 53 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:38:54Z] vuelta 54: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:38:54Z] vuelta 54: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:38:54Z] vuelta 54: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:39:28Z] vuelta 54 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:39:58Z] vuelta 55: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:39:58Z] vuelta 55: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:39:58Z] vuelta 55: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 33s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:40:31Z] vuelta 55 terminada, pausa 30s antes de seguir =====
+===== [2026-10-07T19:41:01Z] vuelta 56: WIDE-HUNT =====
+WIDE-HUNT: 0 en cola (0 pagables), 3265 ya auditados, workers=4
+
+hecho: 0 ok, 0 fallos, 0 hallazgos en 0.0s
+===== [2026-10-07T19:41:01Z] vuelta 56: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T19:41:02Z] vuelta 56: refrescando corpus =====
+corpus: 3249 plugins >= 5,000 installs (2183 de ellos >= 10k) en 34s -> /app/core/../data/wide_corpus.json
+===== [2026-10-07T19:41:35Z] vuelta 56 terminada, pausa 30s antes de seguir =====

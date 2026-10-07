@@ -1,7 +1,7 @@
 {
  "min_installs": 5000,
  "total": 3249,
- "generado": "2026-10-07 19:35",
+ "generado": "2026-10-07 19:41",
  "plugins": [
   {
    "slug": "elementor",
@@ -4844,8 +4844,8 @@
    "slug": "order-import-export-for-woocommerce",
    "name": "Order Export &amp; Order Import for WooCommerce",
    "installs": 60000,
-   "last_updated": "2026-09-02 3:28am GMT",
-   "version": "2.7.8"
+   "last_updated": "2026-10-07 7:39pm GMT",
+   "version": "2.7.9"
   },
   {
    "slug": "wp-maintenance",
@@ -17364,18 +17364,18 @@
    "version": "2.1.4"
   },
   {
-   "slug": "autocomplete-address-for-woocommerce",
-   "name": "Autocomplete Address for WooCommerce",
-   "installs": 8000,
-   "last_updated": "2025-06-07 2:56pm GMT",
-   "version": "1.4.0"
-  },
-  {
    "slug": "slingblocks",
    "name": "SlingBlocks &#8211; Gutenberg Blocks by FunnelKit (Formerly WooFunnels)",
    "installs": 8000,
    "last_updated": "2026-05-23 11:56am GMT",
    "version": "1.8.1"
+  },
+  {
+   "slug": "autocomplete-address-for-woocommerce",
+   "name": "Autocomplete Address for WooCommerce",
+   "installs": 7000,
+   "last_updated": "2025-06-07 2:56pm GMT",
+   "version": "1.4.0"
   },
   {
    "slug": "wc-cash-on-pickup",
