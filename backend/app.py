@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 import os
+import re
 import traceback
 import logging
 from logging.handlers import RotatingFileHandler
@@ -124,7 +125,22 @@ def _load_persisted_jobs() -> None:
                             "(auto-update o reinicio): reintentar la caza")
         with JOBS_LOCK:
             JOBS.setdefault(job["id"], job)
-VERSION = "0.69.2"
+def _leer_version() -> str:
+    """Version real = la cabecera mas reciente de CHANGELOG.md ('## vX.Y.Z
+    ...'). Antes quedaba hardcodeada a mano y se desactualizaba cada
+    release; ahora el dashboard siempre muestra la version vigente sola."""
+    try:
+        with open(ROOT / "CHANGELOG.md", encoding="utf-8") as f:
+            for linea in f:
+                m = re.match(r"^##\s+v(\d+\.\d+\.\d+)", linea.strip())
+                if m:
+                    return m.group(1)
+    except Exception:
+        pass
+    return "0.69.2"
+
+
+VERSION = _leer_version()
 REPORTS_DIR = ROOT / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 LOGGER = logging.getLogger("codexRC")

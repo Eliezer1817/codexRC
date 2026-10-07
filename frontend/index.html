@@ -492,9 +492,54 @@
         transition-duration: 0.001ms !important;
       }
     }
+    /* ===== intro de arranque (una vez por sesion de navegador) ===== */
+    #introScreen {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.1rem; padding: 1.5rem; text-align: center;
+      transition: opacity 0.5s ease;
+    }
+    #introScreen.fade-out { opacity: 0; pointer-events: none; }
+    #introScreen .intro-logo {
+      font-family: ui-monospace, 'Courier New', monospace;
+      font-size: clamp(1.6rem, 7vw, 2.8rem);
+      font-weight: 700; letter-spacing: 0.12em;
+      color: var(--green);
+      text-shadow: 0 0 18px rgba(159, 206, 84, 0.65), 0 0 40px rgba(159, 206, 84, 0.25);
+    }
+    #introScreen .intro-ver {
+      font-family: ui-monospace, 'Courier New', monospace;
+      font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em;
+    }
+    #introScreen .intro-log {
+      font-family: ui-monospace, 'Courier New', monospace;
+      font-size: 0.78rem; color: var(--green-dim);
+      min-height: 5.4em; max-width: 90vw; line-height: 1.5;
+    }
+    #introScreen .intro-bar {
+      width: min(320px, 80vw); height: 4px; background: var(--green-dark);
+      border: 1px solid var(--border); border-radius: 2px; overflow: hidden;
+    }
+    #introScreen .intro-bar-fill {
+      height: 100%; width: 0%; background: var(--green);
+      box-shadow: var(--glow); transition: width 0.25s linear;
+    }
+    #introScreen .intro-skip {
+      margin-top: 0.4rem; background: none; border: 1px solid var(--border);
+      color: var(--muted); width: auto; padding: 0.4rem 1rem; font-size: 0.7rem;
+      box-shadow: none; text-transform: none; letter-spacing: 0.05em;
+    }
   </style>
 </head>
 <body>
+  <div id="introScreen">
+    <div class="intro-logo">CODEX<span style="color:#f2f5ee">RC</span></div>
+    <div class="intro-ver" id="introVer">v…</div>
+    <div class="intro-log" id="introLog"></div>
+    <div class="intro-bar"><div class="intro-bar-fill" id="introBarFill"></div></div>
+    <button class="intro-skip" id="introSkip" onclick="window.__skipIntro && window.__skipIntro()">omitir</button>
+  </div>
   <canvas id="matrix"></canvas>
 
   <header>
@@ -507,6 +552,7 @@
       <a href="/">escáner</a>
       <a href="/hunter.html">hunter</a>
       <a href="/arsenal.html" style="color:#ff2e4c">arsenal</a>
+      <a href="/guia.html">guía</a>
     </nav>
   </header>
 
@@ -516,6 +562,7 @@
         <a href="/">escáner</a>
         <a href="/hunter.html">hunter</a>
       <a href="/arsenal.html" style="color:#ff2e4c">arsenal</a>
+      <a href="/guia.html">guía</a>
       </nav>
       <h2>Nuevo escaneo</h2>
       <label>URL objetivo</label>
@@ -697,7 +744,8 @@
         const href = new URL(a.href, window.location.origin).pathname;
         const active = (path === "/" && href === "/") ||
           (path === "/hunter.html" && href === "/hunter.html") ||
-          (path === "/arsenal.html" && href === "/arsenal.html");
+          (path === "/arsenal.html" && href === "/arsenal.html") ||
+          (path === "/guia.html" && href === "/guia.html");
         a.classList.toggle("active", active);
         a.addEventListener("click", () => {
           document.body.classList.remove("nav-open");
@@ -738,6 +786,46 @@
         }
       }
       requestAnimationFrame(draw);
+    })();
+
+    // ===== intro de arranque: secuencia de boot, una vez por sesion =====
+    (function introBoot() {
+      const el = document.getElementById("introScreen");
+      if (!el) return;
+      if (sessionStorage.getItem("codexrc_intro_seen")) {
+        el.remove();
+        return;
+      }
+      const lineas = [
+        "inicializando CODEXRC...",
+        "cargando UNIVERSAL-ENGINE...",
+        "verificando WIDE-HUNT / RETRO-HUNT...",
+        "sincronizando dashboard...",
+        "sistema listo."
+      ];
+      const logEl = document.getElementById("introLog");
+      const barEl = document.getElementById("introBarFill");
+      let i = 0;
+      function paso() {
+        if (i < lineas.length) {
+          logEl.textContent += (i ? "\n" : "") + lineas[i];
+          barEl.style.width = Math.round(((i + 1) / lineas.length) * 100) + "%";
+          i++;
+          setTimeout(paso, 420);
+        } else {
+          setTimeout(cerrar, 500);
+        }
+      }
+      function cerrar() {
+        el.classList.add("fade-out");
+        sessionStorage.setItem("codexrc_intro_seen", "1");
+        setTimeout(() => el.remove(), 550);
+      }
+      window.__skipIntro = cerrar;
+      paso();
+      fetch('/health').then(r => r.json()).then(d => {
+        if (d && d.version) document.getElementById("introVer").textContent = "v" + d.version;
+      }).catch(() => {});
     })();
 
     // ===== version del backend =====

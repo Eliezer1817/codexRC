@@ -177,6 +177,7 @@
       <a href="/">escáner</a>
       <a href="/hunter.html">hunter</a>
       <a href="/arsenal.html" style="color:#ff2e4c">arsenal</a>
+      <a href="/guia.html">guía</a>
     </nav>
   </header>
 
@@ -682,7 +683,8 @@ esperando objetivo...</pre>
         const href = new URL(a.href, window.location.origin).pathname;
         const active = (path === "/" && href === "/") ||
           (path === "/hunter.html" && href === "/hunter.html") ||
-          (path === "/arsenal.html" && href === "/arsenal.html");
+          (path === "/arsenal.html" && href === "/arsenal.html") ||
+          (path === "/guia.html" && href === "/guia.html");
         a.classList.toggle("on", active);
       });
     })();
