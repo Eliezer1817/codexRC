@@ -576,14 +576,14 @@
         <h2>Autenticación</h2>
         <label>Método</label>
         <select id="authMethod">
-          <option value="none">Ninguno (público)</option>
+          <option value="none">Sin credenciales (AB-DIFF auto)</option>
           <option value="cookies">Cookies</option>
           <option value="credentials">Usuario + Contraseña</option>
           <option value="bearer">Bearer Token</option>
         </select>
         <details class="info">
           <summary>¿qué significa cada uno?</summary>
-          <p><b>Ninguno:</b> sitios que se ven sin cuenta.<br/><b>Usuario + Contraseña:</b> el motor entra solo con tus datos (el más fácil, recomendado).<br/><b>Cookies:</b> pegás las cookies de tu navegador, para logins difíciles.<br/><b>Bearer Token:</b> apps que usan tokens tipo JWT.</p>
+          <p><b>Sin credenciales (AB-DIFF auto):</b> el sistema detecta si el sitio tiene registro, intenta crear cuentas ninja (A y B) y difa accesos. Si no puede registrar, audita lo público (Nivel 3).<br/><b>Usuario + Contraseña:</b> el motor entra solo con tus datos (el más fácil, recomendado).<br/><b>Cookies:</b> pegás las cookies de tu navegador, para logins difíciles.<br/><b>Bearer Token:</b> apps que usan tokens tipo JWT.</p>
         </details>
 
         <div id="authCookies" style="display:none">
@@ -1054,6 +1054,12 @@
         body.bearer_token = document.getElementById("bearerToken").value.trim();
       }
 
+      // Sin credenciales → AB-DIFF: REG-BOT intenta registrar, si no puede
+      // cae a Nivel 3 (anónimo) y sigue auditando lo que puede.
+      if (method === "none") {
+        return startAbDiff(url);
+      }
+
       const btn = document.getElementById("btnScan");
       btn.disabled = true;
       btn.textContent = "ESCANEANDO...";
@@ -1105,7 +1111,133 @@
         btn.textContent = ">> Iniciar Pipeline";
       }
     }
-  
+
+    // ===== AB-DIFF (sin credenciales): REG-BOT registra, difa A vs B vs anónimo =====
+    async function startAbDiff(url) {
+      const btn = document.getElementById("btnScan");
+      btn.disabled = true;
+      btn.textContent = "AB-DIFF...";
+      terminalMode = 'abdiff';
+      document.getElementById("liveDot").style.display = "inline-block";
+      document.getElementById("output").textContent = "";
+      document.getElementById("connectionSummary").textContent = "AB-DIFF en progreso…";
+      document.getElementById("logLink").textContent = "";
+      resetCards();
+      renderPipeline({ input: { status: "success" }, recon: { status: "running" } });
+      logLine("═════════ AB-DIFF INICIADO ═════════");
+      logLine("→ objetivo: " + url);
+      logLine("→ REG-BOT: detectando formulario de registro…");
+      logLine("");
+
+      try {
+        const res = await fetch("/api/ab_diff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const started = await res.json();
+        if (!res.ok) throw new Error(started.error || "Error al iniciar AB-DIFF");
+
+        logLine("→ job " + started.id + " lanzado · AB-DIFF trabajando…");
+        let last = 0;
+        const poll = setInterval(async () => {
+          try {
+            const r = await fetch("/api/ab_diff/" + started.id);
+            if (!r.ok) return;
+            const job = await r.json();
+            // log vivo
+            const lines = job.log || [];
+            for (; last < lines.length; last++) logLine(lines[last]);
+            // pipeline: recon → auth → report
+            const sm = { input: { status: "success" }, recon: { status: "success" } };
+            if (job.status === "running") {
+              sm.auth_status = { status: "running" };
+              sm.report = { status: "pending" };
+            }
+            if (job.status === "finished") {
+              sm.auth_status = { status: "success" };
+              sm.report = { status: "success" };
+            }
+            if (job.status === "failed") {
+              sm.auth_status = { status: "failed" };
+              sm.report = { status: "failed" };
+            }
+            renderPipeline(sm);
+            if (job.status !== "running") {
+              clearInterval(poll);
+              finishAbDiff(job);
+            }
+          } catch (e) { /* seguimos intentando */ }
+        }, 1000);
+      } catch (err) {
+        logLine("✗ ERROR: " + err.message);
+        document.getElementById("connectionSummary").textContent = "El backend no respondió. ¿Está corriendo en :8000?";
+        document.getElementById("liveDot").style.display = "none";
+        renderPipeline();
+        btn.disabled = false;
+        btn.textContent = ">> Iniciar Pipeline";
+      }
+    }
+
+    function finishAbDiff(job) {
+      const btn = document.getElementById("btnScan");
+      btn.disabled = false;
+      btn.textContent = ">> Iniciar Pipeline";
+      document.getElementById("liveDot").style.display = "none";
+      const res = job.result || {};
+      const level = res.level || "?";
+      const verdicts = res.veredictos || [];
+      const notes = res.notes || [];
+      const levelLabels = {
+        1: "Nivel 1 — registro libre (A + B)",
+        2: "Nivel 2 — credenciales propias (OWN)",
+        3: "Nivel 3 — anónimo (fugas sin auth)",
+      };
+      const levelColor = level === 1 ? "var(--green)" : level === 2 ? "var(--amber)" : "var(--muted)";
+      let summary = '<b style="color:' + levelColor + '">AB-DIFF</b> — ' + esc(levelLabels[level] || ("Nivel " + level));
+      summary += ' · ' + (verdicts.length || 0) + ' veredicto(s)';
+      if (notes.length) summary += ' · <span style="color:var(--amber)">' + esc(notes.join("; ")) + '</span>';
+      document.getElementById("connectionSummary").innerHTML = summary;
+
+      // card de Autenticación muestra el nivel
+      document.getElementById("cAuth").textContent = "AB-DIFF N" + level;
+      document.getElementById("bAuth").innerHTML =
+        '<div class="row"><span class="k">Nivel</span><span class="v" style="color:' + levelColor + '">' + esc(levelLabels[level] || "?") + '</span></div>' +
+        '<div class="row"><span class="k">Endpoints probados</span><span class="v">' + (res.endpoints || 0) + '</span></div>' +
+        '<div class="row"><span class="k">Veredictos</span><span class="v ' + (verdicts.length ? "bad" : "good") + '">' + (verdicts.length || 0) + '</span></div>' +
+        (notes.length ? notes.map(n => '<div class="row"><span class="k">·</span><span class="v warn">' + esc(n) + '</span></div>').join("") : "");
+
+      // card de CROSS-LAYER muestra los veredictos del diff
+      if (verdicts.length) {
+        document.getElementById("cXLayer").textContent = verdicts.length + " veredicto(s)";
+        document.getElementById("bXLayer").innerHTML = verdicts.map(v => {
+          const verdict = v.veredicto || "?";
+          const vClass = verdict === "DEMO-UNAUTH" ? "bad" : verdict === "DEMO-BAC" ? "bad" : verdict === "REFUTADO" ? "good" : "warn";
+          return '<div class="row"><span class="k ' + vClass + '">' + esc(verdict) + '</span>' +
+            '<span class="v small mono">' + esc(v.endpoint || "?") + '</span></div>';
+        }).join("");
+      } else {
+        document.getElementById("cXLayer").textContent = "0 veredictos";
+        document.getElementById("bXLayer").innerHTML = '<div class="empty">sin hallazgos — gate correcto o sin superficie</div>';
+      }
+
+      logLine("");
+      logLine("═════════ AB-DIFF COMPLETADO ═════════");
+      logLine("→ nivel: " + (levelLabels[level] || "?"));
+      logLine("→ endpoints probados: " + (res.endpoints || 0));
+      logLine("→ veredictos: " + verdicts.length);
+      if (verdicts.length) {
+        verdicts.forEach(v => {
+          const icon = v.veredicto === "DEMO-UNAUTH" ? "💥💥" : v.veredicto === "DEMO-BAC" ? "💥" : v.veredicto === "REFUTADO" ? "✓" : "·";
+          logLine("  " + icon + " [" + (v.veredicto || "?") + "] " + (v.endpoint || "?"));
+        });
+      } else {
+        logLine("→ sin hallazgos (gate correcto o sin superficie accesible)");
+      }
+      if (notes.length) logLine("→ notas: " + notes.join("; "));
+      if (job.status === "failed") logLine("✗ JOB FALLÓ: " + (job.error || "?"));
+    }
+
     // ===== MOTOR DE CAZA: progreso vivo =====
     function refreshHunt() {
       fetch('/api/hunt_status').then(r => r.json()).then(d => {
@@ -1157,7 +1289,7 @@
         }
       }).catch(() => {});
     }
-    var terminalMode = null; // 'hunt' | 'universal' | 'scan' — qué alimenta la terminal
+    var terminalMode = null; // 'hunt' | 'universal' | 'scan' | 'abdiff' — qué alimenta la terminal
     function huntStart() {
       document.getElementById('huntStartBtn').disabled = true;
       document.getElementById('huntState').textContent = 'arrancando...';
