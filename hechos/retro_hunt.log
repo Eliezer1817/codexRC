@@ -424,3 +424,11 @@ RETRO-HUNT: 1007 en cola (38 pagables), 3 ya auditados, umbral pre-2026-06-01
 [423/1007] remove-cpt-base: limpio
 [424/1007] daggerhart-openid-connect-generic: 1 vivos 💥
 [425/1007] omnibus: 5 vivos 💥
+===== [2026-10-07T18:41:59Z] vuelta 1: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
+===== [2026-10-07T18:43:12Z] vuelta 2: RETRO-HUNT =====
+RETRO-HUNT: 0 en cola (0 pagables), 1010 ya auditados, umbral pre-2026-06-01
+
+RETRO-HUNT fin: 0 ok, 0 fallos, 0 hallazgos vivos, 0 min
