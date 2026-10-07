@@ -1057,6 +1057,7 @@
       const btn = document.getElementById("btnScan");
       btn.disabled = true;
       btn.textContent = "ESCANEANDO...";
+      terminalMode = 'scan';
       document.getElementById("liveDot").style.display = "inline-block";
       document.getElementById("output").textContent = "";
       document.getElementById("connectionSummary").textContent = "Trabajando…";
@@ -1135,11 +1136,39 @@
           stateEl.textContent = 'detenido';
           stateEl.style.color = 'var(--muted)';
         }
+        // Si la terminal está en modo hunt, mostrar el progreso ahí también
+        if (terminalMode === 'hunt') {
+          var pctW = wTot ? Math.min(100, Math.round(100 * wH / wTot)) : 0;
+          var pctR = rTot ? Math.min(100, Math.round(100 * rH / rTot)) : 0;
+          document.getElementById('connectionSummary').innerHTML =
+            '<b>WIDE-HUNT</b>: ' + wH + '/' + wTot + ' (' + pctW + '%) · ' +
+            '<b>RETRO-HUNT</b>: ' + rH + '/' + rTot + ' (' + pctR + '%) · ' +
+            (d.running ? '<b style="color:var(--green)">corriendo</b>' : 'detenido');
+          var out = document.getElementById('output');
+          var lines = [];
+          if (w.ultimos && w.ultimos.length)
+            lines.push('[WIDE] ' + w.ultimos[w.ultimos.length - 1]);
+          if (r.ultimos && r.ultimos.length)
+            lines.push('[RETRO] ' + r.ultimos[r.ultimos.length - 1]);
+          if (lines.length) {
+            out.textContent = lines.join('\n');
+            out.scrollTop = out.scrollHeight;
+          }
+        }
       }).catch(() => {});
     }
+    var terminalMode = null; // 'hunt' | 'universal' | 'scan' — qué alimenta la terminal
     function huntStart() {
       document.getElementById('huntStartBtn').disabled = true;
       document.getElementById('huntState').textContent = 'arrancando...';
+      terminalMode = 'hunt';
+      document.getElementById('connectionSummary').innerHTML = '<b>CAZA CONTINUA ACTIVA</b> — WIDE-HUNT + RETRO-HUNT corriendo…';
+      document.getElementById('output').textContent = '';
+      document.getElementById('liveDot').style.display = 'inline-block';
+      logLine('═════════ CAZA CONTINUA INICIADA ═════════');
+      logLine('→ WIDE-HUNT (>=5k installs): auditando corpus…');
+      logLine('→ RETRO-HUNT (pre-cooldown): re-auditando cola…');
+      logLine('');
       fetch('/api/hunt/start', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({workers: 4})
@@ -1148,6 +1177,11 @@
     function huntStop() {
       document.getElementById('huntStopBtn').disabled = true;
       document.getElementById('huntState').textContent = 'deteniendo...';
+      if (terminalMode === 'hunt') {
+        logLine('');
+        logLine('═════════ CAZA CONTINUA DETENIDA ═════════');
+        document.getElementById('liveDot').style.display = 'none';
+      }
       fetch('/api/hunt/stop', {method: 'POST'})
         .then(r => r.json()).then(() => refreshHunt()).catch(() => refreshHunt());
     }
@@ -1162,12 +1196,25 @@
       const cov = document.getElementById('ueCov');
       const btn = document.getElementById('btnUniversal');
       btn.disabled = true; out.textContent = 'perfilando ' + t + ' …';
+      // La terminal pasa a modo universal-engine
+      terminalMode = 'universal';
+      document.getElementById('connectionSummary').innerHTML = '<b>UNIVERSAL-ENGINE</b> — perfilando: ' + esc(t);
+      document.getElementById('output').textContent = '';
+      document.getElementById('liveDot').style.display = 'inline-block';
+      logLine('═════════ UNIVERSAL-ENGINE ═════════');
+      logLine('→ perfilando: ' + t);
+      logLine('');
       fetch('/api/universal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target: t })
       }).then(r => r.json()).then(res => {
         btn.disabled = false;
-        if (res.error) { out.textContent = '✗ ' + res.error; return; }
+        if (res.error) { out.textContent = '✗ ' + res.error;
+          if (terminalMode === 'universal') {
+            document.getElementById('connectionSummary').innerHTML = '<b style="color:var(--red)">UNIVERSAL-ENGINE</b> — error: ' + esc(res.error);
+            document.getElementById('liveDot').style.display = 'none';
+          }
+          return; }
         cov.style.display = 'flex';
         cov.innerHTML = Object.entries(res.cobertura_resumen || {}).map(([k, v]) =>
           '<span>' + esc(k) + ': <b>' + esc(String(v)) + '</b></span>').join('');
@@ -1187,7 +1234,22 @@
           lines.push('  ' + k + ' → ' + v.estado + (v.nota ? ' (' + v.nota + ')' : ''));
         });
         out.textContent = lines.join('\n');
-      }).catch(e => { btn.disabled = false; out.textContent = '✗ ' + e; });
+        // También volcar los resultados a la terminal en vivo
+        if (terminalMode === 'universal') {
+          document.getElementById('liveDot').style.display = 'none';
+          var hCount = (res.hallazgos || []).length;
+          document.getElementById('connectionSummary').innerHTML =
+            '<b>UNIVERSAL-ENGINE</b> — ' + esc(prof.framework || prof.tipo || 'desconocido') +
+            ' · ' + hCount + ' hallazgo(s) · ' +
+            (res.analizadores_elegidos || []).join(', ');
+          document.getElementById('output').textContent = lines.join('\n');
+        }
+      }).catch(e => { btn.disabled = false; out.textContent = '✗ ' + e;
+        if (terminalMode === 'universal') {
+          document.getElementById('connectionSummary').innerHTML = '<b style="color:var(--red)">UNIVERSAL-ENGINE</b> — sin respuesta del backend';
+          document.getElementById('liveDot').style.display = 'none';
+        }
+      });
     }
 
     // ===== menu movil =====
