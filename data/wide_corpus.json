@@ -1,7 +1,7 @@
 {
  "min_installs": 5000,
  "total": 3249,
- "generado": "2026-10-07 19:28",
+ "generado": "2026-10-07 19:35",
  "plugins": [
   {
    "slug": "elementor",
@@ -3877,7 +3877,7 @@
   {
    "slug": "wp-social",
    "name": "Wp Social Login and Register Social Counter",
-   "installs": 80000,
+   "installs": 70000,
    "last_updated": "2026-09-30 6:04am GMT",
    "version": "3.2.2"
   },
@@ -9904,7 +9904,7 @@
   {
    "slug": "yotuwp-easy-youtube-embed",
    "name": "Video Gallery &#8211; YouTube Playlist, Channel Gallery by YotuWP",
-   "installs": 20000,
+   "installs": 10000,
    "last_updated": "2026-08-22 6:34pm GMT",
    "version": "1.4"
   },

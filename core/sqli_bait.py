@@ -18,6 +18,7 @@ respecto al baseline; el time-based exige repeticion).
 """
 
 import difflib
+import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -208,6 +209,93 @@ class SqlBait:
                 pass
         return None
 
+    # ------------------------------------------------------ json / rest
+
+    def test_json(self, url: str, body_template: Dict[str, Any],
+                  method: str = "POST") -> List[Dict[str, Any]]:
+        """Inyeccion SQL sobre cuerpos JSON (REST APIs / SPAs).
+
+        Inyecta sondas en cada campo string del body JSON, mide error-based
+        y time-based. No toca campos que no sean string/numero."""
+        out: List[Dict[str, Any]] = []
+        headers = {"Content-Type": "application/json"}
+
+        # baseline
+        t0 = time.perf_counter()
+        try:
+            r0 = self.h.session.request(
+                method, url, json=body_template,
+                timeout=self.h.timeout, headers=headers)
+            base = (r0.text or "")[:20000]
+            t_base = round(time.perf_counter() - t0, 2)
+        except Exception:
+            return out
+
+        for field, val in body_template.items():
+            if not isinstance(val, (str, int, float)):
+                continue
+            v = str(val)
+
+            # tier 1: error-based en JSON
+            for p in ERROR_PROBES:
+                body = dict(body_template)
+                body[field] = v + p
+                try:
+                    r = self.h.session.request(
+                        method, url, json=body,
+                        timeout=self.h.timeout, headers=headers)
+                except Exception:
+                    continue
+                resp = (r.text or "")[:20000]
+                m = self._match_error(resp, base)
+                if m:
+                    dbms, err = m
+                    self.h.log(f"[sqli] !! JSON error-based en {field} ({dbms})")
+                    out.append(self._finding(
+                        "error-based (JSON)", url, field,
+                        f"el campo JSON {field} rompe la consulta y el "
+                        f"motor {dbms} responde su error", err, dbms,
+                        method=method))
+                    break
+                time.sleep(self.h.delay)
+
+            # tier 2: time-based en JSON
+            for dbms, tpl in TIME_PAYLOADS:
+                body = dict(body_template)
+                body[field] = tpl.format(v=v)
+                try:
+                    t0 = time.perf_counter()
+                    r = self.h.session.request(
+                        method, url, json=body,
+                        timeout=self.h.timeout, headers=headers)
+                    elapsed = round(time.perf_counter() - t0, 2)
+                except Exception:
+                    continue
+                if elapsed >= t_base + TIME_MIN_DELTA:
+                    time.sleep(self.h.delay)
+                    # confirmacion
+                    try:
+                        t0 = time.perf_counter()
+                        r2 = self.h.session.request(
+                            method, url, json=body,
+                            timeout=self.h.timeout, headers=headers)
+                        elapsed2 = round(time.perf_counter() - t0, 2)
+                    except Exception:
+                        continue
+                    if elapsed2 >= t_base + TIME_MIN_DELTA:
+                        self.h.log(f"[sqli] !! JSON time-based en {field} "
+                                   f"({dbms}): {elapsed}s + {elapsed2}s")
+                        out.append(self._finding(
+                            "time-based blind (JSON)", url, field,
+                            f"el campo JSON {field} con sonda de espera "
+                            f"{dbms} detiene la respuesta {elapsed}s y "
+                            f"{elapsed2}s vs baseline {t_base}s",
+                            f"baseline {t_base}s · sonda1 {elapsed}s · "
+                            f"sonda2 {elapsed2}s", dbms, method=method))
+                        break
+                time.sleep(self.h.delay)
+        return out
+
     # ------------------------------------------------------------ headers
 
     def test_headers(self, url: str) -> List[Dict[str, Any]]:
@@ -243,7 +331,7 @@ class SqlBait:
 
     def run(self, targets: List[Dict[str, Any]], max_params: int = 40) -> List[Dict[str, Any]]:
         self.h.log(f"[sqli] === SQLI-BAIT: {len(targets[:max_params])} parametros "
-                   f"(4 tiers: error · boolean · time · stacked) ===")
+                   f"(4 tiers: error · boolean · time · stacked + JSON/REST) ===")
         findings: List[Dict[str, Any]] = []
         tgts = [t for t in targets[:max_params]
                 if "?" in t.get("url", "") and t.get("param")]
@@ -255,6 +343,18 @@ class SqlBait:
         if tgts:
             hs = self.test_headers(tgts[0]["url"].split("?")[0])
             findings.extend(hs)
+        # --- JSON / REST: targets con body JSON o method POST
+        json_tgts = [t for t in targets[:max_params]
+                     if t.get("json_body") or t.get("method", "").upper() == "POST"]
+        for t in json_tgts[:10]:
+            body = t.get("json_body") or {}
+            if not body:
+                continue
+            method = t.get("method", "POST").upper()
+            js = self.test_json(t["url"], body, method=method)
+            findings.extend(js)
+            if js:
+                self.h.log(f"[sqli] !! JSON/REST injection en {t['url']}")
         self.h.log(f"[sqli] SQLI-BAIT terminado · {len(findings)} inyecciones "
                    f"confirmadas")
         return findings
