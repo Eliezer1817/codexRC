@@ -10,7 +10,8 @@
 set -u
 cd "$(dirname "$0")/.."
 WORKERS="${1:-4}"
-LOG="hechos/wide_hunt.log"
+LOG_WIDE="hechos/wide_hunt.log"
+LOG_RETRO="hechos/retro_hunt.log"
 mkdir -p hechos
 
 trap 'echo; echo "[$(date -u +%FT%TZ)] parado por el operador"; exit 0' SIGINT SIGTERM
@@ -18,12 +19,12 @@ trap 'echo; echo "[$(date -u +%FT%TZ)] parado por el operador"; exit 0' SIGINT S
 vuelta=0
 while true; do
   vuelta=$((vuelta + 1))
-  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: WIDE-HUNT =====" | tee -a "$LOG"
-  python3 core/hunt_wide.py --dias 36500 --workers "$WORKERS" 2>&1 | tee -a "$LOG"
-  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: RETRO-HUNT =====" | tee -a "$LOG"
-  python3 core/retro_hunt.py --workers "$WORKERS" 2>&1 | tee -a "$LOG"
-  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: refrescando corpus =====" | tee -a "$LOG"
-  python3 core/wide_corpus.py --refresh 2>&1 | tee -a "$LOG"
-  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta terminada, pausa 30s antes de seguir =====" | tee -a "$LOG"
+  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: WIDE-HUNT =====" | tee -a "$LOG_WIDE"
+  python3 core/hunt_wide.py --dias 36500 --workers "$WORKERS" 2>&1 | tee -a "$LOG_WIDE"
+  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: RETRO-HUNT =====" | tee -a "$LOG_RETRO"
+  python3 core/retro_hunt.py --workers "$WORKERS" 2>&1 | tee -a "$LOG_RETRO"
+  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta: refrescando corpus =====" | tee -a "$LOG_WIDE"
+  python3 core/wide_corpus.py --refresh 2>&1 | tee -a "$LOG_WIDE"
+  echo "===== [$(date -u +%FT%TZ)] vuelta $vuelta terminada, pausa 30s antes de seguir =====" | tee -a "$LOG_WIDE"
   sleep 30
 done
