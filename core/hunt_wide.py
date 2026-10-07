@@ -112,6 +112,8 @@ def _frescos(corpus: dict, dias: int) -> list:
 
 def _auditar(rec: dict) -> dict:
     slug = rec["slug"]
+    diff_hunt._narrar(slug, "eligiendo plugin del corpus "
+                            f"({rec.get('installs', 0):,} installs)...")
     try:
         res = diff_hunt.scan(slug, diff_hunt.WORK)
         return {"slug": slug, "res": res}

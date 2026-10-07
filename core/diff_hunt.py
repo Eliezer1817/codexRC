@@ -43,6 +43,11 @@ INFO_URL = ("https://api.wordpress.org/plugins/info/1.2/"
 WORK = "/tmp/plugin_diff"
 
 
+def _narrar(slug: str, msg: str) -> None:
+    """Linea legible para el tail del dashboard (hechos/wide_hunt.log)."""
+    print(f"[{time.strftime('%H:%M:%S')}] [{slug}] {msg}", flush=True)
+
+
 def _info(slug: str) -> Optional[Dict[str, Any]]:
     try:
         with urllib.request.urlopen(INFO_URL.format(slug), timeout=20) as r:
@@ -51,11 +56,16 @@ def _info(slug: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def _fetch(url: str, path: str) -> bool:
+def _fetch(url: str, path: str, slug: str = "") -> bool:
+    t0 = time.time()
     try:
         with urllib.request.urlopen(url, timeout=120) as r:
             data = r.read()
         open(path, "wb").write(data)
+        if slug:
+            kb = len(data) / 1024
+            _narrar(slug, f"descarga completa ({kb:.0f} KB en "
+                          f"{time.time()-t0:.1f}s)")
         return True
     except Exception:
         return False
@@ -145,32 +155,47 @@ def prepare(slug: str, workdir: str) -> Optional[Tuple[str, str, str]]:
     SVN tags vacios, API sin mapa): fallback FULL-CODE con la version
     ACTUAL (dir_old=None) -> scan() audita todo el codigo vivo."""
     os.makedirs(workdir, exist_ok=True)
+    _narrar(slug, "seleccionado del corpus, buscando info en wordpress.org...")
     vers = get_versions(slug)
     if not vers:
         info = _info(slug)
         if not info or not info.get("download_link"):
+            _narrar(slug, "sin info descargable en wp.org, descartado")
             return None
+        nombre = info.get("name") or slug
+        _narrar(slug, f"plugin encontrado: '{nombre}' "
+                      f"(v{info.get('version') or '?'}) -> descargando...")
         d_new = os.path.join(workdir, f"{slug}_new")
         zp = os.path.join(workdir, f"{slug}.zip")
-        if not _fetch(info["download_link"], zp) or not _unzip(zp, d_new):
+        if not _fetch(info["download_link"], zp, slug) or not _unzip(zp, d_new):
+            _narrar(slug, "fallo de descarga/descompresion, descartado")
             return None
+        _narrar(slug, "descompresion ok, listo para escanear (modo FULL-CODE)")
         return d_new, None, info.get("version") or "?"
     new_v, old_v, new_u, old_u = vers
+    _narrar(slug, f"plugin encontrado, versiones a comparar: "
+                  f"{old_v} (anterior) -> {new_v} (nueva)")
     d_new = os.path.join(workdir, f"{slug}_new")
     d_old = os.path.join(workdir, f"{slug}_old")
     if not os.path.isdir(d_new) or not os.path.isdir(d_old):
         z_new = os.path.join(workdir, f"{slug}_{new_v}.zip")
         z_old = os.path.join(workdir, f"{slug}_{old_v}.zip")
         if not os.path.isfile(z_new):
-            if not _fetch(new_u, z_new):
+            _narrar(slug, f"descargando v{new_v}...")
+            if not _fetch(new_u, z_new, slug):
+                _narrar(slug, f"fallo descargando v{new_v}, descartado")
                 return None
         if not os.path.isfile(z_old):
-            if not _fetch(old_u, z_old):
+            _narrar(slug, f"descargando v{old_v}...")
+            if not _fetch(old_u, z_old, slug):
+                _narrar(slug, f"fallo descargando v{old_v}, descartado")
                 return None
+        _narrar(slug, "descomprimiendo ambas versiones...")
         if not os.path.isdir(d_new):
             _unzip(z_new, d_new)
         if not os.path.isdir(d_old):
             _unzip(z_old, d_old)
+        _narrar(slug, "descompresion ok, calculando diff y escaneando...")
     # raiz interna (carpeta con slug dentro del zip)
     def _root(d: str) -> str:
         if not os.path.isdir(d):
