@@ -1,0 +1,1351 @@
+# Translation of Plugins - Custom PHP Settings - Stable (latest release) in Swedish
+# This file is distributed under the same license as the Plugins - Custom PHP Settings - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-02-28 19:45+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Loco https://localise.biz/\n"
+"Language: sv_SE\n"
+"Project-Id-Version: Plugins - Custom PHP Settings - Stable (latest release)\n"
+"Language-Team: Svenska"
+
+#. %s: Name of PHP setting
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1197
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:924
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1198
+#, php-format
+msgid "\">premium version</a> to change the %s value."
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:54
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:31
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:54
+#| msgid "COOKIE"
+msgid "$_COOKIE"
+msgstr "COOKIE"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:545
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:296
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:545
+#| msgid "COOKIE Variables"
+msgid "$_COOKIE Variables"
+msgstr "COOKIE-variabler"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:64
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:41
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:64
+#| msgid "ENV"
+msgid "$_ENV"
+msgstr "ENV"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:547
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:298
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:547
+#| msgid "ENV Variables"
+msgid "$_ENV Variables"
+msgstr "ENV-variabler"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:59
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:36
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:59
+#| msgid "SERVER"
+msgid "$_SERVER"
+msgstr "SERVER"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:546
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:297
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:546
+#| msgid "SERVER Variables"
+msgid "$_SERVER Variables"
+msgstr "SERVER-variabler"
+
+#. %s: Name of configuration file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1020
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:765
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1021
+#, php-format
+msgid "%s does not exists or is not writable."
+msgstr "%s finns inte eller är inte skrivbar."
+
+#. %s: Name of PHP setting
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1209
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:940
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1210
+#, php-format
+msgid "%s is not a valid setting."
+msgstr "%s är inte en giltig inställning."
+
+#. %s: Name of PHP setting
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1191
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:916
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1192
+#, php-format
+msgid "%s must be in the format: key=value"
+msgstr "%s måste vara i formatet: nyckel=värde"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:26
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:26
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:26
+msgid "=== PHP Variables ==="
+msgstr "=== PHP-variabler ==="
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:42
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:82
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:42
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:82
+msgid "Add"
+msgstr "Lägg till"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:12
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:16
+msgid "Additional configuration files"
+msgstr "Ytterligare konfigurationsfiler"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1082
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:830
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1083
+msgid "Admin Email"
+msgstr "Admin e-post"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:49
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:26
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:49
+msgid "Apache"
+msgstr "Apache"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:538
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:289
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:538
+msgid "Apache Information"
+msgstr "Apache information"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:4
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:4
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:4
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:8
+msgid "Architecture"
+msgstr "Arkitektur"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:24
+msgid "AVIF Support"
+msgstr "AVIF stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:537
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:39
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:288
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:537
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:39
+msgid "Backup"
+msgstr "Säkerhetskopia"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:150
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:144
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:150
+msgid "Backup your configuration file before applying any changes."
+msgstr ""
+"Säkerhetskopiera din konfigurations fil innan några ändringar tillämpas."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1083
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1151
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:831
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:875
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1084
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1152
+msgid "Charset"
+msgstr "Teckenuppsättning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1152
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:876
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1153
+msgid "Collation"
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:9
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:9
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:9
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:13
+msgid "Configuration File (php.ini) Path"
+msgstr "Sökväg för konfigurationsfil (php.ini)"
+
+#. %s: Name of backup file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:161
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:161
+#, php-format
+msgid "Configuration file restored from: %s"
+msgstr "Konfigurationsfil återställdes från: %s"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-settings.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-settings.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-settings.php:21
+msgid "Copy"
+msgstr "Kopiera"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:128
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:128
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:128
+msgid "Copy for support"
+msgstr "Kopiera för support"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:38
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:37
+msgid "Create"
+msgstr "Skapa"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:146
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:132
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:146
+msgid ""
+"Create multiple configurations that can be used to easily switch between "
+"different settings."
+msgstr ""
+"Skapa flera konfigurationer som kan användas för att enkelt byta mellan "
+"olika inställningar."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1096
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:844
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1097
+msgid "Cron"
+msgstr "Cron"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:544
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:295
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:544
+msgid "Current PHP Settings"
+msgstr "Nuvarande PHP-inställningar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:557
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:558
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:313
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:316
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:557
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:558
+msgid "Custom PHP Settings"
+msgstr "Anpassa PHP-inställningar"
+
+#. Name of the plugin
+#| msgid "Custom PHP settings pRO"
+msgid "Custom PHP settings"
+msgstr "Custom PHP settings"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:59
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:54
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:59
+msgid "Custom PHP Settings. Each setting should be in the form key=value."
+msgstr ""
+"Anpassade PHP-inställningar. Alla inställningar ska vara i formatet "
+"nyckel=värde."
+
+#. Description of the plugin
+msgid "Customize PHP settings."
+msgstr "Anpassa PHP-inställningar."
+
+#. Author of the plugin
+msgid "Cyclonecode"
+msgstr "Cyclonecode"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:542
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1145
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-database.php:39
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:42
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:293
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:869
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:542
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1146
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-database.php:39
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:42
+msgid "Database"
+msgstr "Databas"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:10
+msgid "Debug build"
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1094
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:842
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1095
+msgid "Debug mode"
+msgstr "Felsökningsläge"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:671
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:711
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-settings.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:415
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:451
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:672
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:712
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-settings.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-settings.php:12
+msgid "Default"
+msgstr "Standard"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1079
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:827
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1080
+msgid "Description"
+msgstr "Beskrivning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1098
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:846
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1099
+msgid "Development Mode"
+msgstr "Utvecklingsläge"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:3
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:20
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:21
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:25
+msgid "disabled"
+msgstr "inaktiverad"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:132
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:101
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:132
+msgid "Do not store any blank lines in the configuration file."
+msgstr "Spara inte tomma rader i konfigurations filen."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:126
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:91
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:126
+msgid "Do not store any comments in the configuration file."
+msgstr "Spara inte kommentarer i konfigurations filen."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:519
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:261
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:519
+msgid "Do you have any feedback or need support?"
+msgstr "Har du någon kommentar eller behöver hjälp?"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:506
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:240
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:506
+msgid "Doing this would help me keeping the plugin free and up to date."
+msgstr "Detta skulle hjälpa mig att hålla tillägget gratis och uppdaterat."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:536
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:287
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:536
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:8
+msgid "Editor"
+msgstr "Redigerare"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:34
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:34
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:34
+msgid "enable_dl"
+msgstr "enable_dl"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1096
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1097
+msgid "enabled"
+msgstr "aktiverad"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1099
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:847
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1100
+msgid "Environment Type"
+msgstr "Miljötyp"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:102
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:102
+#| msgid "Environment variables"
+msgid "Environment Variables."
+msgstr "Miljövariabler."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:152
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:150
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:152
+msgid "Extended support."
+msgstr "Utökad support."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-extensions.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-extensions.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-extensions.php:16
+msgid "Extension"
+msgstr "Utökning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:10
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:14
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:14
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:14
+msgid "Extension directory"
+msgstr "Katalog för utökningar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:20
+msgid "Extensions"
+msgstr "Utökningar"
+
+#. %s: Name of backup file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:104
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:104
+#, php-format
+msgid "Failed to get backup file: %s"
+msgstr "Misslyckades med att hämta säkerhetskopia: %s"
+
+#. %s: Name of backup file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:142
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:142
+#, php-format
+msgid "Failed to remove backup file: %s"
+msgstr "Misslyckades med att ta bort säkerhetskopia: %s"
+
+#. %s: Name of backup file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:166
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:166
+#, php-format
+msgid "Failed to restore configuration file from backup: %s"
+msgstr ""
+"Misslyckades med att återställa konfigurationsfilen från säkerhetskopia: %s"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:15
+msgid "File"
+msgstr "Fil"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:10
+msgid "FreeType Linkage"
+msgstr "FreeType-länkning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:8
+msgid "Freetype Support"
+msgstr "Freetype stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:25
+msgid "GC enabled"
+msgstr "GC aktiverad"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:29
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:291
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:540
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:29
+msgid "GD"
+msgstr "GD"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:3
+msgid "GD enabled"
+msgstr "GD aktiverat"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:540
+msgid "GD Library"
+msgstr "GD Bibliotek"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:7
+#| msgid "PRO version"
+msgid "GD Version"
+msgstr "GD version"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:16
+msgid "GIF Create Support"
+msgstr "GIF Create stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:15
+msgid "GIF Read Support"
+msgstr "GIF Read Stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:143
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:127
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:143
+msgid "Go Professional"
+msgstr "Växla till Premium"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:650
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:395
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:652
+msgid "Hide"
+msgstr "Dölj"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1148
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:872
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1149
+msgid "Host"
+msgstr "Värd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1084
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:832
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1085
+msgid "HTML Type"
+msgstr "HTML-typ"
+
+#. Author URI of the plugin
+msgid "https://stackoverflow.com/users/1047662/cyclonecode?tab=profile"
+msgstr "https://stackoverflow.com/users/1047662/cyclonecode?tab=profile"
+
+#. URI of the plugin
+msgid "https://wordpress.org/plugins/custom-php-settings/"
+msgstr "https://wordpress.org/plugins/custom-php-settings/"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:521
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:267
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:521
+#, php-format
+msgid "I can also be reached by email at <a href=\"%s\">%s</a>"
+msgstr "Jag kan även nås via e-post <a href=\"%s\">%s</a>"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:523
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:273
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:523
+msgid "I hope you will have an awesome day!"
+msgstr "Hoppas du får en fantastisk dag!"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:507
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:243
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:507
+msgid ""
+"If you are feeling generous and would like to support me, you can always buy "
+"me a coffee at:"
+msgstr ""
+"Om du känner dig generös och vill stödja mig kan du alltid bjuda mig på en "
+"kopp kaffe:"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:520
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:264
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:520
+#, php-format
+msgid ""
+"If you have any requests for improvement or just need some help. Do not "
+"hesitate to open a ticket in the <a href=\"%s\" target=\"_blank\">support "
+"section</a>."
+msgstr ""
+"Om du har något förslag på förbättringar eller bara behöver hjälp, tveka "
+"inte att öppna ett ärende i <a href=\"%s\" target=\"_blank\">"
+"hjälpsektionen</a>."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:124
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:124
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:124
+msgid ""
+"If you need help, copy and paste the above information for faster support."
+msgstr ""
+"Om du behöver hjälp, kopiera och klistra in ovanstående information för "
+"snabbare support."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:505
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:237
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:505
+#, php-format
+#| msgid ""
+#| "If you use and enjoy Custom PHP Settings, I would be really grateful if "
+#| "you could give it a positive review at <a href=\"%s\" target=\"_blank\">"
+#| "Wordpress.org</a>."
+msgid ""
+"If you use and enjoy Custom PHP Settings, I would be really grateful if you "
+"could give it a positive review at <a href=\"%s\" target=\"_blank\">"
+"wordpress.org</a>."
+msgstr ""
+"Om du använder och uppskattar Anpassa PHP-inställningar så vore jag väldigt "
+"glad om du kunde ge en positiv recension på <a href=\"%s\" target=\"_blank\">"
+"wordpress.org</a>."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:13
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:17
+msgid "Include path"
+msgstr "Inkludera sökväg"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:21
+msgid "IPv6 Support"
+msgstr "IPv6-stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:27
+msgid "JIS-mapped Japanese Font Support"
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:17
+msgid "JPEG Support"
+msgstr "JPEG stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1085
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:833
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1086
+msgid "Language"
+msgstr "Språk"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:156
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:158
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:156
+msgid "Learn More"
+msgstr "Visa mer"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:11
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:15
+msgid "Loaded configuration file"
+msgstr "Laddad konfigurationsfil"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:543
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:294
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:543
+msgid "Loaded Extensions"
+msgstr "Laddade utökningar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-apache.php:4
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-apache.php:4
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-apache.php:4
+msgid "Loaded Modules"
+msgstr "Laddade moduler"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:27
+msgid "max_execution_time"
+msgstr "max_execution_time"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:28
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:28
+msgid "max_input_time"
+msgstr "max_input_time"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1095
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:843
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1096
+msgid "Memory limit"
+msgstr "Minnesbegränsning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:19
+msgid "Memory peak usage"
+msgstr "Högsta minnesanvändning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:18
+msgid "Memory usage"
+msgstr "Minnesanvändning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:29
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:29
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:29
+msgid "memory_limit"
+msgstr "memory_limit"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1093
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:841
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1094
+msgid "Multisite"
+msgstr "Multisite"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1078
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-apache.php:11
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-cookie-vars.php:5
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:69
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-settings.php:10
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-server-vars.php:5
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-env-vars.php:5
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:35
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-wordpress.php:8
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:35
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:826
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1079
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-apache.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-cookie-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-settings.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-server-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-env-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:35
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-apache.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-cookie-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:69
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-settings.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-server-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-env-vars.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:35
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-wordpress.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:35
+msgid "Name"
+msgstr "Namn"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1093
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1094
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:8
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:13
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:15
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:16
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:17
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:18
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:19
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:20
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:21
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:22
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:24
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:27
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:10
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:68
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:69
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:70
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:71
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:103
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:104
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1094
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1095
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:68
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:69
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:70
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:71
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:103
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:104
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:68
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:69
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:70
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:71
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:103
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:104
+msgid "no"
+msgstr "nej"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:25
+msgid "No backups available."
+msgstr "Inga säkerhetskopior tillgängliga."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:470
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:190
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:470
+msgid "No valid notification id supplied."
+msgstr "Inget giltigt notifikations id angavs."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:473
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:193
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:473
+msgid "Notification could not be found."
+msgstr "Avisering kunde inte hittas."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1147
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:871
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1148
+msgid "Password"
+msgstr "Lösenord"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:102
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:102
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:102
+msgid "Path"
+msgstr "Sökväg"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:17
+msgid "PHP"
+msgstr "PHP"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:539
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:14
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:290
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:539
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:14
+msgid "PHP Information"
+msgstr "PHP-information"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:17
+msgid "PHP process ID"
+msgstr "PHP process-ID"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:14
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:14
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:14
+msgid "PHP Script Owner"
+msgstr "PHP-skriptets ägare"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:16
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:16
+msgid "PHP Script Owner GUID"
+msgstr "GUID för PHP-skriptets ägare"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:15
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:15
+msgid "PHP Script Owner UID"
+msgstr "UID för PHP-skriptets ägare"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:844
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:845
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:587
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:588
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:845
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:846
+msgid "PHP Settings"
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:25
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:25
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:22
+msgid "PHP Streams"
+msgstr "PHP-strömmar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:5
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:9
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:9
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:5
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:9
+msgid "PHP Version"
+msgstr "PHP-version"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:508
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:246
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:508
+msgid ""
+"Please make sure to leave your e-mail address, and I will make sure to add "
+"you to the supporter section in the readme =)"
+msgstr ""
+"Vänligen lämna din e-post adress så kommer jag lägga till en referens under "
+"support sektionen i readme filen =)"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:18
+msgid "PNG Support"
+msgstr "PNG stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1149
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:873
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1150
+msgid "Port"
+msgstr "Port"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:31
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:31
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:31
+msgid "post_max_size"
+msgstr "post_max_size"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1150
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:874
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1151
+msgid "Prefix"
+msgstr "Prefix"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:103
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:103
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:103
+msgid "Readable"
+msgstr "Läsbar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:35
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:35
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:35
+msgid "register_globals"
+msgstr "register_globals"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:647
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:43
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:96
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:392
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:649
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:43
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:96
+msgid "Remove"
+msgstr "Ta bort"
+
+#. %s: Name of backup file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:137
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:137
+#, php-format
+msgid "Remove backup file: %s"
+msgstr "Ta bort säkerhetskopia: %s"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:70
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:70
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:70
+msgid "Remove comments"
+msgstr "Ta bort kommentarer"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:71
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:71
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:71
+msgid "Remove whitespaces"
+msgstr "Ta bort tomma rader"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:648
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:393
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:650
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+msgid "Restore"
+msgstr "Återställ"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:69
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:69
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:69
+msgid "Restore configuration file"
+msgstr "Återställ konfigurationsfil"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:151
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:147
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:151
+msgid "Restore configuration file from backup."
+msgstr "Återställ konfigurationsfil från säkerhetskopia."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:33
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:33
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:33
+msgid "safe_mode"
+msgstr "safe_mode"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:136
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:108
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:136
+msgid "Save settings"
+msgstr "Spara inställningar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-settings.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-settings.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-settings.php:6
+msgid "Search for settings"
+msgstr "Sök efter inställningar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:8
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:8
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:12
+msgid "Server Api"
+msgstr "Server-API"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:147
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:135
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:147
+msgid "Set environment variables in your .htaccess file."
+msgstr "Sätt miljövariabler i din .htaccess fil."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:575
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:31
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:334
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:575
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:10
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:31
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:11
+msgid "Settings"
+msgstr "Inställningar"
+
+#. %s: Name of configuration file
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1033
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:773
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1034
+#, php-format
+msgid "Settings updated and stored in %s."
+msgstr "Inställningar uppdaterade och sparade i %s."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:649
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:394
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:651
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-backup.php:21
+msgid "Show"
+msgstr "Visa"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:148
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:138
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:148
+msgid "Show database information."
+msgstr "Visa databas information."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:149
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:141
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:149
+msgid "Show WordPress information."
+msgstr "Visa WordPress information."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1081
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:829
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1082
+msgid "Site Address (URL)"
+msgstr "Webbplatsadress (URL) "
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-database.php:40
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-database.php:40
+msgid "Size (MB)"
+msgstr "Storlek (MB)"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:548
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:68
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:299
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:548
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-tabs.php:45
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:68
+msgid "Status"
+msgstr "Status"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:27
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:24
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:27
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:24
+msgid "Stream Filters"
+msgstr "Strömfilter"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:26
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:26
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:26
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:23
+msgid "Stream Socket Transports"
+msgstr ""
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:3
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:7
+msgid "System name"
+msgstr "Systemnamn"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:13
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:13
+msgid "T1Lib Support"
+msgstr "T1Lib stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:20
+msgid "Temporary directory"
+msgstr "Temporär katalog"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1092
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:840
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1093
+msgid "Text Direction"
+msgstr "Textriktning"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:827
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:573
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:828
+#, php-format
+msgid ""
+"Thank you for using <a href=\"%1$s\" target=\"_blank\">Custom PHP "
+"Settings</a>! Please <a href=\"%2$s\" target=\"_blank\">rate us on WordPress."
+"org</a>"
+msgstr ""
+"Tack för att du använder <a href=\"%1$s\" target=\"_blank\">Custom PHP "
+"Settings</a>! Vänligen <a href=\"%2$s\" target=\"_blank\">betygsätt oss på "
+"WordPress.org</a>"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:504
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:234
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:504
+msgid "Thank you for using Custom PHP Settings!"
+msgstr "Tack för att du använder Anpassa PHP-inställningar!"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:509
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:249
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:509
+msgid "Thank you very much!"
+msgstr "Tack så mycket!"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:120
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:81
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:120
+msgid ""
+"The configuration file will be restored when the plugin is deactivated or "
+"uninstalled."
+msgstr ""
+"Konfigurations filen återställs när tillägget inaktiveras eller "
+"avinstalleras."
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:522
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:270
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:522
+#, php-format
+msgid ""
+"There is also a slack channel that you can <a target=\"_blank\" href=\"%s\">"
+"join</a>."
+msgstr ""
+"Det finns också en slack kanal som du kan <a target=\"_blank\" href=\"%s\">"
+"gå med i</a>."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:23
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:20
+msgid "Thread Safety"
+msgstr "Trådsäkerhet"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1097
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:845
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1098
+msgid "Timezone"
+msgstr "Tidszon"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:68
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:68
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:68
+msgid "Update configuration file"
+msgstr "Uppdatera konfigurationsfil"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:114
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-general.php:71
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:114
+msgid "Update configuration file."
+msgstr "Uppdatera konfigurations fil."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:30
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:30
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:30
+msgid "upload_max_filesize"
+msgstr "upload_max_filesize"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1146
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:870
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1147
+msgid "User"
+msgstr "Användare"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:21
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:18
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:18
+msgid "User INI file"
+msgstr "Användar-INI fil."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:22
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:19
+msgid "User INI file cache TTL"
+msgstr "Cache-tid i användarens INI-fil"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-apache.php:12
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-cookie-vars.php:6
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-database.php:55
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:70
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-settings.php:11
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-server-vars.php:6
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-env-vars.php:6
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:36
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-wordpress.php:9
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:36
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-apache.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-cookie-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-settings.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-server-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-env-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:36
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-apache.php:12
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-cookie-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-database.php:55
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:70
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-settings.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-server-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-env-vars.php:6
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:36
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-wordpress.php:9
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:36
+msgid "Value"
+msgstr "Värde"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-database.php:54
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-database.php:54
+msgid "Variable"
+msgstr "Variabel"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:76
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:76
+msgid "Variable name"
+msgstr "Variabel namn"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-general.php:79
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-general.php:79
+msgid "Variable value"
+msgstr "Variabel värde"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:32
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:32
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:32
+msgid "variables_order"
+msgstr "variables_order"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:607
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:357
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:607
+msgctxt "verb"
+msgid "Rate"
+msgstr "Betygsätt"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:602
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:356
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:602
+msgctxt "verb"
+msgid "Sponsor"
+msgstr "Sponsra"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:612
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:358
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:612
+msgctxt "verb"
+msgid "Support"
+msgstr "Hjälp"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1077
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1144
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-apache.php:3
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-extensions.php:17
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:62
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:825
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:868
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1078
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1145
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-apache.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-extensions.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:62
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-apache.php:3
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-extensions.php:17
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:62
+msgid "Version"
+msgstr "Version"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:19
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:19
+msgid "WBMP Support"
+msgstr "WBMP stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:22
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:22
+msgid "WebP Support"
+msgstr "WebP stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:541
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-tabs.php:32
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:292
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:541
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-tabs.php:32
+msgid "WordPress"
+msgstr "WordPress"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1080
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:828
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1081
+msgid "WordPress Address (URL)"
+msgstr "WordPress-adress (URL)"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:104
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:104
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:104
+msgid "Writeable"
+msgstr "Skrivbar"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:21
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:21
+msgid "XBM Support"
+msgstr "XBM stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-gd.php:20
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-gd.php:20
+msgid "XPM Support"
+msgstr "XPM stöd"
+
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:467
+#: ../../../../custom-php-settings-pro/src/Backend/Backend.php:1248
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:187
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/Backend.php:978
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:467
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/Backend.php:1249
+msgid "You are not allowed to perform this action."
+msgstr "Du har inte behörighet att utföra denna åtgärd."
+
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-php-info.php:7
+#: ../../../../custom-php-settings-pro/src/Backend/views/cps-status.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-php-info.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings/src/Backend/views/cps-status.php:11
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-php-info.php:7
+#: ../../../../custom-php-settings-pro/from-freemius/custom-php-settings-pro/src/Backend/views/cps-status.php:11
+msgid "Zend Engine version"
+msgstr "Zend Engine-version"

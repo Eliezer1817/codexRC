@@ -1,0 +1,196 @@
+= 2.4.0
+
+- Update: Add Freemius SDK as a composer dependency.
+- Fix: Use after_setup_theme to initialize the plugin.
+
+= 2.3.4
+
+- Update Freemius SDK to 2.12.2
+
+= 2.3.3
+
+- Update: Freemius SDK to 2.12.0.
+- Update: Display improved notice when saving settings in CGI/Fast-CGI mode.
+- Fix: Display no available backups when needed.
+- Update: Add warning for CGI/Fast-CGI mode.
+
+= 2.3.2
+
+- Update: Freemius SDK to 2.11.0.
+
+= 2.3.1
+
+- Update: Freemius SDK to 2.10.1.
+- Fix: Load translations on init action.
+
+= 2.3.0
+
+- Remove: DI container to support PHP 5.6.
+- Update: Enqueue jquery-ui scripts locally.
+
+= 2.2.2
+
+- Update: Freemius SDK to 2.9.0.
+
+= 2.2.1
+
+- Update: Freemius SDK to 2.8.1.
+
+= 2.2.0
+
+- Update: Freemius SDK to 2.8.0.
+
+= 2.1.5
+
+- Update: Freemius SDK to 2.7.4.
+
+= 2.1.4
+
+- Update: Check so mod_env is loaded.
+
+= 2.1.3
+
+- Update: Freemius SDK to 2.7.3.
+
+= 2.1.2
+
+- Add: Lockdown some settings.
+
+= 2.1.1
+
+- Update: Freemius SDK to 2.7.2.
+
+= 2.1.0
+
+- Update: Freemius SDK to 2.7.0.
+- Fix: Deprecation warning in PHP 8+.
+
+= 2.0.0
+
+- Add: DI container.
+- Add: Display database information.
+- Add: Display WordPress information.
+- Add: Support for multiple settings.
+- Add: Support for setting environment variables.
+- Add: Extended GD information.
+- Add: Support for backing up configuration file.
+- Add: Support for restoring configuration file from backup.
+- Add: Display database variables.
+- Add: Support to load configuration from disk.
+
+= 1.4.7
+- Add support to search for settings.
+- Add support to only show customized settings.
+- Use filter FILTER_UNSAFE_RAW instead of FILTER_SANITIZE_STRING.
+- Fix bug on status page where duplicate plugins was shown as enabled/disabled.
+
+= 1.4.5
+- Fix faulty clean() method in settings.
+
+= 1.4.4
+- Fix bug where comments that included '=' where not saved.
+
+= 1.4.3.3
+- Add plugin and theme information to status page.
+
+= 1.4.3.2
+- Update Pro pricing.
+
+= 1.4.3.1
+- Minor update for rendering notices.
+- Add note about premium version.
+
+= 1.4.3
+- Fixes a bug on status page when no custom settings has been added.
+
+= 1.4.2 =
+- Add cyclonecode/plugin to source.
+- Improve status page.
+- Position admin notices.
+
+= 1.4.1 =
+- Add version to scripts.
+- Bump cyclonecode/plugin to 1.0.6.
+- Remove composer plugin package.
+- Add status page.
+- Remove whitespaces in settings.
+- Add sponsor, rate and support links.
+- Refactor tabs.
+
+= 1.4.0  =
+- Add PHP extension version.
+- Add translation hints.
+- Load script and stylesheet only when needed.
+- Add header.
+- Add PHP information.
+- Add option to store comments.
+- Add option to store blank lines.
+- Add option to write to configuration file.
+- Add admin review notice.
+- Add admin support notice.
+- Add Wordpress information.
+- Remove GET and POST page.
+- Remove unused member variables.
+- Break out classes to separate repository.
+- Set default settings.
+- Update changelog.
+
+= 1.3.0 =
+- Do not change file permissions.
+- Use admin_post hook to handle form submission.
+- Add PHP information.
+- Add Apache information.
+- Add autoloader.
+- Add changelog.
+
+= 1.2.7 =
+- Improve singleton class.
+
+= 1.2.6 =
+- Fix a bug where the plugin could not be deleted.
+
+= 1.2.5 =
+- Add correct comment character when using `.user.ini` file.
+- Move `.user.ini` to root instead of the `wp-admin` folder, so settings have a global effect.
+- Tweak file permission for both `.user.ini` and `.htaccess` file.
+
+= 1.2.4 =
+- Escape data.
+- Add tab support for all sections.
+- Only show sub section if not empty.
+- Check if settings needs to be updated.
+
+= 1.2.3 =
+- Fix permission check for configuration file.
+
+= 1.2.2 =
+- Add global value to settings table.
+- Add dynamic tabs for super globals.
+- Add footer text in admin dashboard.
+
+= 1.2.1 =
+- Check if wp_enqueue_code_editor() does exist.
+- Use array instead of string in call to insert_with_markers().
+- Switch to shell mode in codemirror.
+- Get name and use configured user INI file.
+- Add information about user INI file.
+- Add composer support.
+
+= 1.2.0 =
+- Refactor code to use templates.
+- Use .user.ini or .htaccess file depending on server api.
+- Add more PHP information.
+- Fix misspelled class name.
+
+= 1.1.0 =
+- Add deactivation hook.
+- Add option to restore the .htaccess file when the plugin is deactivated or uninstalled.
+- Make sure no changes is done in CGI/Fast-CGI mode.
+- Add basic PHP information table.
+
+= 1.0.1 =
+- Add class constants.
+- Add settings table.
+
+= 1.0.0 =
+- Initial commit.
