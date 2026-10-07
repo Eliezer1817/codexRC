@@ -31,6 +31,8 @@ if str(ROOT) not in sys.path:
 
 import itertools
 import threading
+import subprocess
+import signal
 
 from core.auth import AuthManager
 from core.cve_matcher import CVEMatcher
@@ -883,6 +885,78 @@ def _descubrir_acceso_anon(session, base_url: str, emit, job: dict) -> list:
     return seeds
 
 
+HUNT_PIDFILE = ROOT / "hechos" / "_work" / "hunt_forever.pid"
+HUNT_STDOUT = ROOT / "hechos" / "hunt_forever_stdout.log"
+HUNT_LOCK = threading.Lock()
+
+
+def _hunt_pid() -> Optional[int]:
+    """PID vivo del hunt_forever.sh en curso, o None. Via pidfile (no
+    estado en memoria) para sobrevivir un restart del backend: el
+    proceso corre con start_new_session=True, asi que sigue vivo
+    aunque Flask se reinicie, y esto lo vuelve a encontrar."""
+    try:
+        pid = int(HUNT_PIDFILE.read_text().strip())
+    except Exception:
+        return None
+    try:
+        os.kill(pid, 0)
+        return pid
+    except OSError:
+        try:
+            HUNT_PIDFILE.unlink()
+        except Exception:
+            pass
+        return None
+
+
+@app.post("/api/hunt/start")
+def api_hunt_start():
+    """Arranca scripts/hunt_forever.sh (WIDE-HUNT -> RETRO-HUNT ->
+    refresh corpus, en loop) como proceso de fondo, igual que si el
+    operador lo corriera a mano en tmux."""
+    with HUNT_LOCK:
+        pid = _hunt_pid()
+        if pid is not None:
+            return jsonify({"error": "ya esta corriendo", "pid": pid}), 409
+        data = request.get_json(silent=True) or {}
+        try:
+            workers = max(1, min(8, int(data.get("workers", 4))))
+        except Exception:
+            workers = 4
+        script = ROOT / "scripts" / "hunt_forever.sh"
+        if not script.exists():
+            return jsonify({"error": "no existe scripts/hunt_forever.sh"}), 500
+        HUNT_PIDFILE.parent.mkdir(parents=True, exist_ok=True)
+        out_f = open(HUNT_STDOUT, "ab")
+        proc = subprocess.Popen(
+            ["bash", str(script), str(workers)],
+            cwd=str(ROOT), stdout=out_f, stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+        HUNT_PIDFILE.write_text(str(proc.pid))
+        return jsonify({"status": "started", "pid": proc.pid, "workers": workers})
+
+
+@app.post("/api/hunt/stop")
+def api_hunt_stop():
+    """Para el proceso de hunt_forever.sh en curso (si hay uno), matando
+    todo el grupo de procesos (bash + los python hijos)."""
+    with HUNT_LOCK:
+        pid = _hunt_pid()
+        if pid is None:
+            return jsonify({"error": "no esta corriendo"}), 404
+        try:
+            os.killpg(os.getpgid(pid), signal.SIGTERM)
+        except OSError as e:
+            return jsonify({"error": f"no se pudo matar pid {pid}: {e}"}), 500
+        try:
+            HUNT_PIDFILE.unlink()
+        except Exception:
+            pass
+        return jsonify({"status": "stopped", "pid": pid})
+
+
 @app.get("/api/hunt_status")
 def api_hunt_status():
     """Progreso vivo de las cazas por lotes (WIDE-HUNT / RETRO-HUNT)."""
@@ -919,6 +993,9 @@ def api_hunt_status():
         r["total_cola"] = 1007
     r["hechos"] = _n(ROOT / "hechos" / "retro_done.txt")
     r["ultimos"] = _tail(ROOT / "hechos" / "retro_hunt.log")
+    pid = _hunt_pid()
+    out["running"] = pid is not None
+    out["pid"] = pid
     return jsonify(out)
 
 

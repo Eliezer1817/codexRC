@@ -643,6 +643,11 @@
       </div>
 
       <div class="hunt-section">
+        <div class="row-inline" style="margin-bottom:0.6rem;align-items:center;gap:0.6rem;">
+          <button id="huntStartBtn" onclick="huntStart()">&gt;&gt; Iniciar caza continua</button>
+          <button id="huntStopBtn" onclick="huntStop()">Detener</button>
+          <span id="huntState" style="color:var(--muted);font-size:0.8rem;">consultando...</span>
+        </div>
         <div class="hunt-grid">
           <div class="hunt-card">
             <h4>WIDE-HUNT (>=5k installs)</h4>
@@ -1028,7 +1033,35 @@
           document.getElementById('wideLog').textContent = w.ultimos[w.ultimos.length - 1];
         if (r.ultimos && r.ultimos.length)
           document.getElementById('retroLog').textContent = r.ultimos[r.ultimos.length - 1];
+        const startBtn = document.getElementById('huntStartBtn');
+        const stopBtn = document.getElementById('huntStopBtn');
+        const stateEl = document.getElementById('huntState');
+        if (d.running) {
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          stateEl.textContent = 'corriendo (PID ' + d.pid + ')';
+          stateEl.style.color = 'var(--green)';
+        } else {
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          stateEl.textContent = 'detenido';
+          stateEl.style.color = 'var(--muted)';
+        }
       }).catch(() => {});
+    }
+    function huntStart() {
+      document.getElementById('huntStartBtn').disabled = true;
+      document.getElementById('huntState').textContent = 'arrancando...';
+      fetch('/api/hunt/start', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({workers: 4})
+      }).then(r => r.json()).then(() => refreshHunt()).catch(() => refreshHunt());
+    }
+    function huntStop() {
+      document.getElementById('huntStopBtn').disabled = true;
+      document.getElementById('huntState').textContent = 'deteniendo...';
+      fetch('/api/hunt/stop', {method: 'POST'})
+        .then(r => r.json()).then(() => refreshHunt()).catch(() => refreshHunt());
     }
     refreshHunt();
     setInterval(refreshHunt, 30000);
