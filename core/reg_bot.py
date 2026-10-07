@@ -196,7 +196,7 @@ class FormDiscovery:
             r = self.session.get(url, timeout=20)
         except Exception:
             return out
-        page = r.text
+        page = self._relay_if_blocked(url, r)
         # enlaces tipicos de registro/login (relativos o absolutos)
         for m in re.finditer(r'href=["\']([^"\']+)["\']', page):
             href = html_mod.unescape(m.group(1))
@@ -219,7 +219,7 @@ class FormDiscovery:
             # seguir el enlace y leer el formulario remoto
             try:
                 r2 = self.session.get(out["reg_url"], timeout=20)
-                for f in self._parse_forms(r2.text):
+                for f in self._parse_forms(self._relay_if_blocked(out["reg_url"], r2)):
                     f["action"] = self._abs(out["reg_url"], f["action"])
                     out["forms"].append(f)
             except Exception:
@@ -234,6 +234,25 @@ class FormDiscovery:
             p = re.match(r"(https?://[^/]+)", base)
             return p.group(1) + href if p else href
         return base.rstrip("/") + "/" + href
+
+    def _relay_if_blocked(self, url: str, resp) -> str:
+        """Si Cloudflare bloquea el GET, intenta relevo GHOSTGATE-LITE,
+        inyecta las cookies en la sesion y devuelve el HTML real.
+        Si no hay bloqueo o el relevo falla, devuelve el HTML original."""
+        try:
+            from core.ghostgate import clasificar_respuesta, ghostgate_relay
+        except ImportError:
+            return resp.text
+        diag = clasificar_respuesta(resp)
+        if not diag["challenge"] and diag["tipo"] not in ("WAF_BLOCK", "BLOQUEO_IP"):
+            return resp.text
+        relevo = ghostgate_relay(url)
+        if not relevo["ok"]:
+            return resp.text
+        for name, value in relevo["cookies"].items():
+            self.session.cookies.set(name, value)
+        self.session.headers["User-Agent"] = relevo["user_agent"]
+        return relevo["html"]
 
     def _parse_forms(self, page: str,
                   include_all: bool = False) -> List[Dict[str, Any]]:
@@ -583,7 +602,16 @@ class RegBot:
             return idents
         for step in info["forms"][:self.MAX_STEPS]:
             if step["captcha"]:
-                self.log("  [REG-BOT] CAPTCHA-PENDING (handoff al operador)")
+                self.log("  [REG-BOT] CAPTCHA en formulario -> "
+                         "intentando relevo GHOSTGATE")
+                gated = self._ghostgate_rediscover(session, info)
+                if gated is not None:
+                    info = gated
+                    self.log("  [REG-BOT] GHOSTGATE paso -> "
+                             "formulario limpio, continuando")
+                    break
+                self.log("  [REG-BOT] GHOSTGATE no paso -> "
+                         "CAPTCHA-PENDING (handoff al operador)")
                 return idents  # cola de handoff, nunca vencer CAPTCHA
         recipe = {"site": self.site, "reg_url": info["reg_url"],
                   "login_url": info["login_url"],
@@ -647,6 +675,18 @@ class RegBot:
             if verdict and verdict.get("action") == "CONTINUE":
                 self.log("  [REG-BOT] VISION-GATE: falso positivo de "
                          "heuristica -> continuar solo")
+            elif verdict and verdict.get("action") == "GHOSTGATE":
+                self.log("  [REG-BOT] VISION-GATE: GHOSTGATE -> "
+                         "intentando relevo" + self._vision_log(verdict))
+                r2 = self._ghostgate_submit(session, url, data,
+                                            ident, info)
+                if r2 is None:
+                    self.log("  [REG-BOT] GHOSTGATE no paso -> "
+                             "CAPTCHA-PENDING")
+                    ident["verification_state"] = "captcha"
+                    return ident
+                r = r2  # GHOSTGATE paso: continuar con la nueva respuesta
+                SessionHandler.capture(ident, session, r, r.text)
             else:
                 self.log("  [REG-BOT] CAPTCHA-PENDING en submit "
                          "(handoff)" + self._vision_log(verdict))
@@ -699,6 +739,56 @@ class RegBot:
             v.get("challenge_type", "?"),
             float(v.get("confidence", 0) or 0),
             v.get("state", "?")))
+
+    def _ghostgate_rediscover(self, session: requests.Session,
+                              info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Intenta relevo GHOSTGATE en la URL de registro, inyecta
+        cookies en la sesion y redescubre formularios. Devuelve el
+        nuevo info si el CAPTCHA desaparecio, o None si no paso."""
+        try:
+            from core.ghostgate import ghostgate_relay
+        except ImportError:
+            return None
+        reg_url = info.get("reg_url") or self.site
+        relevo = ghostgate_relay(reg_url)
+        if not relevo["ok"]:
+            return None
+        for name, value in relevo["cookies"].items():
+            session.cookies.set(name, value)
+        session.headers["User-Agent"] = relevo["user_agent"]
+        disc = FormDiscovery(session)
+        new_info = disc.discover(reg_url)
+        if not new_info.get("forms"):
+            return None
+        if any(s.get("captcha") for s in new_info["forms"][:self.MAX_STEPS]):
+            return None  # sigue teniendo CAPTCHA
+        return new_info
+
+    def _ghostgate_submit(self, session: requests.Session, url: str,
+                          data: Dict[str, str], ident: Dict[str, Any],
+                          info: Dict[str, Any]):
+        """Intenta relevo GHOSTGATE y reenvia el formulario con las
+        cookies de la sesion resuelta. Devuelve la nueva respuesta
+        si el submit pasa limpio, o None si sigue bloqueado."""
+        try:
+            from core.ghostgate import ghostgate_relay
+        except ImportError:
+            return None
+        reg_url = info.get("reg_url") or url
+        relevo = ghostgate_relay(reg_url)
+        if not relevo["ok"]:
+            return None
+        for name, value in relevo["cookies"].items():
+            session.cookies.set(name, value)
+        session.headers["User-Agent"] = relevo["user_agent"]
+        try:
+            r = session.post(url, data=data, timeout=25,
+                             allow_redirects=True)
+        except Exception:
+            return None
+        if r.status_code in (403, 429) or _CAPTCHA_RE.search(r.text[:3000]):
+            return None  # sigue bloqueado
+        return r
 
     def _find_verify_form(self, session, r) -> Tuple[Optional[str], str]:
         """Busca en la respuesta del registro el formulario donde va
