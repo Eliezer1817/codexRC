@@ -37,10 +37,11 @@ from core.gates_audit import audit as gates_audit  # noqa: E402
 from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
 from core.fp_autoclose import es_ruido_publico  # noqa: E402
 from core.plugin_batch import is_noise  # noqa: E402
+from core import state as _state  # noqa: E402
 
 INFO_URL = ("https://api.wordpress.org/plugins/info/1.2/"
             "?action=plugin_information&request[slug]={}")
-WORK = "/tmp/plugin_diff"
+WORK = _state.workdir("plugin_diff")
 
 
 def _narrar(slug: str, msg: str) -> None:

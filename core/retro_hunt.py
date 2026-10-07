@@ -31,6 +31,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 from core import plugin_batch  # noqa: E402
+from core import state as _state  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 CORPUS = os.path.join(ROOT, "data", "wide_corpus.json")
@@ -62,12 +63,12 @@ def _bounty(v: dict) -> int:
 
 def _auditar(rec: dict) -> dict:
     slug = rec["slug"]
-    os.makedirs("/tmp/retro_hunt", exist_ok=True)
+    os.makedirs(_state.workdir("retro_hunt"), exist_ok=True)
     try:
         vdp = {slug: rec["vdp"]}
-        res = plugin_batch.scan_slug(slug, "/tmp/retro_hunt", vdp, top=60)
+        res = plugin_batch.scan_slug(slug, _state.workdir("retro_hunt"), vdp, top=60)
         # v0.47.0: cadena de evidencia + abogados sobre lo hallado
-        root = plugin_batch.download(slug, "/tmp/retro_hunt")
+        root = plugin_batch.download(slug, _state.workdir("retro_hunt"))
         vivos = res.get("hallazgos") or []
         if root and vivos:
             try:

@@ -20,7 +20,7 @@ cola de "ya auditados" ni se duplican hallazgos.
 """
 import os
 
-__all__ = ["home", "hechos", "path"]
+__all__ = ["home", "hechos", "path", "workdir"]
 
 
 def home() -> str:
@@ -43,3 +43,14 @@ def hechos(*parts) -> str:
 def path(*parts) -> str:
     """Ruta arbitraria dentro del workspace de estado."""
     return os.path.join(home(), *parts) if parts else home()
+
+
+def workdir(*parts) -> str:
+    """Scratch dir para descargas/descompresion (NUNCA /tmp del SO:
+    en varios Termux/Android /tmp es read-only o ni existe). Vive
+    bajo <home>/hechos/_work/ -- el mismo arbol donde ya se escriben
+    hechos/, asi que si ESO anda, esto tambien anda."""
+    d = os.path.join(home(), "hechos", "_work", *parts) if parts \
+        else os.path.join(home(), "hechos", "_work")
+    os.makedirs(d, exist_ok=True)
+    return d

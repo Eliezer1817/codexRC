@@ -42,6 +42,7 @@ from core.cspt_scan import audit as cspt_audit  # noqa: E402
 from core.saml_audit import audit as saml_audit  # noqa: E402
 from core.fp_autoclose import annotate_all as fp_annotate  # noqa: E402
 from core.fp_autoclose import es_ruido_publico  # noqa: E402
+from core import state as _state  # noqa: E402
 
 DL_URL = "https://downloads.wordpress.org/plugin/{}.latest-stable.zip"
 THEME_URL = "https://downloads.wordpress.org/theme/{}.zip"
@@ -242,7 +243,7 @@ def main() -> None:
     ap.add_argument("--top", type=int, default=25, help="top por escaneo")
     ap.add_argument("--verbose", action="store_true",
                     help="mostrar tambien hallazgos autocerrados (FP)")
-    ap.add_argument("--workdir", default="/tmp/plugin_batch",
+    ap.add_argument("--workdir", default=_state.workdir("plugin_batch"),
                     help="dir de descargas (cache)")
     ap.add_argument("--conservar-todo", action="store_true",
                     help="NO borrar plugins limpios tras escanear (por defecto SI "
