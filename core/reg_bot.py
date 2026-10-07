@@ -224,6 +224,13 @@ class FormDiscovery:
                     out["forms"].append(f)
             except Exception:
                 pass
+        # SPA: si no hay <form> HTML, buscar endpoints de registro en JS
+        if not out["forms"]:
+            spa_forms = self._discover_spa_registration(url, page)
+            if spa_forms:
+                out["forms"] = spa_forms
+                if not out["reg_url"]:
+                    out["reg_url"] = url
         out["has_registration"] = bool(out["reg_url"])
         return out
 
@@ -253,6 +260,129 @@ class FormDiscovery:
             self.session.cookies.set(name, value)
         self.session.headers["User-Agent"] = relevo["user_agent"]
         return relevo["html"]
+
+    def _discover_spa_registration(self, url: str,
+                                   page: str) -> List[Dict[str, Any]]:
+        """Descubre endpoints de registro en SPAs escaneando el JS.
+        Devuelve formularios virtuales con spa=True, o lista vacia."""
+        origin = re.match(r"(https?://[^/]+)", url)
+        origin = origin.group(1) if origin else url
+
+        # recopilar JS: inline + archivos externos
+        js_chunks: List[str] = []
+        for tag in re.finditer(r"<script\b[^>]*>(.*?)</script>",
+                               page, re.S | re.I):
+            body = tag.group(1)
+            if body and len(body) < 500000:
+                js_chunks.append(body)
+        script_urls: List[str] = []
+        for m in re.finditer(r'<script[^>]+src=["\']([^"\']+)["\']',
+                             page, re.I):
+            script_urls.append(self._abs(url, m.group(1)))
+        for su in script_urls[:25]:
+            try:
+                r = self.session.get(su, timeout=12)
+                if r.status_code == 200 and len(r.text) < 2500000 \
+                        and "<html" not in r.text[:500].lower():
+                    js_chunks.append(r.text)
+            except Exception:
+                continue
+
+        # buscar endpoints de registro en el JS
+        reg_re = re.compile(
+            r'["\'`]((?:https?://[^"\'`]+)?/(?:api|auth|v\d+|user|account)'
+            r'[A-Za-z0-9_\-/.]*(?:register|signup|sign-?up|registro|alta|'
+            r'crear.?cuenta|create.?account|join)[A-Za-z0-9_\-/.]*)["\'`]',
+            re.I)
+        endpoints: List[str] = []
+        seen = set()
+        for js in js_chunks:
+            for m in reg_re.finditer(js):
+                ep = m.group(1)
+                full = ep if ep.startswith("http") \
+                    else origin + ep if ep.startswith("/") \
+                    else origin + "/" + ep
+                if full not in seen and origin in full:
+                    seen.add(full)
+                    endpoints.append(full)
+
+        # fallback: rutas estandar si el JS no revelo nada
+        if not endpoints:
+            for path in ("/api/auth/register", "/api/register",
+                         "/api/signup", "/api/auth/signup",
+                         "/auth/register", "/auth/signup",
+                         "/api/v1/auth/register", "/api/v1/register",
+                         "/api/users/create", "/api/account/create"):
+                full = origin + path
+                if full not in seen:
+                    seen.add(full)
+                    endpoints.append(full)
+
+        forms: List[Dict[str, Any]] = []
+        for ep in endpoints[:5]:
+            fields = self._infer_spa_fields(js_chunks, ep) or [
+                {"name": "email", "type": "email", "required": True,
+                 "label": "email", "hint": ""},
+                {"name": "password", "type": "password", "required": True,
+                 "label": "password", "hint": ""},
+            ]
+            if not any(f["name"] == "username" for f in fields):
+                fields.append({"name": "username", "type": "text",
+                               "required": False, "label": "username",
+                               "hint": ""})
+            forms.append({
+                "action": ep, "method": "post", "fields": fields,
+                "honeypots": [], "captcha": False, "discard": None,
+                "spa": True,
+            })
+        return forms
+
+    def _infer_spa_fields(self, js_chunks: List[str],
+                          endpoint: str) -> List[Dict[str, Any]]:
+        """Infiere campos del payload de registro desde el JS."""
+        ep_short = endpoint.rstrip("/").split("/")[-1]
+        for js in js_chunks:
+            for m in re.finditer(
+                r'\.post\s*\(\s*["\'`][^"\'`]*' + re.escape(ep_short) +
+                r'[^"\'`]*["\'`]\s*,\s*\{([^}]+)\}', js, re.I):
+                return self._names_to_fields(m.group(1))
+        for js in js_chunks:
+            for m in re.finditer(
+                r'JSON\.stringify\s*\(\s*\{([^}]+)\}', js, re.I):
+                raw = m.group(1)
+                if any(k in raw.lower() for k in ("email", "password")):
+                    return self._names_to_fields(raw)
+        return []
+
+    @staticmethod
+    def _names_to_fields(raw: str) -> List[Dict[str, Any]]:
+        """Convierte nombres de campos extraidos del JS en field dicts."""
+        names = re.findall(r"([A-Za-z_][\w]*)\s*:", raw)
+        if not names:
+            names = re.findall(r"\b([A-Za-z_][\w]*)\b", raw)
+        fields: List[Dict[str, Any]] = []
+        for name in names:
+            low = name.lower()
+            if "email" in low:
+                ftype = "email"
+            elif "pass" in low:
+                ftype = "password"
+            elif _USER_RE.search(low) or _NAME_RE.search(low):
+                ftype = "text"
+            elif _PHONE_RE.search(low):
+                ftype = "tel"
+            else:
+                continue
+            if not any(f["name"] == name for f in fields):
+                fields.append({"name": name, "type": ftype,
+                               "required": True, "label": name, "hint": ""})
+        if not any(f["type"] == "email" for f in fields):
+            fields.insert(0, {"name": "email", "type": "email",
+                             "required": True, "label": "email", "hint": ""})
+        if not any(f["type"] == "password" for f in fields):
+            fields.append({"name": "password", "type": "password",
+                           "required": True, "label": "password", "hint": ""})
+        return fields
 
     def _parse_forms(self, page: str,
                   include_all: bool = False) -> List[Dict[str, Any]]:
@@ -659,8 +789,16 @@ class RegBot:
         for h in form["honeypots"]:
             data[h] = ""
         url = form["action"] or info["reg_url"]
+        is_spa = form.get("spa", False)
         try:
-            r = session.post(url, data=data, timeout=25, allow_redirects=True)
+            if is_spa:
+                r = session.post(url, json=data, timeout=25,
+                                 allow_redirects=True,
+                                 headers={"Content-Type": "application/json",
+                                          "Accept": "application/json",
+                                          "X-Requested-With": "XMLHttpRequest"})
+            else:
+                r = session.post(url, data=data, timeout=25, allow_redirects=True)
         except Exception as e:
             self.log("  [REG-BOT] submit fallo: {}".format(e))
             return None
@@ -698,7 +836,14 @@ class RegBot:
             for _ in range(5):
                 username = self.gen.username()
                 data = self._swap_username(data, form, username)
-                r = session.post(url, data=data, timeout=25, allow_redirects=True)
+                if is_spa:
+                    r = session.post(url, json=data, timeout=25,
+                                     allow_redirects=True,
+                                     headers={"Content-Type": "application/json",
+                                              "Accept": "application/json",
+                                              "X-Requested-With": "XMLHttpRequest"})
+                else:
+                    r = session.post(url, data=data, timeout=25, allow_redirects=True)
                 if not re.search(r"(ya exist|already|taken|exists)", r.text[:4000], re.I):
                     break
             ident["credentials"]["username"] = username
@@ -781,9 +926,16 @@ class RegBot:
         for name, value in relevo["cookies"].items():
             session.cookies.set(name, value)
         session.headers["User-Agent"] = relevo["user_agent"]
+        is_spa = bool(info.get("forms") and info["forms"][0].get("spa"))
         try:
-            r = session.post(url, data=data, timeout=25,
-                             allow_redirects=True)
+            if is_spa:
+                r = session.post(url, json=data, timeout=25,
+                                 allow_redirects=True,
+                                 headers={"Content-Type": "application/json",
+                                          "Accept": "application/json"})
+            else:
+                r = session.post(url, data=data, timeout=25,
+                                 allow_redirects=True)
         except Exception:
             return None
         if r.status_code in (403, 429) or _CAPTCHA_RE.search(r.text[:3000]):
