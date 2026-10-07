@@ -1,0 +1,23 @@
+# Base44 dev environment for codexRC
+# Flask backend serving static frontend from frontend/ on port 8000.
+# Mapped to host port 3000 for the preview.
+services:
+  app:
+    image: python:3.12-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:8000"
+    environment:
+      - CODEXRC_LAN=1
+      - BASE44_PREVIEW_MODE=1
+      - PYTHONUNBUFFERED=1
+    command: ["sh", "-ec", "pip install --no-cache-dir -r requirements.txt && exec python3 backend/app.py"]
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
